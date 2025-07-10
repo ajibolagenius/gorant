@@ -5,18 +5,18 @@ A comprehensive design system for the Rant anonymous venting platform, ensuring 
 ## 🎨 Color Palette
 
 ### **Primary Colors**
-\`\`\`css
+```css
 /* Light Mode */
 --primary: 222.2 84% 4.9%        /* #0f172a - Deep slate */
 --primary-foreground: 210 40% 98% /* #f8fafc - Light slate */
 
-/* Dark Mode */  
+/* Dark Mode */
 --primary: 210 40% 98%           /* #f8fafc - Light slate */
 --primary-foreground: 222.2 84% 4.9% /* #0f172a - Deep slate */
-\`\`\`
+```
 
 ### **Mood-Based Colors**
-\`\`\`css
+```css
 /* Angry - Red spectrum */
 --mood-angry: 0 84% 60%          /* #ef4444 */
 --mood-angry-bg: 0 93% 94%       /* #fef2f2 */
@@ -46,10 +46,10 @@ A comprehensive design system for the Rant anonymous venting platform, ensuring 
 --mood-happy: 142 76% 36%        /* #16a34a */
 --mood-happy-bg: 138 76% 97%     /* #f0fdf4 */
 --mood-happy-border: 141 84% 79% /* #86efac */
-\`\`\`
+```
 
 ### **Semantic Colors**
-\`\`\`css
+```css
 /* Success */
 --success: 142 76% 36%           /* #16a34a */
 --success-foreground: 138 76% 97% /* #f0fdf4 */
@@ -65,17 +65,17 @@ A comprehensive design system for the Rant anonymous venting platform, ensuring 
 /* Info */
 --info: 221 83% 53%              /* #3b82f6 */
 --info-foreground: 214 100% 97%  /* #eff6ff */
-\`\`\`
+```
 
 ## 🔤 Typography
 
 ### **Font Family**
-\`\`\`css
+```css
 font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-\`\`\`
+```
 
 ### **Font Scale**
-\`\`\`css
+```css
 /* Headings */
 --text-xs: 0.75rem    /* 12px */
 --text-sm: 0.875rem   /* 14px */
@@ -90,20 +90,20 @@ font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', s
 --leading-tight: 1.25
 --leading-normal: 1.5
 --leading-relaxed: 1.625
-\`\`\`
+```
 
 ### **Font Weights**
-\`\`\`css
+```css
 --font-normal: 400
 --font-medium: 500
 --font-semibold: 600
 --font-bold: 700
-\`\`\`
+```
 
 ## 🧩 Component Guidelines
 
 ### **Cards**
-\`\`\`tsx
+```tsx
 // Standard rant card
 <Card className="hover:shadow-md transition-all duration-200 hover:border-primary/20">
   <CardHeader className="pb-3">
@@ -116,16 +116,16 @@ font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', s
     {/* Actions: like, comment, share, bookmark */}
   </CardFooter>
 </Card>
-\`\`\`
+```
 
 ### **Buttons**
-\`\`\`tsx
+```tsx
 // Primary action button
 <Button className="bg-primary hover:bg-primary/90">
   Post Rant
 </Button>
 
-// Secondary action button  
+// Secondary action button
 <Button variant="outline">
   Cancel
 </Button>
@@ -134,10 +134,10 @@ font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', s
 <Button variant="ghost" size="sm">
   <Heart size={16} weight="duotone" />
 </Button>
-\`\`\`
+```
 
 ### **Badges**
-\`\`\`tsx
+```tsx
 // Mood badge
 <Badge className={cn("text-xs", moodColors[mood])}>
   {moodEmojis[mood]} {mood}
@@ -152,12 +152,12 @@ font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', s
 <Badge variant="outline" className="text-xs">
   Level {level}
 </Badge>
-\`\`\`
+```
 
 ## 🎭 Icons
 
 ### **Phosphor Icons Configuration**
-\`\`\`tsx
+```tsx
 import { Heart, ChatCircle, Share } from '@phosphor-icons/react'
 
 // Standard usage with duotone weight
@@ -168,17 +168,17 @@ import { Heart, ChatCircle, Share } from '@phosphor-icons/react'
 
 // Icon sizes
 size={12} // Small icons (badges, inline)
-size={16} // Standard icons (buttons, cards)  
+size={16} // Standard icons (buttons, cards)
 size={20} // Medium icons (headers)
 size={24} // Large icons (main actions)
-\`\`\`
+```
 
 ### **Icon Categories**
-\`\`\`tsx
+```tsx
 // Navigation
 House, TrendingUp, Trophy, Target, Gear
 
-// Actions  
+// Actions
 Heart, ChatCircle, Share, Bookmark, Plus
 
 // UI Elements
@@ -186,24 +186,24 @@ X, ChevronDown, Search, Filter, Menu
 
 // Mood Indicators
 Smiley, SmileyMeh, SmileySad, SmileyAngry
-\`\`\`
+```
 
 ## 📱 Responsive Design
 
 ### **Breakpoints**
-\`\`\`css
+```css
 /* Mobile First Approach */
 sm: '640px'   /* Small devices */
-md: '768px'   /* Medium devices */  
+md: '768px'   /* Medium devices */
 lg: '1024px'  /* Large devices */
 xl: '1280px'  /* Extra large devices */
 2xl: '1536px' /* 2X large devices */
-\`\`\`
+```
 
 ### **Grid System**
-\`\`\`tsx
+```tsx
 // Mobile: Single column
-// Tablet: 2 columns  
+// Tablet: 2 columns
 // Desktop: 3-4 columns
 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
   {/* Content */}
@@ -214,12 +214,12 @@ xl: '1280px'  /* Extra large devices */
   <aside className="lg:col-span-1">{/* Sidebar */}</aside>
   <main className="lg:col-span-3">{/* Main content */}</main>
 </div>
-\`\`\`
+```
 
 ## 🎬 Animations
 
 ### **Transition Classes**
-\`\`\`css
+```css
 /* Standard transitions */
 .transition-all { transition: all 0.2s ease-in-out; }
 .transition-colors { transition: color 0.2s ease-in-out; }
@@ -228,7 +228,7 @@ xl: '1280px'  /* Extra large devices */
 /* Hover effects */
 .hover\:scale-105:hover { transform: scale(1.05); }
 .hover\:shadow-md:hover { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-\`\`\`
+```
 
 ### **Animation Principles**
 - **Duration**: 200ms for micro-interactions, 300ms for larger changes
@@ -244,17 +244,17 @@ xl: '1280px'  /* Extra large devices */
 - **Large Text**: 3:1 ratio minimum for 18px+ or 14px+ bold
 
 ### **Focus States**
-\`\`\`css
+```css
 /* Focus ring for interactive elements */
 .focus\:ring-2:focus {
   outline: 2px solid transparent;
   outline-offset: 2px;
   box-shadow: 0 0 0 2px var(--primary);
 }
-\`\`\`
+```
 
 ### **Screen Reader Support**
-\`\`\`tsx
+```tsx
 // Hidden text for screen readers
 <span className="sr-only">Like this rant</span>
 
@@ -267,26 +267,26 @@ xl: '1280px'  /* Extra large devices */
 <div aria-live="polite" aria-atomic="true">
   {statusMessage}
 </div>
-\`\`\`
+```
 
 ## 🌙 Dark Mode
 
 ### **Theme Toggle**
-\`\`\`tsx
+```tsx
 import { useTheme } from 'next-themes'
 
 const { theme, setTheme } = useTheme()
 
-<Button 
-  variant="ghost" 
+<Button
+  variant="ghost"
   onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
 >
   {theme === 'dark' ? <Sun /> : <Moon />}
 </Button>
-\`\`\`
+```
 
 ### **Dark Mode Colors**
-\`\`\`css
+```css
 .dark {
   --background: 222.2 84% 4.9%     /* #0f172a */
   --foreground: 210 40% 98%        /* #f8fafc */
@@ -296,12 +296,12 @@ const { theme, setTheme } = useTheme()
   --muted: 217.2 32.6% 17.5%       /* #1e293b */
   --muted-foreground: 215 20.2% 65.1% /* #94a3b8 */
 }
-\`\`\`
+```
 
 ## 📐 Spacing System
 
 ### **Spacing Scale**
-\`\`\`css
+```css
 /* Based on 4px base unit */
 --space-1: 0.25rem   /* 4px */
 --space-2: 0.5rem    /* 8px */
@@ -313,24 +313,24 @@ const { theme, setTheme } = useTheme()
 --space-10: 2.5rem   /* 40px */
 --space-12: 3rem     /* 48px */
 --space-16: 4rem     /* 64px */
-\`\`\`
+```
 
 ### **Component Spacing**
-\`\`\`tsx
+```tsx
 // Card padding
 <Card className="p-4 md:p-6">
 
-// Section margins  
+// Section margins
 <section className="mb-8 md:mb-12">
 
 // Button spacing
 <div className="flex gap-2 md:gap-4">
-\`\`\`
+```
 
 ## 🎯 Usage Examples
 
 ### **Rant Card Implementation**
-\`\`\`tsx
+```tsx
 <Card className="group hover:shadow-md transition-all duration-200 hover:border-primary/20">
   <CardHeader className="pb-3">
     <div className="flex items-center gap-3">
@@ -349,7 +349,7 @@ const { theme, setTheme } = useTheme()
       {moodEmojis[mood]} {mood}
     </Badge>
   </CardHeader>
-  
+
   <CardContent className="pt-0">
     <p className="text-sm leading-relaxed">{content}</p>
     <div className="flex flex-wrap gap-1 mt-3">
@@ -360,7 +360,7 @@ const { theme, setTheme } = useTheme()
       ))}
     </div>
   </CardContent>
-  
+
   <CardFooter className="pt-3">
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-1">
@@ -384,7 +384,6 @@ const { theme, setTheme } = useTheme()
     </div>
   </CardFooter>
 </Card>
-\`\`\`
+```
 
 This design system ensures consistency, accessibility, and maintainability across the entire Rant application while providing flexibility for future enhancements and customizations.
-\`\`\`
