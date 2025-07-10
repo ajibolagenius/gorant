@@ -1,30 +1,110 @@
-# Rant Product Requirements
+# Rant - Anonymous Venting Platform
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+A modern, anonymous social platform where users can express their thoughts, frustrations, and emotions in a safe, supportive environment. Built with Next.js 14, TypeScript, and Supabase.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/akelebeam16-8696s-projects/v0-rant-product-requirements)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/0eDFIvZ3STX)
+## ✨ Features
 
-## Overview
+### 🎭 **Anonymous Expression**
+- Post rants without revealing your identity
+- Express emotions through mood-based categorization
+- Safe space for authentic self-expression
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+### 🎮 **Gamification System**
+- User levels and experience points
+- Achievement badges and milestones
+- Leaderboards and challenges
+- Engagement rewards
 
-## Deployment
+### 🏷️ **Smart Organization**
+- Tag-based categorization
+- Mood-based filtering (angry, frustrated, sad, confused, excited, happy)
+- Trending topics and popular content
+- Advanced search and filtering
 
-Your project is live at:
+### 💬 **Community Interaction**
+- Like and comment on rants
+- Bookmark favorite content
+- Share rants with others
+- Real-time engagement tracking
 
-**[https://vercel.com/akelebeam16-8696s-projects/v0-rant-product-requirements](https://vercel.com/akelebeam16-8696s-projects/v0-rant-product-requirements)**
+### 🎨 **Modern UI/UX**
+- Responsive design with mobile-first approach
+- Dark/light theme support
+- Masonry grid layout for optimal content display
+- Smooth animations and micro-interactions
+- Phosphor Icons in duotone style
 
-## Build your app
+### 🔧 **Technical Features**
+- Server-side rendering with Next.js 14
+- Real-time updates with Supabase
+- Infinite scroll for seamless browsing
+- Progressive Web App (PWA) capabilities
+- Accessibility-first design (WCAG compliant)
 
-Continue building your app on:
+## 🎯 Roadmap
 
-**[https://v0.dev/chat/projects/0eDFIvZ3STX](https://v0.dev/chat/projects/0eDFIvZ3STX)**
+### **Phase 1: Core Features** ✅
+- [x] Basic rant posting and viewing
+- [x] Mood-based categorization
+- [x] Tag system
+- [x] Like and comment functionality
+- [x] Responsive design
 
-## How It Works
+### **Phase 2: Enhanced UX** 🚧
+- [ ] Motion.js animations
+- [ ] Swiper for mobile browsing
+- [ ] Simple Analytics integration
+- [ ] Advanced filtering options
+- [ ] User preferences
 
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+### **Phase 3: Community Features** 📋
+- [ ] User following system
+- [ ] Notification system
+- [ ] Content moderation tools
+- [ ] Reporting system
+- [ ] Community guidelines
+
+### **Phase 4: Advanced Features** 🔮
+- [ ] AI-powered content suggestions
+- [ ] Sentiment analysis
+- [ ] Multi-language support
+- [ ] Video rant support
+- [ ] Mobile app (React Native)
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+### **Development Workflow**
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Run tests (`npm test`)
+5. Commit your changes (`git commit -m 'Add amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [shadcn/ui](https://ui.shadcn.com/) for the beautiful component library
+- [Phosphor Icons](https://phosphoricons.com/) for the icon system
+- [Supabase](https://supabase.com/) for the backend infrastructure
+- [Vercel](https://vercel.com/) for hosting and deployment
+
+## 📞 Support
+
+If you have any questions or need help, please:
+
+1. Check the [FAQ](docs/FAQ.md)
+2. Search existing [Issues](https://github.com/yourusername/rant-app/issues)
+3. Create a new issue if needed
+4. Join our [Discord community](https://discord.gg/rant-app)
+
+---
+
+**Made with ❤️ by the Rant community**
