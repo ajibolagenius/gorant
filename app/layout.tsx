@@ -7,6 +7,7 @@ import ClientLayout from "@/components/ClientLayout"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Analytics } from "@vercel/analytics/next"
+import Script from "next/script"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -58,6 +59,13 @@ export default function RootLayout({
 }) {
     return (
         <html lang="en">
+            <head>
+                <Script
+                    src="https://scripts.simpleanalyticscdn.com/latest.js"
+                    strategy="afterInteractive"
+                    data-collect-dnt="true"
+                />
+            </head>
             <body className={inter.className}>
                 <TooltipProvider>
                     <ClientLayout>

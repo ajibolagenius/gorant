@@ -32,6 +32,7 @@ import { SentimentAnalysisService } from "@/services/sentiment-analysis"
 import { Star as PhosphorStar } from "phosphor-react"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import React from "react"
+import { motion } from "framer-motion"
 
 interface RantCardProps {
     rant: Rant
@@ -134,196 +135,202 @@ export const RantCard = React.memo(function RantCard({
     const MoodIcon = getMoodIcon(rant.mood);
 
     return (
-        <Card className="shadow-sm border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur hover:shadow-md transition-all duration-200 relative">
-            <CardContent className="pt-6">
-                <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center space-x-2 flex-wrap gap-2">
-                        <Badge variant="secondary" className={`${getMoodColor(rant.mood)} text-xs px-2 py-0.5 font-medium`}>
-                            <MoodIcon weight="duotone" className={`w-5 h-5 mr-1 ${getMoodColor(rant.mood).replace(/bg-[^ ]+/, '').replace('text-', 'text-')}`} />
-                            {moods.find((m) => m.value === rant.mood)?.label}
-                        </Badge>
-                        {rant.is_trending && (
-                            <Badge
-                                variant="secondary"
-                                className="bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
-                            >
-                                <TrendingUp className="w-3 h-3 mr-1" />
-                                Trending
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+        >
+            <Card className="shadow-sm border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur hover:shadow-md transition-all duration-200 relative">
+                <CardContent className="pt-6">
+                    <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center space-x-2 flex-wrap gap-2">
+                            <Badge variant="secondary" className={`${getMoodColor(rant.mood)} text-xs px-2 py-0.5 font-medium`}>
+                                <MoodIcon weight="duotone" className={`w-5 h-5 mr-1 ${getMoodColor(rant.mood).replace(/bg-[^ ]+/, '').replace('text-', 'text-')}`} />
+                                {moods.find((m) => m.value === rant.mood)?.label}
                             </Badge>
-                        )}
-                        {showSentiment && getSentimentDisplay()}
-                        {showModeration && rant.moderation_status === "approved" && (
-                            <Badge variant="outline" className="text-green-600 border-green-300 bg-green-50 dark:bg-green-900/20">
-                                <Shield className="w-3 h-3 mr-1" />
-                                Verified
-                            </Badge>
-                        )}
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <span className="text-sm text-gray-500 dark:text-gray-400">{formatTimeAgo(rant.created_at)}</span>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                {showShare && (
-                                    <DropdownMenuItem onClick={handleShare}>
-                                        <Share2 className="mr-2 h-4 w-4" />
-                                        Share
+                            {rant.is_trending && (
+                                <Badge
+                                    variant="secondary"
+                                    className="bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
+                                >
+                                    <TrendingUp className="w-3 h-3 mr-1" />
+                                    Trending
+                                </Badge>
+                            )}
+                            {showSentiment && getSentimentDisplay()}
+                            {showModeration && rant.moderation_status === "approved" && (
+                                <Badge variant="outline" className="text-green-600 border-green-300 bg-green-50 dark:bg-green-900/20">
+                                    <Shield className="w-3 h-3 mr-1" />
+                                    Verified
+                                </Badge>
+                            )}
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <span className="text-sm text-gray-500 dark:text-gray-400">{formatTimeAgo(rant.created_at)}</span>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                        <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    {showShare && (
+                                        <DropdownMenuItem onClick={handleShare}>
+                                            <Share2 className="mr-2 h-4 w-4" />
+                                            Share
+                                        </DropdownMenuItem>
+                                    )}
+                                    <DropdownMenuItem onClick={() => onBlockUser(rant.anonymous_id)}>
+                                        <UserX className="mr-2 h-4 w-4" />
+                                        Block User
                                     </DropdownMenuItem>
-                                )}
-                                <DropdownMenuItem onClick={() => onBlockUser(rant.anonymous_id)}>
-                                    <UserX className="mr-2 h-4 w-4" />
-                                    Block User
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                {showReport && (
-                                    <DropdownMenuItem onClick={() => handleReport("inappropriate")}>
-                                        <Flag className="mr-2 h-4 w-4" />
-                                        Report
-                                    </DropdownMenuItem>
-                                )}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                                    <DropdownMenuSeparator />
+                                    {showReport && (
+                                        <DropdownMenuItem onClick={() => handleReport("inappropriate")}>
+                                            <Flag className="mr-2 h-4 w-4" />
+                                            Report
+                                        </DropdownMenuItem>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
                     </div>
-                </div>
 
-                <p className="text-gray-800 dark:text-gray-200 mb-4 leading-relaxed">{rant.content}</p>
+                    <p className="text-gray-800 dark:text-gray-200 mb-4 leading-relaxed">{rant.content}</p>
 
-                {/* Tags */}
-                {rant.tags && rant.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mb-4">
-                        {rant.tags.map((tag, index) => (
-                            <Badge
-                                key={index}
-                                variant="outline"
-                                className={`text-xs px-2 py-0.5 border font-medium cursor-pointer transition-colors ${followedTags.has(tag)
-                                    ? "bg-purple-100 text-purple-800 border-purple-400 dark:bg-purple-900 dark:text-purple-200 dark:border-purple-400"
-                                    : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-400 dark:border-gray-500 hover:bg-purple-50 dark:hover:bg-purple-900"
-                                    }`}
-                                onClick={() => onFollowTag(tag)}
-                            >
-                                #{tag} {followedTags.has(tag) && "✓"}
-                            </Badge>
-                        ))}
-                    </div>
-                )}
+                    {/* Tags */}
+                    {rant.tags && rant.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-4">
+                            {rant.tags.map((tag, index) => (
+                                <Badge
+                                    key={index}
+                                    variant="outline"
+                                    className={`text-xs px-2 py-0.5 border font-medium cursor-pointer transition-colors ${followedTags.has(tag)
+                                        ? "bg-purple-100 text-purple-800 border-purple-400 dark:bg-purple-900 dark:text-purple-200 dark:border-purple-400"
+                                        : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-400 dark:border-gray-500 hover:bg-purple-50 dark:hover:bg-purple-900"
+                                        }`}
+                                    onClick={() => onFollowTag(tag)}
+                                >
+                                    #{tag} {followedTags.has(tag) && "✓"}
+                                </Badge>
+                            ))}
+                        </div>
+                    )}
 
-                <Separator className="mb-4" />
+                    <Separator className="mb-4" />
 
-                <div className="flex flex-row w-full items-center justify-between mt-4 gap-2">
-                    <div className="flex items-center gap-4 min-w-0">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onLike(rant.id)}
-                            className={`${isLiked
-                                ? "text-red-600 hover:text-red-700 dark:text-red-400"
-                                : "text-gray-600 hover:text-red-600 dark:text-gray-400"
-                                }`}
-                        >
-                            <Heart className={`w-4 h-4 mr-1 ${isLiked ? "fill-current" : ""}`} />
-                            {rant.likes_count}
-                        </Button>
-
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setShowComments(!showComments)}
-                            className="text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400"
-                        >
-                            <MessageCircle className="w-4 h-4 mr-1" />
-                            {rant.comments_count}
-                        </Button>
-
-                        {showBookmark && (
+                    <div className="flex flex-row w-full items-center justify-between mt-4 gap-2">
+                        <div className="flex items-center gap-4 min-w-0">
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => onBookmark(rant.id)}
-                                className={`${isBookmarked
-                                    ? "text-yellow-600 hover:text-yellow-700 dark:text-yellow-400"
-                                    : "text-gray-600 hover:text-yellow-600 dark:text-gray-400"
+                                onClick={() => onLike(rant.id)}
+                                className={`${isLiked
+                                    ? "text-red-600 hover:text-red-700 dark:text-red-400"
+                                    : "text-gray-600 hover:text-red-600 dark:text-gray-400"
                                     }`}
-                                aria-label={isBookmarked ? "Remove bookmark" : "Add bookmark"}
                             >
-                                <Bookmark className={`w-4 h-4 ${isBookmarked ? "fill-current" : ""}`} />
-                                <span className="sr-only">{isBookmarked ? "Remove bookmark" : "Add bookmark"}</span>
+                                <Heart className={`w-4 h-4 mr-1 ${isLiked ? "fill-current" : ""}`} />
+                                {rant.likes_count}
                             </Button>
-                        )}
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap justify-end min-w-0">
-                        {rant.reputation_impact && (
-                            <Tooltip open={isMobile ? showRepTooltip : undefined} onOpenChange={isMobile ? setShowRepTooltip : undefined}>
-                                <TooltipTrigger asChild>
-                                    <span
-                                        className="inline-flex items-center text-yellow-700 dark:text-yellow-300 cursor-pointer"
-                                        onClick={isMobile ? () => setShowRepTooltip((v) => !v) : undefined}
-                                        aria-label="Reputation info"
-                                    >
-                                        <PhosphorStar weight="duotone" className="w-4 h-4 mr-0.5" />
-                                        +{rant.reputation_impact}
-                                    </span>
-                                </TooltipTrigger>
-                                <TooltipContent
-                                    side="top"
-                                    sideOffset={8}
-                                    className="bg-popover text-gray-900 dark:bg-gray-900 dark:text-white rounded-xl shadow-lg p-4 max-w-xs border border-yellow-400 dark:border-yellow-400 z-50 whitespace-normal break-words"
+
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setShowComments(!showComments)}
+                                className="text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400"
+                            >
+                                <MessageCircle className="w-4 h-4 mr-1" />
+                                {rant.comments_count}
+                            </Button>
+
+                            {showBookmark && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => onBookmark(rant.id)}
+                                    className={`${isBookmarked
+                                        ? "text-yellow-600 hover:text-yellow-700 dark:text-yellow-400"
+                                        : "text-gray-600 hover:text-yellow-600 dark:text-gray-400"
+                                        }`}
+                                    aria-label={isBookmarked ? "Remove bookmark" : "Add bookmark"}
                                 >
-                                    <div className="mb-2 flex items-center gap-2">
-                                        <PhosphorStar weight="duotone" className="w-5 h-5 text-yellow-400" />
-                                        <span className="font-semibold text-base">Reputation</span>
-                                    </div>
-                                    <div className="text-sm text-gray-200 mb-2 whitespace-normal break-words">
-                                        Earned by positive community actions. Higher reputation unlocks more features and recognition.
-                                    </div>
-                                </TooltipContent>
-                            </Tooltip>
-                        )}
-                        <Eye className="w-3 h-3" />
-                        <span>{rant.anonymous_id}</span>
-                    </div>
-                </div>
-
-                {/* Comments Section */}
-                {showComments && (
-                    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-                        {/* Add Comment */}
-                        <div className="flex gap-2 mb-4">
-                            <Input
-                                placeholder="Add a comment..."
-                                value={newComment}
-                                onChange={(e) => setNewComment(e.target.value)}
-                                className="flex-1 border-gray-200 dark:border-gray-600 focus:border-purple-400 dark:bg-gray-700 dark:text-white"
-                                onKeyPress={(e) => {
-                                    if (e.key === "Enter" && newComment.trim()) {
-                                        // Handle comment submission
-                                        setNewComment("")
-                                    }
-                                }}
-                            />
-                            <Button size="sm" disabled={!newComment.trim()} className="bg-purple-600 hover:bg-purple-700">
-                                <Send className="w-4 h-4" />
-                            </Button>
+                                    <Bookmark className={`w-4 h-4 ${isBookmarked ? "fill-current" : ""}`} />
+                                    <span className="sr-only">{isBookmarked ? "Remove bookmark" : "Add bookmark"}</span>
+                                </Button>
+                            )}
                         </div>
+                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap justify-end min-w-0">
+                            {rant.reputation_impact && (
+                                <Tooltip open={isMobile ? showRepTooltip : undefined} onOpenChange={isMobile ? setShowRepTooltip : undefined}>
+                                    <TooltipTrigger asChild>
+                                        <span
+                                            className="inline-flex items-center text-yellow-700 dark:text-yellow-300 cursor-pointer"
+                                            onClick={isMobile ? () => setShowRepTooltip((v) => !v) : undefined}
+                                            aria-label="Reputation info"
+                                        >
+                                            <PhosphorStar weight="duotone" className="w-4 h-4 mr-0.5" />
+                                            +{rant.reputation_impact}
+                                        </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent
+                                        side="top"
+                                        sideOffset={8}
+                                        className="bg-popover text-gray-900 dark:bg-gray-900 dark:text-white rounded-xl shadow-lg p-4 max-w-xs border border-yellow-400 dark:border-yellow-400 z-50 whitespace-normal break-words"
+                                    >
+                                        <div className="mb-2 flex items-center gap-2">
+                                            <PhosphorStar weight="duotone" className="w-5 h-5 text-yellow-400" />
+                                            <span className="font-semibold text-base">Reputation</span>
+                                        </div>
+                                        <div className="text-sm text-gray-200 mb-2 whitespace-normal break-words">
+                                            Earned by positive community actions. Higher reputation unlocks more features and recognition.
+                                        </div>
+                                    </TooltipContent>
+                                </Tooltip>
+                            )}
+                            <Eye className="w-3 h-3" />
+                            <span>{rant.anonymous_id}</span>
+                        </div>
+                    </div>
 
-                        {/* Comments List */}
-                        <div className="space-y-3">
-                            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-                                <p className="text-gray-800 dark:text-gray-200 text-sm mb-1">
-                                    I totally understand how you feel. Hang in there! 💪
-                                </p>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-xs text-gray-500 dark:text-gray-400">2h ago</span>
-                                    <span className="text-xs text-gray-500 dark:text-gray-400">anon_123</span>
+                    {/* Comments Section */}
+                    {showComments && (
+                        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                            {/* Add Comment */}
+                            <div className="flex gap-2 mb-4">
+                                <Input
+                                    placeholder="Add a comment..."
+                                    value={newComment}
+                                    onChange={(e) => setNewComment(e.target.value)}
+                                    className="flex-1 border-gray-200 dark:border-gray-600 focus:border-purple-400 dark:bg-gray-700 dark:text-white"
+                                    onKeyPress={(e) => {
+                                        if (e.key === "Enter" && newComment.trim()) {
+                                            // Handle comment submission
+                                            setNewComment("")
+                                        }
+                                    }}
+                                />
+                                <Button size="sm" disabled={!newComment.trim()} className="bg-purple-600 hover:bg-purple-700">
+                                    <Send className="w-4 h-4" />
+                                </Button>
+                            </div>
+
+                            {/* Comments List */}
+                            <div className="space-y-3">
+                                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                                    <p className="text-gray-800 dark:text-gray-200 text-sm mb-1">
+                                        I totally understand how you feel. Hang in there! 💪
+                                    </p>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-xs text-gray-500 dark:text-gray-400">2h ago</span>
+                                        <span className="text-xs text-gray-500 dark:text-gray-400">anon_123</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                )}
-            </CardContent>
-        </Card>
+                    )}
+                </CardContent>
+            </Card>
+        </motion.div>
     )
 })
