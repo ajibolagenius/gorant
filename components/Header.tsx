@@ -72,16 +72,20 @@ export default function Header({ userLevel, theme, toggleTheme, pathname }: Head
                             size="sm"
                             onClick={toggleTheme}
                             className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            aria-label="Toggle theme"
                         >
                             {theme === "dark" ? <Sun weight="duotone" className="w-4 h-4" /> : <Moon weight="duotone" className="w-4 h-4" />}
+                            <span className="sr-only">Toggle theme</span>
                         </Button>
                         <Link href="/notifications">
                             <Button
                                 variant="ghost"
                                 size="sm"
                                 className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                aria-label="Notifications"
                             >
                                 <Bell weight="duotone" className="w-4 h-4" />
+                                <span className="sr-only">Notifications</span>
                             </Button>
                         </Link>
                         <Link href="/settings">
@@ -89,8 +93,10 @@ export default function Header({ userLevel, theme, toggleTheme, pathname }: Head
                                 variant="ghost"
                                 size="sm"
                                 className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                aria-label="Settings"
                             >
                                 <Shield weight="duotone" className="w-4 h-4" />
+                                <span className="sr-only">Settings</span>
                             </Button>
                         </Link>
                     </div>

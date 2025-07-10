@@ -56,7 +56,7 @@ export default function BookmarksClient() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800 py-8">
-            <div className="container mx-auto max-w-2xl px-4">
+            <div className="container mx-auto max-w-2xl px-4 mb-safe-bottom wrap-screen">
                 <div className="flex items-center justify-between mb-6">
                     <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Bookmarked Rants</h1>
                     <Link
