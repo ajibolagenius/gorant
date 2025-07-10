@@ -1,46 +1,45 @@
-# Rant 💭 - Anonymous Mental Health Platform
+# Rant - Anonymous Venting Platform
 
-A modern, anonymous platform for emotional expression and mental health support, built with Next.js, Supabase, and enhanced with gamification elements.
-
-![Rant App Screenshot](https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-07-10%20at%2009.04.02-x0X2kwvzvRBIwK0TpTWTPh1NBOXrXt.png)
+A modern, anonymous social platform where users can express their thoughts, frustrations, and emotions in a safe, supportive environment. Built with Next.js 14, TypeScript, and Supabase.
 
 ## ✨ Features
 
 ### 🎭 **Anonymous Expression**
-- Post anonymous rants with mood indicators
-- Express emotions without judgment
-- Safe space for mental health discussions
+- Post rants without revealing your identity
+- Express emotions through mood-based categorization
+- Safe space for authentic self-expression
 
 ### 🎮 **Gamification System**
-- Points and levels for engagement
+- User levels and experience points
 - Achievement badges and milestones
-- Weekly challenges and leaderboards
-- Reputation system for community building
+- Leaderboards and challenges
+- Engagement rewards
 
-### 🤖 **AI-Powered Features**
-- Sentiment analysis for emotional insights
-- Content moderation for safety
-- Personalized recommendations
-- Mood tracking and analytics
+### 🏷️ **Smart Organization**
+- Tag-based categorization
+- Mood-based filtering (angry, frustrated, sad, confused, excited, happy)
+- Trending topics and popular content
+- Advanced search and filtering
 
-### 📱 **Modern UI/UX**
-- Responsive design with Tailwind CSS
-- Dark/light mode support
+### 💬 **Community Interaction**
+- Like and comment on rants
+- Bookmark favorite content
+- Share rants with others
+- Real-time engagement tracking
+
+### 🎨 **Modern UI/UX**
+- Responsive design with mobile-first approach
+- Dark/light theme support
 - Masonry grid layout for optimal content display
-- Phosphor Icons in duotone style for visual consistency
 - Smooth animations and micro-interactions
+- Phosphor Icons in duotone style
 
-### 🔒 **Privacy & Safety**
-- Anonymous posting system
-- Content moderation and reporting
-- User blocking capabilities
-- Privacy-first analytics
-
-### 🌐 **Social Features**
-- Comment system with threading
-- Tag following and discovery
-- Real-time updates
-- Social sharing capabilities
+### 🔧 **Technical Features**
+- Server-side rendering with Next.js 14
+- Real-time updates with Supabase
+- Infinite scroll for seamless browsing
+- Progressive Web App (PWA) capabilities
+- Accessibility-first design (WCAG compliant)
 
 ## 🚀 Getting Started
 
@@ -61,6 +60,8 @@ A modern, anonymous platform for emotional expression and mental health support,
 2. **Install dependencies**
    \`\`\`bash
    npm install
+   # or
+   yarn install
    \`\`\`
 
 3. **Set up environment variables**
@@ -77,137 +78,130 @@ A modern, anonymous platform for emotional expression and mental health support,
 
 4. **Set up the database**
    \`\`\`bash
-   # Run the SQL scripts in order
-   npm run db:setup
+   # Run the SQL scripts in order:
+   # 1. scripts/01-create-tables.sql
+   # 2. scripts/02-create-functions.sql  
+   # 3. scripts/03-seed-data.sql
    \`\`\`
 
 5. **Start the development server**
    \`\`\`bash
    npm run dev
+   # or
+   yarn dev
    \`\`\`
 
 6. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
-## 🗄️ Database Setup
-
-The application uses Supabase as the backend. Run these SQL scripts in order:
-
-1. `scripts/01-create-tables.sql` - Creates all necessary tables
-2. `scripts/02-create-functions.sql` - Sets up database functions and triggers
-3. `scripts/03-seed-data.sql` - Adds initial data for testing
-
-## 🎨 Design System
-
-The application follows a comprehensive design system documented in `DESIGN_SYSTEM.md`:
-
-- **Colors**: Purple-based primary palette with mood-specific colors
-- **Typography**: Inter font family with semantic sizing
-- **Icons**: Phosphor Icons in duotone weight for consistency
-- **Components**: Reusable shadcn/ui components with custom styling
-- **Spacing**: 8px grid system for consistent layouts
-
 ## 📁 Project Structure
 
 \`\`\`
 rant-app/
-├── app/                    # Next.js app directory
-│   ├── challenges/         # Weekly challenges page
-│   ├── leaderboard/        # Community leaderboard
-│   ├── settings/           # User settings
-│   ├── trending/           # Trending rants
-│   └── page.tsx           # Main feed page
-├── components/             # Reusable components
-│   ├── ui/                # shadcn/ui components
-│   ├── enhanced-rant-card.tsx
-│   ├── gamification-panel.tsx
-│   └── app-sidebar.tsx
-├── hooks/                  # Custom React hooks
-├── services/              # API services
-│   ├── content-moderation.ts
-│   ├── sentiment-analysis.ts
-│   └── personalization.ts
-├── scripts/               # Database scripts
-└── styles/               # Global styles
+├── app/                    # Next.js 14 App Router
+│   ├── (routes)/          # Route groups
+│   ├── globals.css        # Global styles
+│   ├── layout.tsx         # Root layout
+│   └── page.tsx          # Home page
+├── components/            # Reusable components
+│   ├── ui/               # shadcn/ui components
+│   ├── rant-card.tsx     # Rant display component
+│   ├── post-rant-modal.tsx
+│   └── ...
+├── hooks/                # Custom React hooks
+├── lib/                  # Utility functions
+├── services/             # API and external services
+├── scripts/              # Database scripts
+├── styles/               # Additional styles
+└── types/                # TypeScript type definitions
 \`\`\`
 
-## 🔧 Available Scripts
+## 🛠️ Tech Stack
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm run db:setup` - Set up database tables
+### **Frontend**
+- **Next.js 14** - React framework with App Router
+- **TypeScript** - Type-safe JavaScript
+- **Tailwind CSS** - Utility-first CSS framework
+- **shadcn/ui** - Modern component library
+- **Phosphor Icons** - Beautiful icon library
+- **Framer Motion** - Animation library
 
-## 🎯 Key Features Implementation
+### **Backend & Database**
+- **Supabase** - Backend-as-a-Service
+- **PostgreSQL** - Relational database
+- **Row Level Security** - Data protection
 
-### Gamification System
-- **Points**: Earned through posting, commenting, and receiving likes
-- **Levels**: Progressive system with unlockable features
-- **Badges**: Achievement system for milestones
-- **Challenges**: Weekly community challenges
+### **Development Tools**
+- **ESLint** - Code linting
+- **Prettier** - Code formatting
+- **Husky** - Git hooks
+- **TypeScript** - Static type checking
 
-### Content Moderation
-- **AI Moderation**: Automatic content filtering
-- **Community Reporting**: User-driven content moderation
-- **Reputation System**: Trust-based user scoring
+## 🎯 Roadmap
 
-### Accessibility
-- **WCAG Compliance**: Full accessibility support
-- **Screen Reader**: Compatible with assistive technologies
-- **Keyboard Navigation**: Full keyboard accessibility
-- **High Contrast**: Support for visual impairments
+### **Phase 1: Core Features** ✅
+- [x] Basic rant posting and viewing
+- [x] Mood-based categorization
+- [x] Tag system
+- [x] Like and comment functionality
+- [x] Responsive design
 
-## 🔮 Future Enhancements
+### **Phase 2: Enhanced UX** 🚧
+- [ ] Motion.js animations
+- [ ] Swiper for mobile browsing
+- [ ] Simple Analytics integration
+- [ ] Advanced filtering options
+- [ ] User preferences
 
-### Planned Features
-- [ ] Native mobile applications (iOS/Android)
-- [ ] Voice rants and audio support
-- [ ] Advanced analytics dashboard
+### **Phase 3: Community Features** 📋
+- [ ] User following system
+- [ ] Notification system
+- [ ] Content moderation tools
+- [ ] Reporting system
+- [ ] Community guidelines
+
+### **Phase 4: Advanced Features** 🔮
+- [ ] AI-powered content suggestions
+- [ ] Sentiment analysis
 - [ ] Multi-language support
-- [ ] Offline capabilities
 - [ ] Video rant support
-- [ ] Advanced AI insights
-
-### Potential Integrations
-- [ ] Motion.js for enhanced animations
-- [ ] Remotion for video content generation
-- [ ] Three.js for 3D mood visualizations
-- [ ] Tauri for desktop applications
+- [ ] Mobile app (React Native)
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+### **Development Workflow**
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+3. Make your changes
+4. Run tests (`npm test`)
+5. Commit your changes (`git commit -m 'Add amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🆘 Support
-
-- **Documentation**: Check our [Wiki](https://github.com/yourusername/rant-app/wiki)
-- **Issues**: Report bugs on [GitHub Issues](https://github.com/yourusername/rant-app/issues)
-- **Discussions**: Join our [GitHub Discussions](https://github.com/yourusername/rant-app/discussions)
-- **Email**: support@rantapp.com
-
 ## 🙏 Acknowledgments
 
-- [Next.js](https://nextjs.org/) - React framework
-- [Supabase](https://supabase.com/) - Backend as a service
-- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
-- [shadcn/ui](https://ui.shadcn.com/) - Component library
-- [Phosphor Icons](https://phosphoricons.com/) - Icon library
-- [Vercel](https://vercel.com/) - Deployment platform
+- [shadcn/ui](https://ui.shadcn.com/) for the beautiful component library
+- [Phosphor Icons](https://phosphoricons.com/) for the icon system
+- [Supabase](https://supabase.com/) for the backend infrastructure
+- [Vercel](https://vercel.com/) for hosting and deployment
+
+## 📞 Support
+
+If you have any questions or need help, please:
+
+1. Check the [FAQ](docs/FAQ.md)
+2. Search existing [Issues](https://github.com/yourusername/rant-app/issues)
+3. Create a new issue if needed
+4. Join our [Discord community](https://discord.gg/rant-app)
 
 ---
 
-**Made with ❤️ for mental health awareness and community support**
+**Made with ❤️ by the Rant community**
 \`\`\`
-
-Now let me create the comprehensive design system document:
