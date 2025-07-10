@@ -26,7 +26,9 @@ A comprehensive guide to the visual and interaction standards for the Rant platf
 
 ## 🔤 Typography
 
-- **Font Family:** `Inter`, sans-serif (Google Fonts)
+- **Font Family:**
+  - Headings: `Montserrat`, sans-serif (Google Fonts)
+  - Body: `Lora`, serif (Google Fonts)
 - **Font Sizes:**
   - `text-xs` (0.75rem/12px) – tags, pills, badges
   - `text-sm` (0.875rem/14px) – UI, buttons, search
@@ -40,6 +42,8 @@ A comprehensive guide to the visual and interaction standards for the Rant platf
   - Bold: 700
 - **Line Height:**
   - Default: 1.5
+
+> **Note:** Montserrat is used for all headings for a modern, clean look. Lora is used for body text for warmth and readability. Both are loaded via Google Fonts in `app/globals.css`.
 
 ---
 

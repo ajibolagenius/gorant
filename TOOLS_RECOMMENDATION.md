@@ -172,15 +172,7 @@ By integrating and prioritizing these tools, the Rant application will evolve fr
 
 ### 1. **Codebase Modifications**
 - **Audit and Refactor:** Review the codebase for performance bottlenecks, redundant logic, and opportunities for modularization.
-
-
-### 2. **Anonymous User Identification**
-- **Implementation:**
-  - On first app use or registration, generate a unique, anonymous user ID (e.g., UUID).
-  - Store this ID in localStorage or the user profile in Supabase.
-  - Use this ID for all user-related actions (likes, comments, preferences) to maintain anonymity.
-  - Update authentication and user context logic to reference this identifier.
-
+---
 
 ## 🎯 Roadmap
 
