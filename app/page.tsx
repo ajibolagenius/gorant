@@ -622,9 +622,16 @@ export default function RantApp() {
                         {rantOfTheDay && (
                             <>
                                 <Card
-                                    className="shadow-lg border-0 bg-gradient-to-r from-yellow-100 to-orange-100 dark:from-yellow-900/30 dark:to-orange-900/30 dark:border-yellow-800/30 cursor-pointer"
+                                    className="shadow-lg border-0 bg-gradient-to-r from-yellow-100 to-orange-100 dark:from-yellow-900/30 dark:to-orange-900/30 dark:border-yellow-800/30 cursor-pointer relative"
                                     onClick={() => setShowRantOfTheDayModal(true)}
                                 >
+                                    <button
+                                        onClick={e => { e.stopPropagation(); setRantOfTheDay(null); }}
+                                        aria-label="Close Rant of the Day"
+                                        className="absolute top-3 right-3 z-10 p-1 rounded-full hover:bg-yellow-200 dark:hover:bg-yellow-800 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                                    >
+                                        <X className="w-5 h-5 text-yellow-700 dark:text-yellow-300" />
+                                    </button>
                                     <CardHeader>
                                         <div className="flex items-center space-x-2">
                                             <Trophy weight="duotone" className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />

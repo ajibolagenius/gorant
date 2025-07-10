@@ -172,16 +172,7 @@ By integrating and prioritizing these tools, the Rant application will evolve fr
 
 ### 1. **Codebase Modifications**
 - **Audit and Refactor:** Review the codebase for performance bottlenecks, redundant logic, and opportunities for modularization.
-- **Targeted Files/Components:**
-  - `app/layout.tsx`, `app/page.tsx`: For layout and global UI improvements.
-  - `components/Sidebar.tsx`, `components/Footer.tsx`, `components/Header.tsx`: For navigation and accessibility.
-  - `components/MasonryGrid.tsx`: For feed responsiveness.
-  - `components/Notification.tsx`, `app/notifications/page.tsx`: For notification fixes.
-  - `components/Bookmark.tsx`, `app/bookmarks/page.tsx`: For bookmark functionality.
-  - `components/Settings.tsx`, `app/settings/page.tsx`: For user preferences.
-  - `components/Trending.tsx`, `app/trending/page.tsx`: For trending logic.
-  - `components/Modal.tsx`: For modal interactions.
-  - `components/PhosphorIcon.tsx`: For icon integration.
+
 
 ### 2. **Anonymous User Identification**
 - **Implementation:**
@@ -190,72 +181,6 @@ By integrating and prioritizing these tools, the Rant application will evolve fr
   - Use this ID for all user-related actions (likes, comments, preferences) to maintain anonymity.
   - Update authentication and user context logic to reference this identifier.
 
-### 3. **'Rant of the Day' Enhancements**
-- **Like & Comment:**
-  - Ensure real-time updates for likes/comments using Supabase subscriptions or similar.
-  - Validate backend endpoints for correct recording and retrieval.
-- **Modal View:**
-  - Create a dedicated modal component/class for 'Rant of the Day'.
-  - Add a close icon (preferably using Phosphor Duotone) for easy dismissal.
-  - Ensure modal overlays the home feed and is accessible via keyboard and screen readers.
-
-### 4. **Expanded Mood Tagging**
-- **New Mood Tags:** 😢Sad, 😃Happy, 😡Angry, ❤️Love, 😰Anxious, 🤔Confused, 😴Tired, 🎉Excited
-- **Action:**
-  - Update mood tag arrays/enums in all relevant files (rant creation, display, filtering).
-  - Ensure UI components reflect new tags and icons.
-
-### 5. **Notification Component/Page Fix**
-- **Review:**
-  - Audit notification logic for generation, display, and management.
-  - Ensure notifications are interactive (read/unread, dismiss, link to relevant content).
-  - Test across devices for consistency.
-
-### 6. **Settings Page Implementation**
-- **Functionality:**
-  - Implement saving of user preferences (theme, notifications, etc.) to localStorage or Supabase.
-  - Load and apply preferences on app start.
-  - Provide user feedback (e.g., toast) on successful updates.
-
-### 7. **Bookmark Page/Component**
-- **Add:**
-  - Bookmark button to rants in the feed.
-  - Bookmarks page/component accessible from the header.
-  - Ensure bookmarked rants are visually marked and easily accessible.
-
-### 8. **Responsive Masonry Bento Grid**
-- **Action:**
-  - Refactor MasonryGrid component for full responsiveness.
-  - Test on various devices and resolutions.
-  - Optimize for performance and accessibility.
-
-### 9. **Trending Page Fix**
-- **Review:**
-  - Ensure trending logic accurately reflects popular rants.
-  - Fix navigation links to/from trending page.
-  - Validate like, bookmark, and report features on trending rants.
-
-### 10. **Community Features Implementation (add the comming soon pill to the features here)**
-- **Join Challenge:** Implement in `app/challenges/page.tsx` with join/leave logic.
-- **Support Group:** Add a support group join feature (new page/component).
-- **Crisis Hotline:** Integrate hotline info in sidebar, or as a modal for quick access.
-
-### 11. **Sidebar Accessibility & Sticky Footer**
-- **Sidebar:** On mobile, convert sidebar to a slide-in drawer or floating action button for easy access above the infinite feed.
-- **Footer:** Make footer sticky/fixed (update layout files as needed).
-
-### 12. **Phosphor Icons (Duotone) Integration**
-- **Action:** Replace all existing icons with Phosphor Icons in duotone style for visual consistency. Update imports and usage across all components.
-
-
-### 14. Coming Soon
-- Weekly challenge card
-- Challenge page (including the nav link)
-- Support group page
-- Crisis hotline page
----
-
-**Note:** For each enhancement, document code changes, update relevant files, and ensure compatibility with the existing codebase. Test thoroughly to avoid regressions and maintain a seamless user experience.
 
 ## 🎯 Roadmap
 

@@ -4,8 +4,11 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { GameificationPanel } from "@/components/gamification-panel"
-import { Trophy } from "phosphor-react"
-import React from "react"
+import { Trophy, Users } from "phosphor-react"
+import React, { useState } from "react"
+import { ComingSoonPill } from "@/components/ui/coming-soon-pill"
+import Link from "next/link"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 interface SidebarContentProps {
     userPoints: number
@@ -16,6 +19,8 @@ interface SidebarContentProps {
 }
 
 export function SidebarContent({ userPoints, userLevel, nextLevelPoints, followedTags, followTag }: SidebarContentProps) {
+    const [showHotlineModal, setShowHotlineModal] = useState(false)
+    const [showSupportModal, setShowSupportModal] = useState(false)
     return (
         <div className="space-y-6">
             {/* Gamification Panel */}
@@ -75,6 +80,7 @@ export function SidebarContent({ userPoints, userLevel, nextLevelPoints, followe
                     <div className="flex items-center space-x-2">
                         <Trophy weight="duotone" className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
                         <h3 className="font-semibold text-gray-800 dark:text-white">Weekly Challenge</h3>
+                        <ComingSoonPill className="ml-2" />
                     </div>
                 </CardHeader>
                 <CardContent>
@@ -82,10 +88,11 @@ export function SidebarContent({ userPoints, userLevel, nextLevelPoints, followe
                         Share a rant about something that made you grateful this week! 🙏
                     </p>
                     <Button
+                        asChild
                         size="sm"
                         className="bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-700 dark:hover:bg-yellow-600 text-white"
                     >
-                        Join Challenge
+                        <Link href="/challenges">Join Challenge</Link>
                     </Button>
                 </CardContent>
             </Card>
@@ -99,12 +106,65 @@ export function SidebarContent({ userPoints, userLevel, nextLevelPoints, followe
                     <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
                         Remember, you're not alone. Help is always available.
                     </p>
-                    <Button variant="outline" className="w-full mb-2">
-                        Crisis Hotline
-                    </Button>
-                    <Button variant="outline" className="w-full">
-                        Support Groups
-                    </Button>
+                    <div className="flex items-center mb-2">
+                        <Button variant="outline" className="w-full" onClick={() => setShowHotlineModal(true)}>
+                            Crisis Helplines
+                        </Button>
+                    </div>
+                    <div className="flex items-center">
+                        <Button variant="outline" className="w-full" onClick={() => setShowSupportModal(true)}>
+                            Support Groups
+                        </Button>
+                    </div>
+                    {/* Nigerian Crisis Hotline Modal */}
+                    <Dialog open={showHotlineModal} onOpenChange={setShowHotlineModal}>
+                        <DialogContent className="max-w-md">
+                            <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+                                    Nigerian Crisis Helplines
+                                </DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-3">
+                                <p className="text-gray-700 dark:text-gray-200">
+                                    If you or someone you know is in crisis, please reach out immediately to these Nigerian helplines:
+                                </p>
+                                <ul className="text-sm text-gray-800 dark:text-gray-100 space-y-1">
+                                    <li><strong>Suicide Prevention Initiative in Nigeria (SUPRIN):</strong> <a href="tel:09080217555" className="text-purple-700 underline">0908 021 7555</a></li>
+                                    <li><strong>Mentally Aware Nigeria Initiative (MANI):</strong> <a href="tel:08091116264" className="text-purple-700 underline">0809 111 6264</a></li>
+                                    <li><strong>She Writes Woman (Mental Health Helpline):</strong> <a href="tel:08008002000" className="text-purple-700 underline">0800 800 2000</a></li>
+                                    <li><strong>Lagos State Helpline:</strong> <a href="tel:08058820777" className="text-purple-700 underline">0805 882 0777</a></li>
+                                    <li><strong>National Emergency Hotline:</strong> <a href="tel:112" className="text-purple-700 underline">112</a></li>
+                                </ul>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    Your feelings matter. Help is available 24/7. All calls are confidential.
+                                </p>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+                    {/* Nigerian Support Groups Modal */}
+                    <Dialog open={showSupportModal} onOpenChange={setShowSupportModal}>
+                        <DialogContent className="max-w-md">
+                            <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+                                    <Users className="w-5 h-5 text-purple-700" /> Nigerian Support Groups
+                                </DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-3">
+                                <p className="text-gray-700 dark:text-gray-200">
+                                    Connect with mental health support groups and communities in Nigeria:
+                                </p>
+                                <ul className="text-sm text-gray-800 dark:text-gray-100 space-y-1">
+                                    <li><a href="https://mentallyaware.org/join-a-support-group/" target="_blank" rel="noopener noreferrer" className="text-purple-700 underline">Mentally Aware Nigeria Initiative (MANI) Support Groups</a></li>
+                                    <li><a href="https://shewriteswoman.org/helpline/" target="_blank" rel="noopener noreferrer" className="text-purple-700 underline">She Writes Woman Peer Support</a></li>
+                                    <li><a href="https://www.surpinng.org/" target="_blank" rel="noopener noreferrer" className="text-purple-700 underline">SUPRIN Community</a></li>
+                                    <li><a href="https://www.facebook.com/groups/mentalhealthnigeria/" target="_blank" rel="noopener noreferrer" className="text-purple-700 underline">Mental Health Nigeria (Facebook Group)</a></li>
+                                </ul>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    These groups offer peer support, resources, and a safe space to share your journey.
+                                </p>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
                 </CardContent>
             </Card>
         </div>

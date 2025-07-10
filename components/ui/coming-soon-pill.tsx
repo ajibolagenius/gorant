@@ -1,20 +1,29 @@
 import React from "react"
-import { HourglassHigh } from "phosphor-react"
+import { SpinnerGap } from "phosphor-react"
 
 /**
- * A pill badge indicating a feature is coming soon.
- * Uses the design system's accent color and a clock/hourglass icon.
+ * A minimal badge indicating a feature is coming soon.
+ * Uses a spinner-gap icon with infinite rotation and hashtag pill colors.
  */
 export function ComingSoonPill({ className = "" }: { className?: string }) {
     return (
         <span
-            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300 shadow ${className}`}
+            className={`inline-flex items-center justify-center w-6 h-6 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 ${className}`}
             aria-label="Coming soon"
         >
-            <HourglassHigh weight="duotone" className="w-4 h-4 mr-1" />
-            Coming Soon
+            <SpinnerGap
+                weight="duotone"
+                className="w-4 h-4 animate-spin"
+                style={{ animation: "spin 1s linear infinite" }}
+            />
         </span>
     )
 }
 
 export default ComingSoonPill;
+
+// Add global style for spin animation if not present
+// @layer utilities {
+//   @keyframes spin { to { transform: rotate(360deg); } }
+//   .animate-spin { animation: spin 1s linear infinite; }
+// }
