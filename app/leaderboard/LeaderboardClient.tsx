@@ -194,7 +194,7 @@ export default function LeaderboardClient({ leaderboardCategories, leaderboardDa
                         {/* Full Leaderboard */}
                         <Card className="shadow-sm border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur">
                             <CardHeader>
-                                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Full Rankings</h3>
+                                <h2 className="text-lg font-semibold text-gray-800 dark:text-white">Full Rankings</h2>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-3">

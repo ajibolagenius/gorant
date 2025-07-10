@@ -42,7 +42,7 @@ export function GameificationPanel({ userPoints, userLevel, nextLevelPoints }: G
                             {userPoints - currentLevelPoints}/{nextLevelPoints - currentLevelPoints}
                         </span>
                     </div>
-                    <Progress value={progressToNext} className="h-2" />
+                    <Progress value={progressToNext} className="h-2" aria-label="Level progress" />
                 </div>
 
                 <div className="pt-2 border-t border-purple-200 dark:border-purple-700">

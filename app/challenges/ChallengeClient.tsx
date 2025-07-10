@@ -130,7 +130,7 @@ export default function ChallengeClient({ currentChallenges, pastChallenges, use
                                                 <div className="flex items-center space-x-3">
                                                     <div className="text-3xl">{challenge.emoji}</div>
                                                     <div>
-                                                        <h3 className="text-xl font-semibold text-gray-800 dark:text-white">{challenge.title}</h3>
+                                                        <h2 className="text-xl font-semibold text-gray-800 dark:text-white">{challenge.title}</h2>
                                                         <p className="text-gray-600 dark:text-gray-300 mt-1">{challenge.description}</p>
                                                     </div>
                                                 </div>
@@ -176,7 +176,7 @@ export default function ChallengeClient({ currentChallenges, pastChallenges, use
                                                         <span className="text-gray-600 dark:text-gray-300">Progress</span>
                                                         <span className="text-gray-600 dark:text-gray-300">{challenge.progress}%</span>
                                                     </div>
-                                                    <Progress value={challenge.progress} className="h-2" />
+                                                    <Progress value={challenge.progress} className="h-2" aria-label={`Progress for ${challenge.title}`} />
                                                 </div>
 
                                                 <div className="flex justify-end">

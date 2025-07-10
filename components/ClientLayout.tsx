@@ -43,19 +43,19 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             )}
             {/* Bottom Navigation Bar for Mobile */}
             <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/90 dark:bg-gray-900/90 border-t border-gray-200 dark:border-gray-700 flex justify-around items-center h-16 md:hidden backdrop-blur shadow-lg">
-                <Link href="/trending" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/trending" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
+                <Link href="/trending" aria-label="Trending" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/trending" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
                     <TrendUp weight="duotone" className="w-6 h-6 mb-1" />
                     <span className="text-xs">Trending</span>
                 </Link>
-                <Link href="/challenges" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/challenges" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
+                <Link href="/challenges" aria-label="Challenges" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/challenges" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
                     <Trophy weight="duotone" className="w-6 h-6 mb-1" />
                     <span className="text-xs">Challenges</span>
                 </Link>
-                <Link href="/leaderboard" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/leaderboard" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
+                <Link href="/leaderboard" aria-label="Leaderboard" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/leaderboard" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
                     <Lightning weight="duotone" className="w-6 h-6 mb-1" />
                     <span className="text-xs">Leaderboard</span>
                 </Link>
-                <Link href="/bookmarks" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/bookmarks" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
+                <Link href="/bookmarks" aria-label="Bookmarks" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/bookmarks" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
                     <Star weight="duotone" className="w-6 h-6 mb-1" />
                     <span className="text-xs">Bookmarks</span>
                 </Link>

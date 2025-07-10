@@ -610,6 +610,7 @@ export default function RantApp() {
                                             className="absolute top-3 right-3 z-10 p-1 rounded-full hover:bg-yellow-200 dark:hover:bg-yellow-800 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                                         >
                                             <X className="w-5 h-5 text-yellow-700 dark:text-yellow-300" />
+                                            <span className="sr-only">Close Rant of the Day</span>
                                         </button>
                                         <CardHeader>
                                             <div className="flex items-center space-x-2">
@@ -879,6 +880,7 @@ export default function RantApp() {
                     aria-label="Open Sidebar"
                 >
                     <PanelLeft className="w-6 h-6" />
+                    <span className="sr-only">Open Sidebar</span>
                 </button>
                 <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
                     <SheetContent side="right" className="w-80 max-w-full p-0">
