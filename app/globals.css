@@ -155,3 +155,14 @@
   white-space: nowrap;
   border: 0;
 }
+
+/* Accessibility: Make font size classes cascade to all children */
+.text-sm, .text-base, .text-lg, .text-xl {
+  font-size: inherit !important;
+}
+.text-sm * { font-size: 0.875rem !important; }
+.text-base * { font-size: 1rem !important; }
+.text-lg * { font-size: 1.125rem !important; }
+.text-xl * { font-size: 1.25rem !important; }
+
+/* For contrast to work, ensure all color styles use the CSS variables defined in :root and .high-contrast (e.g., bg-background, text-foreground, etc.) */

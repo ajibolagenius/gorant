@@ -6,25 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import {
-    Heart,
-    Search,
-    TrendingUp,
-    Clock,
-    Send,
-    Filter,
-    Moon,
-    Sun,
-    Bell,
-    Users,
-    Trophy,
-    Globe,
-    HelpCircle,
-    Star,
-    Zap,
-    Shield,
-    MessageCircle,
-} from "lucide-react"
+import { TrendUp, Trophy, Lightning, Star, List, Moon, Sun, Bell, Users, Shield, Globe, X, Calendar, Medal, Crown, Target, CheckCircle, ArrowLeft, ArrowRight, Circle, Check } from "phosphor-react"
+import { HelpCircle, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, MoreHorizontal, Dot, GripVertical, Search, PanelLeft, Award, MessageCircle, Send } from "lucide-react"
 import { toast } from "sonner"
 import confetti from "canvas-confetti"
 import Link from "next/link"
@@ -32,7 +15,7 @@ import { useTheme } from "@/hooks/use-theme"
 import { useGameification } from "@/hooks/use-gamification"
 import { useAccessibility } from "@/hooks/use-accessibility"
 import { MasonryGrid } from "@/components/masonry-grid"
-import { EnhancedRantCard } from "@/components/enhanced-rant-card"
+import { EnhancedRantCard, Rant, Comment } from "@/components/enhanced-rant-card"
 import { PostRantModal } from "@/components/post-rant-modal"
 import { FilterPanel } from "@/components/filter-panel"
 import { GameificationPanel } from "@/components/gamification-panel"
@@ -41,37 +24,15 @@ import { SentimentAnalysisService } from "@/services/sentiment-analysis"
 import { PersonalizationService } from "@/services/personalization"
 import { getAnonymousId } from "@/lib/utils"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { SidebarContent } from "@/components/sidebar-content"
+import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { usePathname } from "next/navigation"
 
 // Initialize Supabase client with fallback for development
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://your-project.supabase.co"
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "your-anon-key"
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
-
-interface Comment {
-    id: string
-    rant_id: string
-    content: string
-    created_at: string
-    anonymous_id: string
-    likes_count?: number
-    replies?: Comment[]
-}
-
-interface Rant {
-    id: string
-    content: string
-    mood: string
-    created_at: string
-    likes_count: number
-    comments_count: number
-    anonymous_id: string
-    tags?: string[]
-    is_trending?: boolean
-    sentiment_score?: number
-    moderation_status?: "approved" | "flagged" | "pending"
-    reputation_impact?: number
-}
 
 const MOODS = [
     { emoji: "😢", label: "Sad", value: "sad", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300" },
@@ -127,11 +88,11 @@ const mockComments: { [key: string]: Comment[] } = {
     ],
 }
 
+// Ensure all mockRants and Rant objects have all required properties
 const mockRants: Rant[] = [
-    {
-        id: "1",
-        content:
-            "Just had the worst day at work. Everything that could go wrong did go wrong. Need to vent somewhere! Sometimes I feel like the universe is conspiring against me. My computer crashed, I spilled coffee on important documents, and my boss was in the worst mood ever.",
+  {
+    id: "1",
+        content: "Just had the worst day at work. Everything that could go wrong did go wrong. Need to vent somewhere! Sometimes I feel like the universe is conspiring against me. My computer crashed, I spilled coffee on important documents, and my boss was in the worst mood ever.",
         mood: "angry",
         created_at: new Date().toISOString(),
         likes_count: 15,
@@ -142,11 +103,12 @@ const mockRants: Rant[] = [
         sentiment_score: -0.7,
         moderation_status: "approved",
         reputation_impact: 2,
-    },
-    {
-        id: "2",
-        content:
-            "Finally got that promotion I've been working towards for months! So grateful and excited for what's next. Hard work really does pay off! I can't believe it's finally happening. Time to celebrate! 🎉",
+        reported: false,
+        moderation_score: 1,
+  },
+  {
+    id: "2",
+        content: "Finally got that promotion I've been working towards for months! So grateful and excited for what's next. Hard work really does pay off! I can't believe it's finally happening. Time to celebrate! 🎉",
         mood: "excited",
         created_at: new Date(Date.now() - 3600000).toISOString(),
         likes_count: 32,
@@ -157,75 +119,85 @@ const mockRants: Rant[] = [
         sentiment_score: 0.9,
         moderation_status: "approved",
         reputation_impact: 5,
-    },
-    {
-        id: "3",
-        content:
-            "Feeling really anxious about the presentation tomorrow. Public speaking has always been my weakness. My heart is already racing just thinking about it. Any tips for dealing with presentation anxiety?",
+        reported: false,
+        moderation_score: 1,
+  },
+  {
+    id: "3",
+        content: "Feeling really anxious about the presentation tomorrow. Public speaking has always been my weakness. My heart is already racing just thinking about it. Any tips for dealing with presentation anxiety?",
         mood: "anxious",
         created_at: new Date(Date.now() - 7200000).toISOString(),
         likes_count: 8,
         comments_count: 0,
         anonymous_id: "anon_003",
         tags: ["anxiety", "presentation", "help"],
+        is_trending: false,
         sentiment_score: -0.5,
         moderation_status: "approved",
         reputation_impact: 1,
-    },
-    {
-        id: "4",
-        content:
-            "My dog passed away today. 15 years of unconditional love. I'm going to miss him so much. He was my best friend through everything - college, breakups, job changes. The house feels so empty without him.",
+        reported: false,
+        moderation_score: 1,
+  },
+  {
+    id: "4",
+        content: "My dog passed away today. 15 years of unconditional love. I'm going to miss him so much. He was my best friend through everything - college, breakups, job changes. The house feels so empty without him.",
         mood: "sad",
         created_at: new Date(Date.now() - 10800000).toISOString(),
         likes_count: 45,
         comments_count: 0,
         anonymous_id: "anon_004",
         tags: ["loss", "pets", "grief"],
+        is_trending: false,
         sentiment_score: -0.8,
         moderation_status: "approved",
         reputation_impact: 3,
-    },
-    {
-        id: "5",
-        content:
-            "Sometimes I wonder what the point of it all is. Life feels so confusing and overwhelming lately. Everything seems to be moving so fast and I can't keep up.",
+        reported: false,
+        moderation_score: 1,
+  },
+  {
+    id: "5",
+        content: "Sometimes I wonder what the point of it all is. Life feels so confusing and overwhelming lately. Everything seems to be moving so fast and I can't keep up.",
         mood: "confused",
         created_at: new Date(Date.now() - 14400000).toISOString(),
         likes_count: 12,
         comments_count: 0,
         anonymous_id: "anon_005",
         tags: ["existential", "overwhelmed", "life"],
+        is_trending: false,
         sentiment_score: -0.3,
         moderation_status: "approved",
         reputation_impact: 1,
+        reported: false,
+        moderation_score: 1,
     },
     {
         id: "6",
-        content:
-            "Met someone amazing today. There's something special about genuine human connection. My heart feels so full right now! We talked for hours about everything and nothing. It's been so long since I felt this happy.",
+        content: "Met someone amazing today. It's rare to feel such a strong connection right away. Maybe this is the start of something special.",
         mood: "love",
         created_at: new Date(Date.now() - 18000000).toISOString(),
         likes_count: 28,
         comments_count: 0,
         anonymous_id: "anon_006",
         tags: ["connection", "relationships", "happiness"],
+        is_trending: false,
         sentiment_score: 0.8,
         moderation_status: "approved",
         reputation_impact: 4,
+        reported: false,
+        moderation_score: 1,
     },
 ]
 
 const FILTER_OPTIONS = [
-    { icon: Clock, label: "Latest", value: "latest" },
-    { icon: TrendingUp, label: "Popular", value: "popular" },
-    { icon: Heart, label: "Most Liked", value: "most_liked" },
-    { icon: Star, label: "Recommended", value: "recommended" },
+    { icon: Calendar, label: "Latest", value: "latest" },
+    { icon: TrendUp, label: "Popular", value: "popular" },
+    { icon: Star, label: "Most Liked", value: "most_liked" },
+    { icon: Award, label: "Recommended", value: "recommended" },
 ]
 
 export default function RantApp() {
-    const [rants, setRants] = useState<Rant[]>([])
-    const [filteredRants, setFilteredRants] = useState<Rant[]>([])
+    const [rants, setRants] = useState<Rant[]>(mockRants)
+    const [filteredRants, setFilteredRants] = useState<Rant[]>(mockRants)
     const [comments, setComments] = useState<{ [key: string]: Comment[] }>(mockComments)
     const [searchQuery, setSearchQuery] = useState("")
     const [searchSuggestions, setSearchSuggestions] = useState<string[]>([])
@@ -241,16 +213,49 @@ export default function RantApp() {
     const [rantOfTheDay, setRantOfTheDay] = useState<Rant | null>(null)
     // Add state for Rant of the Day modal
     const [showRantOfTheDayModal, setShowRantOfTheDayModal] = useState(false)
+    // Add state for settings
+    const [settingsLoaded, setSettingsLoaded] = useState(false)
+    const [notificationSettings, setNotificationSettings] = useState({
+        likes: true,
+        comments: true,
+        mentions: false,
+        challenges: true,
+        achievements: true,
+    })
+    const [privacySettings, setPrivacySettings] = useState({
+        showInLeaderboard: true,
+        allowDirectMessages: false,
+        shareAnalytics: true,
+    })
+    const [contentFilterSettings, setContentFilterSettings] = useState({
+        hideNegativeSentiment: false,
+        hideReportedContent: true,
+        minimumModerationScore: 0.7,
+    })
+    const [sidebarOpen, setSidebarOpen] = useState(false)
 
     const { theme, toggleTheme } = useTheme()
     const { userPoints, userLevel, addPoints, checkAchievements } = useGameification()
     const { fontSize, contrast, screenReaderMode, updateAccessibility } = useAccessibility()
+    const pathname = usePathname()
+
+    // Load settings from localStorage on mount
+  useEffect(() => {
+        const savedNotifications = localStorage.getItem("settings_notifications")
+        const savedPrivacy = localStorage.getItem("settings_privacy")
+        const savedContentFilters = localStorage.getItem("settings_contentFilters")
+        if (savedNotifications) setNotificationSettings(JSON.parse(savedNotifications))
+        if (savedPrivacy) setPrivacySettings(JSON.parse(savedPrivacy))
+        if (savedContentFilters) setContentFilterSettings(JSON.parse(savedContentFilters))
+        setSettingsLoaded(true)
+    }, [])
 
     // Enhanced comment posting function
     const handleCommentPost = async (rantId: string, content: string): Promise<Comment> => {
         // Content moderation check
         const moderationResult = await ContentModerationService.moderateContent(content)
         if (!moderationResult.isAppropriate) {
+            if (notificationSettings.comments) toast.error(`Comment flagged: ${moderationResult.reason}`)
             throw new Error(`Comment flagged: ${moderationResult.reason}`)
         }
 
@@ -277,6 +282,7 @@ export default function RantApp() {
         // Add points for commenting
         addPoints(2, "comment")
         checkAchievements("comments_posted", Object.values(comments).flat().length + 1)
+        if (notificationSettings.comments) toast.success("Comment posted! +2 points")
 
         return newComment
     }
@@ -325,6 +331,22 @@ export default function RantApp() {
                 // Filter out blocked users
                 data = data.filter((rant) => !blockedUsers.has(rant.anonymous_id))
 
+                // Ensure all required fields exist
+                data = data.map((rant) => ({
+                    ...rant,
+                    comments_count: rant.comments_count ?? 0,
+                    likes_count: rant.likes_count ?? 0,
+                    mood: rant.mood ?? "neutral",
+                    created_at: rant.created_at ?? new Date().toISOString(),
+                    anonymous_id: rant.anonymous_id ?? "anon_unknown",
+                    content: rant.content ?? "",
+                    id: rant.id ?? Math.random().toString(36).substr(2, 9),
+                    moderation_status: rant.moderation_status ?? "approved",
+                    reputation_impact: rant.reputation_impact ?? 0,
+                    reported: rant.reported ?? false,
+                    moderation_score: rant.moderation_score ?? 1,
+                }))
+
                 setRants(data)
                 // Set rant of the day
                 if (data.length > 0) {
@@ -339,12 +361,40 @@ export default function RantApp() {
 
             if (error) throw error
 
-            setRants(data || [])
+            // Ensure all required fields exist
+            const safeData = (data || []).map((rant: any) => ({
+                ...rant,
+                comments_count: rant.comments_count ?? 0,
+                likes_count: rant.likes_count ?? 0,
+                mood: rant.mood ?? "neutral",
+                created_at: rant.created_at ?? new Date().toISOString(),
+                anonymous_id: rant.anonymous_id ?? "anon_unknown",
+                content: rant.content ?? "",
+                id: rant.id ?? Math.random().toString(36).substr(2, 9),
+                moderation_status: rant.moderation_status ?? "approved",
+                reputation_impact: rant.reputation_impact ?? 0,
+                reported: rant.reported ?? false,
+                moderation_score: rant.moderation_score ?? 1,
+            }))
+
+            setRants(safeData)
         } catch (error) {
             console.error("Error fetching rants:", error)
             toast.error("Failed to load rants - using demo data")
-            setRants(mockRants)
-        } finally {
+            setRants(mockRants.map((rant) => ({
+                ...rant,
+                comments_count: rant.comments_count ?? 0,
+                likes_count: rant.likes_count ?? 0,
+                mood: rant.mood ?? "neutral",
+                created_at: rant.created_at ?? new Date().toISOString(),
+                anonymous_id: rant.anonymous_id ?? "anon_unknown",
+                content: rant.content ?? "",
+                id: rant.id ?? Math.random().toString(36).substr(2, 9),
+                moderation_status: rant.moderation_status ?? "approved",
+                reputation_impact: rant.reputation_impact ?? 0,
+                reported: rant.reported ?? false,
+                moderation_score: rant.moderation_score ?? 1,
+            })))
             setLoading(false)
         }
     }
@@ -359,8 +409,9 @@ export default function RantApp() {
         return true
     }
 
-    // Filter and search rants with advanced features
+    // Enforce content filters in feed
     useEffect(() => {
+        if (!settingsLoaded) return
         let filtered = rants.filter((rant) => {
             const matchesSearch =
                 searchQuery.length < 3 ||
@@ -369,9 +420,26 @@ export default function RantApp() {
             const matchesMood = !moodFilter || rant.mood === moodFilter
             const notBlocked = !blockedUsers.has(rant.anonymous_id)
             const moderationPassed = rant.moderation_status === "approved"
-            return matchesSearch && matchesMood && notBlocked && moderationPassed
+            // Content filter logic
+            const sentimentOk =
+                !contentFilterSettings.hideNegativeSentiment ||
+                (rant.sentiment_score === undefined || rant.sentiment_score >= 0)
+            const reportedOk =
+                !contentFilterSettings.hideReportedContent ||
+                !rant.reported // assumes rant.reported is boolean or undefined
+            const moderationScoreOk =
+                rant.moderation_score === undefined ||
+                rant.moderation_score >= contentFilterSettings.minimumModerationScore
+            return (
+                matchesSearch &&
+                matchesMood &&
+                notBlocked &&
+                moderationPassed &&
+                sentimentOk &&
+                reportedOk &&
+                moderationScoreOk
+            )
         })
-
         // Apply sorting with personalization
         if (sortFilter === "recommended") {
             filtered = PersonalizationService.getRecommendedRants(filtered, getAnonymousId(), Array.from(followedTags))
@@ -380,12 +448,11 @@ export default function RantApp() {
         } else {
             filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         }
-
-        setFilteredRants(filtered)
-    }, [rants, searchQuery, moodFilter, sortFilter, blockedUsers, followedTags])
+    setFilteredRants(filtered)
+    }, [rants, searchQuery, moodFilter, sortFilter, blockedUsers, followedTags, contentFilterSettings, settingsLoaded])
 
     // Enhanced like function with gamification
-    const likeRant = async (rantId: string) => {
+    const likeRant = (rantId: string) => {
         if (likedRants.has(rantId)) {
             toast.info("You already liked this rant!")
             return
@@ -393,7 +460,7 @@ export default function RantApp() {
 
         try {
             setLikedRants((prev) => new Set([...prev, rantId]))
-            setRants((prev) =>
+    setRants((prev) =>
                 prev.map((rant) => (rant.id === rantId ? { ...rant, likes_count: rant.likes_count + 1 } : rant)),
             )
 
@@ -454,8 +521,8 @@ export default function RantApp() {
         } else {
             // Fallback: copy to clipboard
             await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`)
-            toast.success("Link copied to clipboard!")
-        }
+    toast.success("Link copied to clipboard!")
+  }
     }
 
     // Toggle bookmark
@@ -483,6 +550,14 @@ export default function RantApp() {
     useEffect(() => {
         fetchRants()
     }, [sortFilter])
+
+    // Persist all rants and bookmarks to localStorage for bookmarks page
+    useEffect(() => {
+        localStorage.setItem("all_rants", JSON.stringify(rants))
+    }, [rants])
+    useEffect(() => {
+        localStorage.setItem("bookmarked_rants", JSON.stringify(Array.from(bookmarkedRants)))
+    }, [bookmarkedRants])
 
     const getMoodEmoji = (mood: string) => {
         return MOODS.find((m) => m.value === mood)?.emoji || "😐"
@@ -514,14 +589,31 @@ export default function RantApp() {
                 </div>
             </div>
         )
-    }
+  }
 
-    return (
+  return (
         <div
             className={`min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800 transition-colors ${fontSize} ${contrast}`}
             style={{ fontSize: fontSize === "text-lg" ? "1.125rem" : fontSize === "text-xl" ? "1.25rem" : "1rem" }}
         >
-            {/* Header */}
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{
+                    __html: JSON.stringify({
+                        "@context": "https://schema.org",
+                        "@type": "WebSite",
+                        "name": "Rant - Anonymous Expression Platform",
+                        "url": "https://gorant.live/",
+                        "description": "A safe, anonymous space to express your thoughts and feelings. Join the community and share your story anonymously.",
+                        "publisher": {
+                            "@type": "Organization",
+                            "name": "Rant Team",
+                            "url": "https://gorant.live/"
+                        }
+                    })
+                }}
+            />
+      {/* Header */}
             <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-200 dark:border-gray-700">
                 <div className="container mx-auto px-4 py-4 max-w-7xl">
                     <div className="flex items-center justify-between">
@@ -535,71 +627,78 @@ export default function RantApp() {
                             </Badge>
                             {userLevel > 1 && (
                                 <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
-                                    <Star className="w-3 h-3 mr-1" />
+                                    <Star weight="duotone" className="w-3 h-3 mr-1" />
                                     Level {userLevel}
-                                </Badge>
+            </Badge>
                             )}
-                        </div>
+          </div>
 
                         <nav className="hidden md:flex items-center space-x-6">
                             <Link
                                 href="/trending"
                                 className="flex items-center space-x-1 text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400"
                             >
-                                <TrendingUp className="w-4 h-4" />
+                                <TrendUp weight="duotone" className="w-4 h-4" />
                                 <span>Trending</span>
                             </Link>
                             <Link
                                 href="/challenges"
                                 className="flex items-center space-x-1 text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400"
                             >
-                                <Trophy className="w-4 h-4" />
+                                <Trophy weight="duotone" className="w-4 h-4" />
                                 <span>Challenges</span>
                             </Link>
                             <Link
                                 href="/leaderboard"
                                 className="flex items-center space-x-1 text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400"
                             >
-                                <Zap className="w-4 h-4" />
+                                <Lightning weight="duotone" className="w-4 h-4" />
                                 <span>Leaderboard</span>
+                            </Link>
+                            <Link
+                                href="/bookmarks"
+                                className="flex items-center space-x-1 text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400"
+                            >
+                                <Star weight="duotone" className="w-4 h-4" />
+                                <span>Bookmarks</span>
                             </Link>
                         </nav>
 
                         <div className="flex items-center space-x-2">
-                            <Button
+            <Button
                                 variant="ghost"
-                                size="sm"
+              size="sm"
                                 onClick={toggleTheme}
                                 className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                            >
-                                {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                            </Button>
+            >
+                                {theme === "dark" ? <Sun weight="duotone" className="w-4 h-4" /> : <Moon weight="duotone" className="w-4 h-4" />}
+            </Button>
                             <Link href="/notifications">
-                                <Button
+            <Button
                                     variant="ghost"
-                                    size="sm"
+              size="sm"
                                     className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                                >
-                                    <Bell className="w-4 h-4" />
-                                </Button>
+            >
+                                    <Bell weight="duotone" className="w-4 h-4" />
+            </Button>
                             </Link>
                             <Link href="/settings">
-                                <Button
+            <Button
                                     variant="ghost"
-                                    size="sm"
+              size="sm"
                                     className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                                >
-                                    <Shield className="w-4 h-4" />
-                                </Button>
+            >
+                                    <Shield weight="duotone" className="w-4 h-4" />
+            </Button>
                             </Link>
                         </div>
-                    </div>
-                </div>
-            </header>
+          </div>
+        </div>
+      </header>
 
-            <div className="container mx-auto px-4 py-8 max-w-7xl">
+            <div className="container mx-auto px-4 py-8 max-w-7xl pb-32">
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                    {/* Main Content */}
+          {/* Main Content */}
                     <div className="lg:col-span-3 space-y-6">
                         {/* Rant of the Day */}
                         {rantOfTheDay && (
@@ -608,26 +707,26 @@ export default function RantApp() {
                                     className="shadow-lg border-0 bg-gradient-to-r from-yellow-100 to-orange-100 dark:from-yellow-900/30 dark:to-orange-900/30 dark:border-yellow-800/30 cursor-pointer"
                                     onClick={() => setShowRantOfTheDayModal(true)}
                                 >
-                                    <CardHeader>
+                <CardHeader>
                                         <div className="flex items-center space-x-2">
-                                            <Trophy className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+                                            <Trophy weight="duotone" className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
                                             <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Rant of the Day</h2>
                                         </div>
-                                    </CardHeader>
-                                    <CardContent>
+                </CardHeader>
+                <CardContent>
                                         <div className="flex items-start space-x-3">
                                             <div className="text-2xl">{getMoodEmoji(rantOfTheDay.mood)}</div>
                                             <div className="flex-1">
                                                 <p className="text-gray-800 dark:text-gray-200 mb-2 line-clamp-3">{rantOfTheDay.content}</p>
                                                 <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-300">
                                                     <span className="flex items-center">
-                                                        <Heart className="w-4 h-4 mr-1" />
+                                                        <Star weight="duotone" className="w-4 h-4 mr-1" />
                                                         {rantOfTheDay.likes_count} likes
                                                     </span>
                                                     <span className="flex items-center">
                                                         <MessageCircle className="w-4 h-4 mr-1" />
                                                         {rantOfTheDay.comments_count} comments
-                                                    </span>
+                      </span>
                                                 </div>
                                             </div>
                                         </div>
@@ -637,7 +736,7 @@ export default function RantApp() {
                                     <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
                                         <DialogHeader>
                                             <DialogTitle className="text-xl font-semibold flex items-center gap-2">
-                                                <Trophy className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+                                                <Trophy weight="duotone" className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
                                                 Rant of the Day
                                             </DialogTitle>
                                         </DialogHeader>
@@ -687,8 +786,8 @@ export default function RantApp() {
                                         Share Your Thoughts
                                     </Button>
                                 </div>
-                            </CardContent>
-                        </Card>
+                </CardContent>
+              </Card>
 
                         {/* Enhanced Search with Suggestions */}
                         <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
@@ -720,7 +819,7 @@ export default function RantApp() {
                                                 ))}
                                             </div>
                                         )}
-                                    </div>
+            </div>
 
                                     {/* Filter Toggle */}
                                     <Button
@@ -728,7 +827,7 @@ export default function RantApp() {
                                         onClick={() => setShowFilters(!showFilters)}
                                         className="flex items-center space-x-2 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                                     >
-                                        <Filter className="w-4 h-4" />
+                                        <List weight="duotone" className="w-4 h-4" />
                                         <span>Filters</span>
                                     </Button>
                                 </div>
@@ -764,10 +863,10 @@ export default function RantApp() {
                             </Card>
                         ) : (
                             <MasonryGrid columns={2} gap={20} className="w-full">
-                                {filteredRants.map((rant) => (
-                                    <EnhancedRantCard
-                                        key={rant.id}
-                                        rant={rant}
+                {filteredRants.map((rant) => (
+                  <EnhancedRantCard
+                    key={rant.id}
+                    rant={rant}
                                         onLike={likeRant}
                                         onBookmark={toggleBookmark}
                                         onReport={reportRant}
@@ -787,121 +886,64 @@ export default function RantApp() {
                                         showSentiment={true}
                                         showModeration={true}
                                         comments={comments[rant.id] || []}
-                                    />
-                                ))}
-                            </MasonryGrid>
-                        )}
-                    </div>
+                  />
+                ))}
+              </MasonryGrid>
+            )}
+          </div>
 
                     {/* Sidebar */}
-                    <div className="space-y-6">
-                        {/* Gamification Panel */}
-                        <GameificationPanel userPoints={userPoints} userLevel={userLevel} nextLevelPoints={userLevel * 100} />
+                    <SidebarContent
+                        userPoints={userPoints}
+                        userLevel={userLevel}
+                        nextLevelPoints={userLevel * 100}
+                        followedTags={followedTags}
+                        followTag={followTag}
+                    />
+        </div>
+      </div>
 
-                        {/* Quick Stats */}
-                        <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
-                            <CardHeader>
-                                <h3 className="font-semibold text-gray-800 dark:text-white">Community Stats</h3>
-                            </CardHeader>
-                            <CardContent className="space-y-3">
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600 dark:text-gray-300">Total Rants</span>
-                                    <span className="font-semibold text-purple-600 dark:text-purple-400">1,234</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600 dark:text-gray-300">Active Users</span>
-                                    <span className="font-semibold text-purple-600 dark:text-purple-400">567</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600 dark:text-gray-300">Today's Rants</span>
-                                    <span className="font-semibold text-purple-600 dark:text-purple-400">89</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600 dark:text-gray-300">Comments Today</span>
-                                    <span className="font-semibold text-green-600 dark:text-green-400">156</span>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Followed Tags */}
-                        {followedTags.size > 0 && (
-                            <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
-                                <CardHeader>
-                                    <h3 className="font-semibold text-gray-800 dark:text-white">Following</h3>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="flex flex-wrap gap-2">
-                                        {Array.from(followedTags).map((tag) => (
-                                            <Badge
-                                                key={tag}
-                                                variant="secondary"
-                                                className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 cursor-pointer hover:bg-purple-200 dark:hover:bg-purple-900/50"
-                                                onClick={() => followTag(tag)}
-                                            >
-                                                #{tag} ✓
-                                            </Badge>
-                                        ))}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        )}
-
-                        {/* Current Challenge */}
-                        <Card className="shadow-sm border-0 bg-gradient-to-r from-yellow-100 to-orange-100 dark:from-yellow-900/30 dark:to-orange-900/30">
-                            <CardHeader>
-                                <div className="flex items-center space-x-2">
-                                    <Trophy className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-                                    <h3 className="font-semibold text-gray-800 dark:text-white">Weekly Challenge</h3>
-                                </div>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
-                                    Share a rant about something that made you grateful this week! 🙏
-                                </p>
-                                <Button
-                                    size="sm"
-                                    className="bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-700 dark:hover:bg-yellow-600 text-white"
-                                >
-                                    Join Challenge
-                                </Button>
-                            </CardContent>
-                        </Card>
-
-                        {/* Support Resources */}
-                        <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
-                            <CardHeader>
-                                <div className="flex items-center space-x-2">
-                                    <HelpCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                                    <h3 className="font-semibold text-gray-800 dark:text-white">Need Support?</h3>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="space-y-2">
-                                <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                                    Remember, you're not alone. Help is always available.
-                                </p>
-                                <div className="space-y-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="w-full justify-start bg-transparent dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
-                                    >
-                                        <Globe className="w-4 h-4 mr-2" />
-                                        Crisis Hotline
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="w-full justify-start bg-transparent dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
-                                    >
-                                        <Users className="w-4 h-4 mr-2" />
-                                        Support Groups
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
+            {/* Floating Action Button for Mobile Sidebar */}
+            <button
+                className="fixed bottom-6 right-6 z-50 p-4 rounded-full bg-purple-600 text-white shadow-lg md:hidden hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-400 mb-20"
+                onClick={() => setSidebarOpen(true)}
+                aria-label="Open Sidebar"
+            >
+                <PanelLeft className="w-6 h-6" />
+            </button>
+            <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+                <SheetContent side="right" className="w-80 max-w-full p-0">
+                    <div className="p-4">
+                        <SidebarContent
+                            userPoints={userPoints}
+                            userLevel={userLevel}
+                            nextLevelPoints={userLevel * 100}
+                            followedTags={followedTags}
+                            followTag={followTag}
+                        />
                     </div>
-                </div>
-            </div>
+                </SheetContent>
+            </Sheet>
+
+            {/* Bottom Navigation Bar for Mobile */}
+            <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/90 dark:bg-gray-900/90 border-t border-gray-200 dark:border-gray-700 flex justify-around items-center h-16 md:hidden backdrop-blur shadow-lg">
+                <Link href="/trending" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/trending" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
+                    <TrendUp weight="duotone" className="w-6 h-6 mb-1" />
+                    <span className="text-xs">Trending</span>
+                </Link>
+                <Link href="/challenges" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/challenges" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
+                    <Trophy weight="duotone" className="w-6 h-6 mb-1" />
+                    <span className="text-xs">Challenges</span>
+                </Link>
+                <Link href="/leaderboard" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/leaderboard" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
+                    <Lightning weight="duotone" className="w-6 h-6 mb-1" />
+                    <span className="text-xs">Leaderboard</span>
+                </Link>
+                <Link href="/bookmarks" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/bookmarks" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
+                    <Star weight="duotone" className="w-6 h-6 mb-1" />
+                    <span className="text-xs">Bookmarks</span>
+                </Link>
+            </nav>
 
             {/* Enhanced Post Rant Modal */}
             <PostRantModal
@@ -928,6 +970,8 @@ export default function RantApp() {
                         sentiment_score: sentimentScore,
                         moderation_status: "approved",
                         reputation_impact: 3,
+                        reported: false,
+                        moderation_score: 1,
                     }
 
                     setRants((prev) => [newRant, ...prev])
@@ -946,14 +990,14 @@ export default function RantApp() {
             />
 
             {/* Footer */}
-            <footer className="bg-white/80 dark:bg-gray-900/80 backdrop-blur border-t border-gray-200 dark:border-gray-700 mt-12">
+            <footer className="fixed bottom-0 left-0 w-full z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-t border-gray-200 dark:border-gray-700 mt-12 md:block hidden">
                 <div className="container mx-auto px-4 py-8 max-w-7xl">
                     <div className="text-center text-gray-500 dark:text-gray-400 text-sm">
                         <p className="mb-2">Rant - Anonymous. Safe. Expressive.</p>
                         <p>Your thoughts matter. Share them freely.</p>
                         <div className="flex justify-center space-x-4 mt-4">
                             <Link href="/privacy" className="hover:text-purple-600 dark:hover:text-purple-400">
-                                Privacy
+              Privacy
                             </Link>
                             <Link href="/guidelines" className="hover:text-purple-600 dark:hover:text-purple-400">
                                 Guidelines
@@ -964,10 +1008,10 @@ export default function RantApp() {
                             <Link href="/accessibility" className="hover:text-purple-600 dark:hover:text-purple-400">
                                 Accessibility
                             </Link>
-                        </div>
-                    </div>
-                </div>
-            </footer>
+          </div>
+          </div>
         </div>
-    )
+      </footer>
+    </div>
+  )
 }

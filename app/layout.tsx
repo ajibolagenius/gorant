@@ -3,26 +3,64 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { Toaster } from "sonner"
+import ClientLayout from "@/components/ClientLayout"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Rant - Anonymous Expression Platform",
-  description: "A safe, anonymous space to express your thoughts and feelings",
-    generator: 'v0.dev'
+    title: "Rant - Anonymous Expression Platform",
+    description: "A safe, anonymous space to express your thoughts and feelings",
+    generator: 'v0.dev',
+    keywords: [
+        "anonymous",
+        "mental health",
+        "venting",
+        "community",
+        "support",
+        "rant",
+        "expression",
+        "safe space",
+        "social platform"
+    ],
+    authors: [{ name: "Rant Team", url: "https://gorant.live" }],
+    openGraph: {
+        title: "Rant - Anonymous Expression Platform",
+        description: "A safe, anonymous space to express your thoughts and feelings. Join the community and share your story anonymously.",
+        url: "https://gorant.live",
+        siteName: "Rant",
+        images: [
+            {
+                url: "/app_screenshot.png",
+                width: 1200,
+                height: 630,
+                alt: "Rant - Anonymous Expression Platform"
+            }
+        ],
+        locale: "en_US",
+        type: "website"
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: "Rant - Anonymous Expression Platform",
+        description: "A safe, anonymous space to express your thoughts and feelings. Join the community and share your story anonymously.",
+        images: ["/app_screenshot.png"],
+        creator: "@rantapp"
+    }
 }
 
 export default function RootLayout({
-  children,
+    children,
 }: {
-  children: React.ReactNode
+    children: React.ReactNode
 }) {
-  return (
-    <html lang="en">
-      <body className={inter.className}>
-        {children}
-        <Toaster position="top-right" richColors />
-      </body>
-    </html>
-  )
+    return (
+        <html lang="en">
+            <body className={inter.className}>
+                <ClientLayout>
+                    {children}
+                    <Toaster position="top-right" richColors />
+                </ClientLayout>
+            </body>
+        </html>
+    )
 }
