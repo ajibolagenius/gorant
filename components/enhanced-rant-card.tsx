@@ -32,6 +32,7 @@ import {
 import { SentimentAnalysisService } from "@/services/sentiment-analysis"
 import { toast } from "sonner"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import React from "react"
 
 export interface Comment {
     id: string
@@ -74,10 +75,10 @@ interface EnhancedRantCardProps {
     isBookmarked: boolean
     isUserBlocked: boolean
     followedTags: Set<string>
-    getMoodEmoji: (mood: string) => string
+    getMoodIcon: (mood: string) => React.ElementType
     getMoodColor: (mood: string) => string
     formatTimeAgo: (date: string) => string
-    moods: Array<{ emoji: string; label: string; value: string; color: string }>
+    moods: Array<{ icon: React.ElementType; label: string; value: string; color: string }>
     showSentiment?: boolean
     showModeration?: boolean
     comments?: Comment[]
@@ -86,7 +87,7 @@ interface EnhancedRantCardProps {
     showShare?: boolean    // Show share action (default true)
 }
 
-export function EnhancedRantCard({
+const EnhancedRantCardComponent = ({
     rant,
     onLike,
     onBookmark,
@@ -100,7 +101,7 @@ export function EnhancedRantCard({
     isBookmarked,
     isUserBlocked,
     followedTags,
-    getMoodEmoji,
+    getMoodIcon,
     getMoodColor,
     formatTimeAgo,
     moods,
@@ -110,7 +111,7 @@ export function EnhancedRantCard({
     showBookmark = true,
     showReport = true,
     showShare = true,
-}: EnhancedRantCardProps) {
+}: EnhancedRantCardProps) => {
     const [showComments, setShowComments] = useState(false)
     const [newComment, setNewComment] = useState("")
     const [isPostingComment, setIsPostingComment] = useState(false)
@@ -211,6 +212,8 @@ export function EnhancedRantCard({
         return baseHeight + Math.min(contentLength / 3, 100) + tagsHeight + commentsHeight
     }
 
+    const MoodIcon = getMoodIcon(rant.mood)
+
     return (
         <Card
             className="shadow-lg border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] group relative"
@@ -220,7 +223,8 @@ export function EnhancedRantCard({
                 <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-2 flex-wrap gap-2">
                         <Badge variant="secondary" className={`${getMoodColor(rant.mood)} text-xs px-2 py-0.5 font-medium`}>
-                            {getMoodEmoji(rant.mood)} {moods.find((m) => m.value === rant.mood)?.label}
+                            <MoodIcon weight="duotone" className="w-5 h-5 mr-1" />
+                            {moods.find((m) => m.value === rant.mood)?.label}
                         </Badge>
                         {rant.is_trending && (
                             <Badge
@@ -458,3 +462,5 @@ export function EnhancedRantCard({
         </Card>
     )
 }
+
+export const EnhancedRantCard = React.memo(EnhancedRantCardComponent)

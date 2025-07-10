@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 
 interface Mood {
-    emoji: string
+    icon: React.ElementType
     label: string
     value: string
     color: string
@@ -61,11 +61,12 @@ export function FilterPanel({
                             size="sm"
                             onClick={() => setMoodFilter(moodFilter === mood.value ? "" : mood.value)}
                             className={`${moodFilter === mood.value
-                                    ? "bg-purple-600 hover:bg-purple-700"
-                                    : "hover:bg-purple-50 dark:hover:bg-purple-900"
+                                ? "bg-purple-600 hover:bg-purple-700"
+                                : "hover:bg-purple-50 dark:hover:bg-purple-900"
                                 }`}
                         >
-                            {mood.emoji} {mood.label}
+                            <mood.icon weight="duotone" className="w-5 h-5 mr-1" />
+                            {mood.label}
                         </Button>
                     ))}
                 </div>
@@ -82,8 +83,8 @@ export function FilterPanel({
                             size="sm"
                             onClick={() => setSortFilter(option.value)}
                             className={`${sortFilter === option.value
-                                    ? "bg-purple-600 hover:bg-purple-700"
-                                    : "hover:bg-purple-50 dark:hover:bg-purple-900"
+                                ? "bg-purple-600 hover:bg-purple-700"
+                                : "hover:bg-purple-50 dark:hover:bg-purple-900"
                                 }`}
                         >
                             <option.icon className="w-4 h-4 mr-1" />
@@ -102,8 +103,8 @@ export function FilterPanel({
                             key={tag}
                             variant="outline"
                             className={`cursor-pointer transition-colors ${followedTags.has(tag)
-                                    ? "bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-900 dark:text-purple-200"
-                                    : "hover:bg-purple-50 dark:hover:bg-purple-900"
+                                ? "bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-900 dark:text-purple-200"
+                                : "hover:bg-purple-50 dark:hover:bg-purple-900"
                                 }`}
                             onClick={() => onFollowTag(tag)}
                         >

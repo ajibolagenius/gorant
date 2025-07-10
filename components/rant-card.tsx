@@ -31,6 +31,7 @@ import {
 import { SentimentAnalysisService } from "@/services/sentiment-analysis"
 import { Star as PhosphorStar } from "phosphor-react"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import React from "react"
 
 interface RantCardProps {
     rant: Rant
@@ -44,10 +45,10 @@ interface RantCardProps {
     isBookmarked: boolean
     isUserBlocked: boolean
     followedTags: Set<string>
-    getMoodEmoji: (mood: string) => string
+    getMoodIcon: (mood: string) => React.ElementType
     getMoodColor: (mood: string) => string
     formatTimeAgo: (date: string) => string
-    moods: Array<{ emoji: string; label: string; value: string; color: string }>
+    moods: Array<{ icon: React.ElementType; label: string; value: string; color: string }>
     showSentiment?: boolean
     showModeration?: boolean
     showBookmark?: boolean // Show bookmark action (default true)
@@ -55,7 +56,7 @@ interface RantCardProps {
     showShare?: boolean    // Show share action (default true)
 }
 
-export function RantCard({
+export const RantCard = React.memo(function RantCard({
     rant,
     onLike,
     onBookmark,
@@ -67,7 +68,7 @@ export function RantCard({
     isBookmarked,
     isUserBlocked,
     followedTags,
-    getMoodEmoji,
+    getMoodIcon,
     getMoodColor,
     formatTimeAgo,
     moods,
@@ -130,13 +131,16 @@ export function RantCard({
         )
     }
 
+    const MoodIcon = getMoodIcon(rant.mood);
+
     return (
         <Card className="shadow-sm border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur hover:shadow-md transition-all duration-200 relative">
             <CardContent className="pt-6">
                 <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center space-x-2 flex-wrap gap-2">
                         <Badge variant="secondary" className={`${getMoodColor(rant.mood)} text-xs px-2 py-0.5 font-medium`}>
-                            {getMoodEmoji(rant.mood)} {moods.find((m) => m.value === rant.mood)?.label}
+                            <MoodIcon weight="duotone" className="w-5 h-5 mr-1" />
+                            {moods.find((m) => m.value === rant.mood)?.label}
                         </Badge>
                         {rant.is_trending && (
                             <Badge
@@ -320,4 +324,4 @@ export function RantCard({
             </CardContent>
         </Card>
     )
-}
+})

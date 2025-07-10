@@ -8,10 +8,25 @@ import { Button } from "@/components/ui/button"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { TrendUp, Clock, Calendar, Trophy } from "phosphor-react"
+import {
+    Smiley,
+    SmileySad,
+    SmileyMeh,
+    SmileyNervous,
+    Heart,
+    HeartBreak,
+    Cloud,
+    Confetti,
+    SmileySticker,
+    TrendUp,
+    Clock,
+    Calendar,
+    Trophy
+} from "phosphor-react"
 import Link from "next/link"
 import { RantCard } from "@/components/rant-card"
 import type { Rant } from "@/components/enhanced-rant-card"
+import { FixedSizeList as VirtualizedList, ListChildComponentProps } from "react-window"
 
 const TRENDING_PERIODS = [
     { label: "Today", value: "today", icon: Clock },
@@ -59,18 +74,18 @@ const mockTrendingRants = [
 ]
 
 const MOODS = [
-    { emoji: "😢", label: "Sad", value: "sad", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300" },
-    { emoji: "😭", label: "Crying", value: "crying", color: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300" },
-    { emoji: "😃", label: "Happy", value: "happy", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300" },
-    { emoji: "😐", label: "Neutral", value: "neutral", color: "bg-gray-100 text-gray-800 dark:bg-gray-700/50 dark:text-gray-300" },
-    { emoji: "😡", label: "Angry", value: "angry", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300" },
-    { emoji: "💔", label: "Heartbroken", value: "heartbroken", color: "bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300" },
-    { emoji: "❤️", label: "Love", value: "love", color: "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300" },
-    { emoji: "😰", label: "Anxious", value: "anxious", color: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300" },
-    { emoji: "🤔", label: "Confused", value: "confused", color: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300" },
-    { emoji: "😴", label: "Tired", value: "tired", color: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300" },
-    { emoji: "🎉", label: "Excited", value: "excited", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" },
-    { emoji: "💪", label: "Confident", value: "confident", color: "bg-lime-100 text-lime-800 dark:bg-lime-900/30 dark:text-lime-300" },
+    { icon: SmileySad, label: "Sad", value: "sad", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300" },
+    { icon: SmileySad, label: "Crying", value: "crying", color: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300" },
+    { icon: Smiley, label: "Happy", value: "happy", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300" },
+    { icon: SmileyMeh, label: "Neutral", value: "neutral", color: "bg-gray-100 text-gray-800 dark:bg-gray-700/50 dark:text-gray-300" },
+    { icon: SmileyNervous, label: "Angry", value: "angry", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300" },
+    { icon: HeartBreak, label: "Heartbroken", value: "heartbroken", color: "bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300" },
+    { icon: Heart, label: "Love", value: "love", color: "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300" },
+    { icon: SmileyNervous, label: "Anxious", value: "anxious", color: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300" },
+    { icon: SmileyMeh, label: "Confused", value: "confused", color: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300" },
+    { icon: Cloud, label: "Tired", value: "tired", color: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300" },
+    { icon: Confetti, label: "Excited", value: "excited", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" },
+    { icon: SmileySticker, label: "Confident", value: "confident", color: "bg-lime-100 text-lime-800 dark:bg-lime-900/30 dark:text-lime-300" },
 ]
 
 export function TrendingClient() {
@@ -84,8 +99,8 @@ export function TrendingClient() {
     const [selectedRant, setSelectedRant] = useState<Rant | string | null>(null)
     const [blockedUsers, setBlockedUsers] = useState<Set<string>>(new Set())
 
-    const getMoodEmoji = (mood: string) => {
-        return MOODS.find((m) => m.value === mood)?.emoji || "😐"
+    const getMoodIcon = (mood: string) => {
+        return MOODS.find((m) => m.value === mood)?.icon || SmileyMeh
     }
 
     const getMoodColor = (mood: string) => {
@@ -166,6 +181,10 @@ export function TrendingClient() {
         }
     }
 
+    // Helper to determine virtualization
+    const VIRTUALIZATION_THRESHOLD = 30
+    const isVirtualized = trendingRants.length > VIRTUALIZATION_THRESHOLD
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800">
             {/* Header */}
@@ -212,33 +231,71 @@ export function TrendingClient() {
 
                         {/* Trending Rants */}
                         <div className="space-y-4">
-                            {trendingRants.map((rant, index) => (
-                                <div key={rant.id} className="relative">
-                                    <div className="absolute -left-4 top-4 z-10">
-                                        <Badge className="bg-orange-500 text-white font-bold">#{index + 1}</Badge>
+                            {isVirtualized ? (
+                                <VirtualizedList
+                                    height={800}
+                                    itemCount={trendingRants.length}
+                                    itemSize={340}
+                                    width={"100%"}
+                                    className="w-full"
+                                >
+                                    {({ index, style }: ListChildComponentProps) => (
+                                        <div style={style} key={trendingRants[index].id} className="relative">
+                                            <div className="absolute -left-4 top-4 z-10">
+                                                <Badge className="bg-orange-500 text-white font-bold">#{index + 1}</Badge>
+                                            </div>
+                                            <RantCard
+                                                rant={trendingRants[index]}
+                                                onLike={handleLike}
+                                                onBookmark={handleBookmark}
+                                                onReport={() => handleReport(trendingRants[index].id)}
+                                                onShare={() => handleShare(trendingRants[index])}
+                                                onBlockUser={() => handleBlockUser(trendingRants[index].anonymous_id)}
+                                                onFollowTag={() => { }}
+                                                isLiked={likedRants.has(trendingRants[index].id)}
+                                                isBookmarked={bookmarkedRants.has(trendingRants[index].id)}
+                                                isUserBlocked={blockedUsers.has(trendingRants[index].anonymous_id)}
+                                                followedTags={new Set()}
+                                                getMoodIcon={getMoodIcon}
+                                                getMoodColor={getMoodColor}
+                                                formatTimeAgo={formatTimeAgo}
+                                                moods={MOODS}
+                                                showBookmark={true}
+                                                showReport={true}
+                                                showShare={true}
+                                            />
+                                        </div>
+                                    )}
+                                </VirtualizedList>
+                            ) : (
+                                trendingRants.map((rant, index) => (
+                                    <div key={rant.id} className="relative">
+                                        <div className="absolute -left-4 top-4 z-10">
+                                            <Badge className="bg-orange-500 text-white font-bold">#{index + 1}</Badge>
+                                        </div>
+                                        <RantCard
+                                            rant={rant}
+                                            onLike={handleLike}
+                                            onBookmark={handleBookmark}
+                                            onReport={() => handleReport(rant.id)}
+                                            onShare={() => handleShare(rant)}
+                                            onBlockUser={() => handleBlockUser(rant.anonymous_id)}
+                                            onFollowTag={() => { }}
+                                            isLiked={likedRants.has(rant.id)}
+                                            isBookmarked={bookmarkedRants.has(rant.id)}
+                                            isUserBlocked={blockedUsers.has(rant.anonymous_id)}
+                                            followedTags={new Set()}
+                                            getMoodIcon={getMoodIcon}
+                                            getMoodColor={getMoodColor}
+                                            formatTimeAgo={formatTimeAgo}
+                                            moods={MOODS}
+                                            showBookmark={true}
+                                            showReport={true}
+                                            showShare={true}
+                                        />
                                     </div>
-                                    <RantCard
-                                        rant={rant}
-                                        onLike={handleLike}
-                                        onBookmark={handleBookmark}
-                                        onReport={() => handleReport(rant.id)}
-                                        onShare={() => handleShare(rant)}
-                                        onBlockUser={() => handleBlockUser(rant.anonymous_id)}
-                                        onFollowTag={() => { }}
-                                        isLiked={likedRants.has(rant.id)}
-                                        isBookmarked={bookmarkedRants.has(rant.id)}
-                                        isUserBlocked={blockedUsers.has(rant.anonymous_id)}
-                                        followedTags={new Set()}
-                                        getMoodEmoji={getMoodEmoji}
-                                        getMoodColor={getMoodColor}
-                                        formatTimeAgo={formatTimeAgo}
-                                        moods={MOODS}
-                                        showBookmark={true}
-                                        showReport={true}
-                                        showShare={true}
-                                    />
-                                </div>
-                            ))}
+                                ))
+                            )}
                         </div>
                         {/* Share Modal */}
                         <Dialog open={shareModalOpen} onOpenChange={setShareModalOpen}>

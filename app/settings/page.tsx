@@ -7,69 +7,36 @@ import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
-import { Shield, Eye, Bell, Lock, Globe, HelpCircle } from "phosphor-react"
+import { Shield, Eye, Bell, Lock, Globe } from "phosphor-react"
 import Link from "next/link"
 import { useAccessibility } from "@/hooks/use-accessibility"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+import { useSettings } from "@/hooks/use-settings"
 
 export default function SettingsPage() {
     const { fontSize, contrast, screenReaderMode, reducedMotion, updateAccessibility } = useAccessibility()
-    const [notifications, setNotifications] = useState({
-        likes: true,
-        comments: true,
-        mentions: false,
-        challenges: true,
-        achievements: true,
-    })
-    const [privacy, setPrivacy] = useState({
-        showInLeaderboard: true,
-        allowDirectMessages: false,
-        shareAnalytics: true,
-    })
-    const [contentFilters, setContentFilters] = useState({
-        hideNegativeSentiment: false,
-        hideReportedContent: true,
-        minimumModerationScore: 0.7,
-    })
+    const {
+        notifications,
+        privacy,
+        contentFilters,
+        updateNotification,
+        updatePrivacy,
+        updateContentFilter
+    } = useSettings()
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
     const fileDownloadRef = useRef<HTMLAnchorElement>(null)
     const router = useRouter()
 
-    // Load settings from localStorage on mount
-    useEffect(() => {
-        const savedNotifications = localStorage.getItem("settings_notifications")
-        const savedPrivacy = localStorage.getItem("settings_privacy")
-        const savedContentFilters = localStorage.getItem("settings_contentFilters")
-        if (savedNotifications) setNotifications(JSON.parse(savedNotifications))
-        if (savedPrivacy) setPrivacy(JSON.parse(savedPrivacy))
-        if (savedContentFilters) setContentFilters(JSON.parse(savedContentFilters))
-    }, [])
-
-    // Persist settings to localStorage on change
-    useEffect(() => {
-        localStorage.setItem("settings_notifications", JSON.stringify(notifications))
-    }, [notifications])
-    useEffect(() => {
-        localStorage.setItem("settings_privacy", JSON.stringify(privacy))
-    }, [privacy])
-    useEffect(() => {
-        localStorage.setItem("settings_contentFilters", JSON.stringify(contentFilters))
-    }, [contentFilters])
-
-    const handleNotificationChange = (key: string, value: boolean) => {
-        setNotifications((prev) => ({ ...prev, [key]: value }))
-        toast.success("Notification preferences updated")
-    }
-
-    const handlePrivacyChange = (key: string, value: boolean) => {
-        setPrivacy((prev) => ({ ...prev, [key]: value }))
-        toast.success("Privacy settings updated")
-    }
-
+    // Handler wrappers for switches
+    const handleNotificationChange = (key: string, value: boolean) => updateNotification(key as any, value)
+    const handlePrivacyChange = (key: string, value: boolean) => updatePrivacy(key as any, value)
     const handleContentFilterChange = (key: string, value: boolean | number) => {
-        setContentFilters((prev) => ({ ...prev, [key]: value }))
-        toast.success("Content filter updated")
+        if (key === "minimumModerationScore") {
+            updateContentFilter(key as any, value as number)
+        } else {
+            updateContentFilter(key as any, value as boolean)
+        }
     }
 
     // Save All Settings button handler
@@ -325,7 +292,10 @@ export default function SettingsPage() {
                                     <Link href="/privacy">Privacy Policy</Link>
                                 </Button>
                                 <Button variant="outline" asChild>
-                                    <Link href="/terms">Terms of Service</Link>
+                                    <Link href="/terms-of-service">Terms of Service</Link>
+                                </Button>
+                                <Button variant="outline" asChild>
+                                    <Link href="/guidelines">Community Guidelines</Link>
                                 </Button>
                                 <Button variant="destructive" onClick={handleDeleteAccount}>Delete Account</Button>
                             </div>

@@ -1,15 +1,17 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import type { Rant } from "@/components/enhanced-rant-card"
+import { storageGet, storageSet } from "@/lib/storage"
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
 }
 
 export function getAnonymousId(): string {
-    let anonymousId = localStorage.getItem("anonymous_id")
+    let anonymousId = storageGet<string>("anonymous_id")
     if (!anonymousId) {
         anonymousId = `anon_${Math.random().toString(36).substr(2, 9)}`
-        localStorage.setItem("anonymous_id", anonymousId)
+        storageSet("anonymous_id", anonymousId)
     }
     return anonymousId
 }
@@ -42,4 +44,28 @@ export function generateFriendlyAnonymousName(separator = ' '): string {
     const adjective = adjectives[Math.floor(Math.random() * adjectives.length)]
     const animal = animals[Math.floor(Math.random() * animals.length)]
     return `${adjective}${separator}${animal}`
+}
+
+/**
+ * Ensures a rant object has all required fields with sensible defaults.
+ * Use this when loading or updating rants from any source.
+ */
+export function normalizeRant(rant: any): Rant {
+    return {
+        id: rant.id ?? Math.random().toString(36).substr(2, 9),
+        content: rant.content ?? "",
+        mood: rant.mood ?? "neutral",
+        created_at: rant.created_at ?? new Date().toISOString(),
+        likes_count: rant.likes_count ?? 0,
+        comments_count: rant.comments_count ?? 0,
+        anonymous_id: rant.anonymous_id ?? "anon_unknown",
+        tags: rant.tags ?? [],
+        is_trending: rant.is_trending ?? false,
+        sentiment_score: rant.sentiment_score ?? 0,
+        moderation_status: rant.moderation_status ?? "approved",
+        reputation_impact: rant.reputation_impact ?? 0,
+        reported: rant.reported ?? false,
+        moderation_score: rant.moderation_score ?? 1,
+        // Add any additional fields as needed
+    }
 }

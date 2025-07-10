@@ -13,6 +13,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     const { userLevel } = useGameification()
     const { theme, toggleTheme } = useTheme()
     const pathname = usePathname()
+    const showFooter = !pathname.startsWith("/settings")
     return (
         <div
             className={fontSize}
@@ -21,6 +22,25 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         >
             <Header userLevel={userLevel} theme={theme} toggleTheme={toggleTheme} pathname={pathname} />
             {children}
+            {/* Desktop Footer */}
+            {showFooter && (
+                <footer className="fixed bottom-0 left-0 w-full z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-t border-gray-200 dark:border-gray-700 mt-12 md:block hidden">
+                    <div className="container mx-auto px-4 py-4 max-w-7xl">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-gray-500 dark:text-gray-400 text-sm items-center">
+                            {/* Column 1: Branding */}
+                            <div className="text-center md:text-left">
+                                <p>Your thoughts matter. Share them freely.</p>
+                            </div>
+                            {/* Column 2: Navigation Links */}
+                            <div className="flex flex-col md:flex-row justify-center items-center gap-2 md:gap-6">
+                                <Link href="/privacy" className="hover:text-purple-600 dark:hover:text-purple-400">Privacy</Link>
+                                <Link href="/terms-of-service" className="hover:text-purple-600 dark:hover:text-purple-400">Terms</Link>
+                                <Link href="/guidelines" className="hover:text-purple-600 dark:hover:text-purple-400">Community Guidelines</Link>
+                            </div>
+                        </div>
+                    </div>
+                </footer>
+            )}
             {/* Bottom Navigation Bar for Mobile */}
             <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/90 dark:bg-gray-900/90 border-t border-gray-200 dark:border-gray-700 flex justify-around items-center h-16 md:hidden backdrop-blur shadow-lg">
                 <Link href="/trending" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/trending" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>

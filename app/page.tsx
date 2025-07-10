@@ -6,7 +6,17 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { TrendUp, Trophy, Lightning, Star, List, Moon, Sun, Bell, Users, Shield, Globe, X, Calendar, Medal, Crown, Target, CheckCircle, ArrowLeft, ArrowRight, Circle, Check } from "phosphor-react"
+import {
+    Smiley,
+    SmileySad,
+    SmileyMeh,
+    SmileyNervous,
+    Heart,
+    HeartBreak,
+    Cloud,
+    Confetti,
+    SmileySticker
+} from "phosphor-react"
 import { HelpCircle, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, MoreHorizontal, Dot, GripVertical, Search, PanelLeft, Award, MessageCircle, Send } from "lucide-react"
 import { toast } from "sonner"
 import confetti from "canvas-confetti"
@@ -22,11 +32,16 @@ import { GameificationPanel } from "@/components/gamification-panel"
 import { ContentModerationService } from "@/services/content-moderation"
 import { SentimentAnalysisService } from "@/services/sentiment-analysis"
 import { PersonalizationService } from "@/services/personalization"
-import { getAnonymousId } from "@/lib/utils"
+import { getAnonymousId, normalizeRant } from "@/lib/utils"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { SidebarContent } from "@/components/sidebar-content"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { usePathname } from "next/navigation"
+import { useSettings } from "@/hooks/use-settings"
+import { useFilteredRants } from "@/hooks/use-filtered-rants"
+import { storageSet } from "@/lib/storage"
+import { FixedSizeList as VirtualizedList, ListChildComponentProps } from "react-window"
+import React from "react"
 
 // Initialize Supabase client with fallback for development
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://your-project.supabase.co"
@@ -35,18 +50,18 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "your-anon-
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 const MOODS = [
-    { emoji: "😢", label: "Sad", value: "sad", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300" },
-    { emoji: "😭", label: "Crying", value: "crying", color: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300" },
-    { emoji: "😃", label: "Happy", value: "happy", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300" },
-    { emoji: "😐", label: "Neutral", value: "neutral", color: "bg-gray-100 text-gray-800 dark:bg-gray-700/50 dark:text-gray-300" },
-    { emoji: "😡", label: "Angry", value: "angry", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300" },
-    { emoji: "💔", label: "Heartbroken", value: "heartbroken", color: "bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300" },
-    { emoji: "❤️", label: "Love", value: "love", color: "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300" },
-    { emoji: "😰", label: "Anxious", value: "anxious", color: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300" },
-    { emoji: "🤔", label: "Confused", value: "confused", color: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300" },
-    { emoji: "😴", label: "Tired", value: "tired", color: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300" },
-    { emoji: "🎉", label: "Excited", value: "excited", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" },
-    { emoji: "💪", label: "Confident", value: "confident", color: "bg-lime-100 text-lime-800 dark:bg-lime-900/30 dark:text-lime-300" },
+    { icon: SmileySad, emoji: "", label: "Sad", value: "sad", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300" },
+    { icon: SmileySad, emoji: "", label: "Crying", value: "crying", color: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300" },
+    { icon: Smiley, emoji: "", label: "Happy", value: "happy", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300" },
+    { icon: SmileyMeh, emoji: "", label: "Neutral", value: "neutral", color: "bg-gray-100 text-gray-800 dark:bg-gray-700/50 dark:text-gray-300" },
+    { icon: SmileyNervous, emoji: "", label: "Angry", value: "angry", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300" },
+    { icon: HeartBreak, emoji: "", label: "Heartbroken", value: "heartbroken", color: "bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300" },
+    { icon: Heart, emoji: "", label: "Love", value: "love", color: "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300" },
+    { icon: SmileyNervous, emoji: "", label: "Anxious", value: "anxious", color: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300" },
+    { icon: SmileyMeh, emoji: "", label: "Confused", value: "confused", color: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300" },
+    { icon: Cloud, emoji: "", label: "Tired", value: "tired", color: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300" },
+    { icon: Confetti, emoji: "", label: "Excited", value: "excited", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" },
+    { icon: SmileySticker, emoji: "", label: "Confident", value: "confident", color: "bg-lime-100 text-lime-800 dark:bg-lime-900/30 dark:text-lime-300" },
 ]
 
 const mockComments: { [key: string]: Comment[] } = {
@@ -189,15 +204,15 @@ const mockRants: Rant[] = [
 ]
 
 const FILTER_OPTIONS = [
-    { icon: Calendar, label: "Latest", value: "latest" },
-    { icon: TrendUp, label: "Popular", value: "popular" },
-    { icon: Star, label: "Most Liked", value: "most_liked" },
+    { icon: Cloud, label: "Latest", value: "latest" },
+    { icon: SmileySticker, label: "Popular", value: "popular" },
+    { icon: SmileySticker, label: "Most Liked", value: "most_liked" },
     { icon: Award, label: "Recommended", value: "recommended" },
 ]
 
 export default function RantApp() {
     const [rants, setRants] = useState<Rant[]>(mockRants)
-    const [filteredRants, setFilteredRants] = useState<Rant[]>(mockRants)
+    // Remove filteredRants state, use hook instead
     const [comments, setComments] = useState<{ [key: string]: Comment[] }>(mockComments)
     const [searchQuery, setSearchQuery] = useState("")
     const [searchSuggestions, setSearchSuggestions] = useState<string[]>([])
@@ -213,25 +228,15 @@ export default function RantApp() {
     const [rantOfTheDay, setRantOfTheDay] = useState<Rant | null>(null)
     // Add state for Rant of the Day modal
     const [showRantOfTheDayModal, setShowRantOfTheDayModal] = useState(false)
-    // Add state for settings
-    const [settingsLoaded, setSettingsLoaded] = useState(false)
-    const [notificationSettings, setNotificationSettings] = useState({
-        likes: true,
-        comments: true,
-        mentions: false,
-        challenges: true,
-        achievements: true,
-    })
-    const [privacySettings, setPrivacySettings] = useState({
-        showInLeaderboard: true,
-        allowDirectMessages: false,
-        shareAnalytics: true,
-    })
-    const [contentFilterSettings, setContentFilterSettings] = useState({
-        hideNegativeSentiment: false,
-        hideReportedContent: true,
-        minimumModerationScore: 0.7,
-    })
+    const {
+        notifications: notificationSettings,
+        privacy: privacySettings,
+        contentFilters: contentFilterSettings,
+        updateNotification,
+        updatePrivacy,
+        updateContentFilter,
+        loaded: settingsLoaded
+    } = useSettings()
     const [sidebarOpen, setSidebarOpen] = useState(false)
 
     const { theme, toggleTheme } = useTheme()
@@ -241,13 +246,7 @@ export default function RantApp() {
 
     // Load settings from localStorage on mount
     useEffect(() => {
-        const savedNotifications = localStorage.getItem("settings_notifications")
-        const savedPrivacy = localStorage.getItem("settings_privacy")
-        const savedContentFilters = localStorage.getItem("settings_contentFilters")
-        if (savedNotifications) setNotificationSettings(JSON.parse(savedNotifications))
-        if (savedPrivacy) setPrivacySettings(JSON.parse(savedPrivacy))
-        if (savedContentFilters) setContentFilterSettings(JSON.parse(savedContentFilters))
-        setSettingsLoaded(true)
+        // The useSettings hook already handles loading from localStorage
     }, [])
 
     // Enhanced comment posting function
@@ -322,31 +321,11 @@ export default function RantApp() {
             if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
                 console.warn("Supabase not configured - using mock data")
                 let data = [...mockRants]
-
-                // Apply personalization
                 if (sortFilter === "recommended") {
                     data = PersonalizationService.getRecommendedRants(data, getAnonymousId(), Array.from(followedTags))
                 }
-
-                // Filter out blocked users
                 data = data.filter((rant) => !blockedUsers.has(rant.anonymous_id))
-
-                // Ensure all required fields exist
-                data = data.map((rant) => ({
-                    ...rant,
-                    comments_count: rant.comments_count ?? 0,
-                    likes_count: rant.likes_count ?? 0,
-                    mood: rant.mood ?? "neutral",
-                    created_at: rant.created_at ?? new Date().toISOString(),
-                    anonymous_id: rant.anonymous_id ?? "anon_unknown",
-                    content: rant.content ?? "",
-                    id: rant.id ?? Math.random().toString(36).substr(2, 9),
-                    moderation_status: rant.moderation_status ?? "approved",
-                    reputation_impact: rant.reputation_impact ?? 0,
-                    reported: rant.reported ?? false,
-                    moderation_score: rant.moderation_score ?? 1,
-                }))
-
+                data = data.map(normalizeRant)
                 setRants(data)
                 // Set rant of the day
                 if (data.length > 0) {
@@ -361,40 +340,12 @@ export default function RantApp() {
 
             if (error) throw error
 
-            // Ensure all required fields exist
-            const safeData = (data || []).map((rant: any) => ({
-                ...rant,
-                comments_count: rant.comments_count ?? 0,
-                likes_count: rant.likes_count ?? 0,
-                mood: rant.mood ?? "neutral",
-                created_at: rant.created_at ?? new Date().toISOString(),
-                anonymous_id: rant.anonymous_id ?? "anon_unknown",
-                content: rant.content ?? "",
-                id: rant.id ?? Math.random().toString(36).substr(2, 9),
-                moderation_status: rant.moderation_status ?? "approved",
-                reputation_impact: rant.reputation_impact ?? 0,
-                reported: rant.reported ?? false,
-                moderation_score: rant.moderation_score ?? 1,
-            }))
-
+            const safeData = (data || []).map(normalizeRant)
             setRants(safeData)
         } catch (error) {
             console.error("Error fetching rants:", error)
             toast.error("Failed to load rants - using demo data")
-            setRants(mockRants.map((rant) => ({
-                ...rant,
-                comments_count: rant.comments_count ?? 0,
-                likes_count: rant.likes_count ?? 0,
-                mood: rant.mood ?? "neutral",
-                created_at: rant.created_at ?? new Date().toISOString(),
-                anonymous_id: rant.anonymous_id ?? "anon_unknown",
-                content: rant.content ?? "",
-                id: rant.id ?? Math.random().toString(36).substr(2, 9),
-                moderation_status: rant.moderation_status ?? "approved",
-                reputation_impact: rant.reputation_impact ?? 0,
-                reported: rant.reported ?? false,
-                moderation_score: rant.moderation_score ?? 1,
-            })))
+            setRants(mockRants.map(normalizeRant))
             setLoading(false)
         }
     }
@@ -409,47 +360,22 @@ export default function RantApp() {
         return true
     }
 
-    // Enforce content filters in feed
-    useEffect(() => {
-        if (!settingsLoaded) return
-        let filtered = rants.filter((rant) => {
-            const matchesSearch =
-                searchQuery.length < 3 ||
-                rant.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                (rant.tags && rant.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase())))
-            const matchesMood = !moodFilter || rant.mood === moodFilter
-            const notBlocked = !blockedUsers.has(rant.anonymous_id)
-            const moderationPassed = rant.moderation_status === "approved"
-            // Content filter logic
-            const sentimentOk =
-                !contentFilterSettings.hideNegativeSentiment ||
-                (rant.sentiment_score === undefined || rant.sentiment_score >= 0)
-            const reportedOk =
-                !contentFilterSettings.hideReportedContent ||
-                !rant.reported // assumes rant.reported is boolean or undefined
-            const moderationScoreOk =
-                rant.moderation_score === undefined ||
-                rant.moderation_score >= contentFilterSettings.minimumModerationScore
-            return (
-                matchesSearch &&
-                matchesMood &&
-                notBlocked &&
-                moderationPassed &&
-                sentimentOk &&
-                reportedOk &&
-                moderationScoreOk
-            )
-        })
-        // Apply sorting with personalization
-        if (sortFilter === "recommended") {
-            filtered = PersonalizationService.getRecommendedRants(filtered, getAnonymousId(), Array.from(followedTags))
-        } else if (sortFilter === "popular" || sortFilter === "most_liked") {
-            filtered.sort((a, b) => b.likes_count - a.likes_count)
-        } else {
-            filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        }
-        setFilteredRants(filtered)
-    }, [rants, searchQuery, moodFilter, sortFilter, blockedUsers, followedTags, contentFilterSettings, settingsLoaded])
+    const filteredRants = useFilteredRants({
+        rants,
+        searchQuery,
+        moodFilter,
+        sortFilter,
+        blockedUsers,
+        followedTags,
+        contentFilterSettings,
+        settingsLoaded,
+        getAnonymousId,
+        personalizationService: PersonalizationService,
+    })
+
+    // Helper to determine virtualization
+    const VIRTUALIZATION_THRESHOLD = 30
+    const isVirtualized = filteredRants.length > VIRTUALIZATION_THRESHOLD
 
     // Enhanced like function with gamification
     const likeRant = (rantId: string) => {
@@ -553,14 +479,14 @@ export default function RantApp() {
 
     // Persist all rants and bookmarks to localStorage for bookmarks page
     useEffect(() => {
-        localStorage.setItem("all_rants", JSON.stringify(rants))
+        storageSet("all_rants", rants)
     }, [rants])
     useEffect(() => {
-        localStorage.setItem("bookmarked_rants", JSON.stringify(Array.from(bookmarkedRants)))
+        storageSet("bookmarked_rants", Array.from(bookmarkedRants))
     }, [bookmarkedRants])
 
-    const getMoodEmoji = (mood: string) => {
-        return MOODS.find((m) => m.value === mood)?.emoji || "😐"
+    const getMoodIcon = (mood: string) => {
+        return MOODS.find((m) => m.value === mood)?.icon || SmileyMeh
     }
 
     const getMoodColor = (mood: string) => {
@@ -630,22 +556,22 @@ export default function RantApp() {
                                         aria-label="Close Rant of the Day"
                                         className="absolute top-3 right-3 z-10 p-1 rounded-full hover:bg-yellow-200 dark:hover:bg-yellow-800 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                                     >
-                                        <X className="w-5 h-5 text-yellow-700 dark:text-yellow-300" />
+                                        <SmileySticker className="w-5 h-5 text-yellow-700 dark:text-yellow-300" />
                                     </button>
                                     <CardHeader>
                                         <div className="flex items-center space-x-2">
-                                            <Trophy weight="duotone" className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+                                            <SmileySticker weight="duotone" className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
                                             <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Rant of the Day</h2>
                                         </div>
                                     </CardHeader>
                                     <CardContent>
                                         <div className="flex items-start space-x-3">
-                                            <div className="text-2xl">{getMoodEmoji(rantOfTheDay.mood)}</div>
+                                            <div className="text-2xl">{React.createElement(getMoodIcon(rantOfTheDay.mood), { weight: 'duotone', className: 'w-5 h-5' })}</div>
                                             <div className="flex-1">
                                                 <p className="text-gray-800 dark:text-gray-200 mb-2 line-clamp-3">{rantOfTheDay.content}</p>
                                                 <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-300">
                                                     <span className="flex items-center">
-                                                        <Star weight="duotone" className="w-4 h-4 mr-1" />
+                                                        <SmileySticker weight="duotone" className="w-4 h-4 mr-1" />
                                                         {rantOfTheDay.likes_count} likes
                                                     </span>
                                                     <span className="flex items-center">
@@ -661,7 +587,7 @@ export default function RantApp() {
                                     <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
                                         <DialogHeader>
                                             <DialogTitle className="text-xl font-semibold flex items-center gap-2">
-                                                <Trophy weight="duotone" className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+                                                <SmileySticker weight="duotone" className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
                                                 Rant of the Day
                                             </DialogTitle>
                                         </DialogHeader>
@@ -680,7 +606,7 @@ export default function RantApp() {
                                             isBookmarked={bookmarkedRants.has(rantOfTheDay.id)}
                                             isUserBlocked={blockedUsers.has(rantOfTheDay.anonymous_id)}
                                             followedTags={followedTags}
-                                            getMoodEmoji={getMoodEmoji}
+                                            getMoodIcon={getMoodIcon}
                                             getMoodColor={getMoodColor}
                                             formatTimeAgo={formatTimeAgo}
                                             moods={MOODS}
@@ -756,7 +682,7 @@ export default function RantApp() {
                                             onClick={() => setShowFilters(!showFilters)}
                                             className="flex-1 flex items-center space-x-2 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 relative"
                                         >
-                                            <List weight="duotone" className="w-4 h-4" />
+                                            <SmileySticker weight="duotone" className="w-4 h-4" />
                                             <span>Filters</span>
                                             {/* Active filter count badge */}
                                             {(moodFilter || sortFilter !== 'latest' || followedTags.size > 0 || searchQuery.length > 0) && (
@@ -783,7 +709,7 @@ export default function RantApp() {
                                                     setSearchQuery("");
                                                 }}
                                             >
-                                                <X className="w-4 h-4 mr-1" />
+                                                <SmileySticker className="w-4 h-4 mr-1" />
                                                 <span>Clear</span>
                                             </Button>
                                         )}
@@ -808,7 +734,7 @@ export default function RantApp() {
                             </CardContent>
                         </Card>
 
-                        {/* Masonry Grid Rants Feed */}
+                        {/* Masonry Grid or Virtualized List Rants Feed */}
                         {filteredRants.length === 0 ? (
                             <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
                                 <CardContent className="pt-6 text-center">
@@ -819,6 +745,44 @@ export default function RantApp() {
                                     </p>
                                 </CardContent>
                             </Card>
+                        ) : isVirtualized ? (
+                            <VirtualizedList
+                                height={800}
+                                itemCount={filteredRants.length}
+                                itemSize={340}
+                                width={"100%"}
+                                className="w-full"
+                            >
+                                {({ index, style }: ListChildComponentProps) => (
+                                    <div style={style} key={filteredRants[index].id}>
+                                        <EnhancedRantCard
+                                            rant={filteredRants[index]}
+                                            onLike={likeRant}
+                                            onBookmark={toggleBookmark}
+                                            onReport={reportRant}
+                                            onShare={shareRant}
+                                            onBlockUser={blockUser}
+                                            onFollowTag={followTag}
+                                            onCommentPost={handleCommentPost}
+                                            onCommentLike={handleCommentLike}
+                                            isLiked={likedRants.has(filteredRants[index].id)}
+                                            isBookmarked={bookmarkedRants.has(filteredRants[index].id)}
+                                            isUserBlocked={blockedUsers.has(filteredRants[index].anonymous_id)}
+                                            followedTags={followedTags}
+                                            getMoodIcon={getMoodIcon}
+                                            getMoodColor={getMoodColor}
+                                            formatTimeAgo={formatTimeAgo}
+                                            moods={MOODS}
+                                            showSentiment={true}
+                                            showModeration={true}
+                                            comments={comments[filteredRants[index].id] || []}
+                                            showBookmark={true}
+                                            showReport={true}
+                                            showShare={true}
+                                        />
+                                    </div>
+                                )}
+                            </VirtualizedList>
                         ) : (
                             <MasonryGrid columns={2} gap={20} className="w-full">
                                 {filteredRants.map((rant) => (
@@ -837,7 +801,7 @@ export default function RantApp() {
                                         isBookmarked={bookmarkedRants.has(rant.id)}
                                         isUserBlocked={blockedUsers.has(rant.anonymous_id)}
                                         followedTags={followedTags}
-                                        getMoodEmoji={getMoodEmoji}
+                                        getMoodIcon={getMoodIcon}
                                         getMoodColor={getMoodColor}
                                         formatTimeAgo={formatTimeAgo}
                                         moods={MOODS}
@@ -889,19 +853,19 @@ export default function RantApp() {
             {/* Bottom Navigation Bar for Mobile */}
             <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/90 dark:bg-gray-900/90 border-t border-gray-200 dark:border-gray-700 flex justify-around items-center h-16 md:hidden backdrop-blur shadow-lg">
                 <Link href="/trending" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/trending" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
-                    <TrendUp weight="duotone" className="w-6 h-6 mb-1" />
+                    <SmileySticker weight="duotone" className="w-6 h-6 mb-1" />
                     <span className="text-xs">Trending</span>
                 </Link>
                 <Link href="/challenges" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/challenges" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
-                    <Trophy weight="duotone" className="w-6 h-6 mb-1" />
+                    <SmileySticker weight="duotone" className="w-6 h-6 mb-1" />
                     <span className="text-xs">Challenges</span>
                 </Link>
                 <Link href="/leaderboard" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/leaderboard" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
-                    <Lightning weight="duotone" className="w-6 h-6 mb-1" />
+                    <SmileySticker weight="duotone" className="w-6 h-6 mb-1" />
                     <span className="text-xs">Leaderboard</span>
                 </Link>
                 <Link href="/bookmarks" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/bookmarks" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
-                    <Star weight="duotone" className="w-6 h-6 mb-1" />
+                    <SmileySticker weight="duotone" className="w-6 h-6 mb-1" />
                     <span className="text-xs">Bookmarks</span>
                 </Link>
             </nav>
@@ -952,18 +916,17 @@ export default function RantApp() {
 
             {/* Footer */}
             <footer className="fixed bottom-0 left-0 w-full z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-t border-gray-200 dark:border-gray-700 mt-12 md:block hidden">
-                <div className="container mx-auto px-4 py-8 max-w-7xl">
+                <div className="container mx-auto px-4 py-4 max-w-7xl">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-gray-500 dark:text-gray-400 text-sm items-center">
                         {/* Column 1: Branding */}
                         <div className="text-center md:text-left">
-                            <p className="mb-2 font-semibold text-gray-700 dark:text-gray-200">Rant - Anonymous. Safe. Expressive.</p>
                             <p>Your thoughts matter. Share them freely.</p>
                         </div>
                         {/* Column 2: Navigation Links */}
                         <div className="flex flex-col md:flex-row justify-center items-center gap-2 md:gap-6">
                             <Link href="/privacy" className="hover:text-purple-600 dark:hover:text-purple-400">Privacy</Link>
+                            <Link href="/terms-of-service" className="hover:text-purple-600 dark:hover:text-purple-400">Terms of Service</Link>
                             <Link href="/guidelines" className="hover:text-purple-600 dark:hover:text-purple-400">Guidelines</Link>
-
                         </div>
                     </div>
                 </div>

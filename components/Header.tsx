@@ -18,13 +18,15 @@ export default function Header({ userLevel, theme, toggleTheme, pathname }: Head
             <div className="container mx-auto px-4 py-4 max-w-7xl">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
-                        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Rant 💭</h1>
-                        <Badge
+                        <Link href="/">
+                            <h1 className="text-2xl font-bold text-gray-800 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors">Rant 💭</h1>
+                        </Link>
+                        {/* <Badge
                             variant="secondary"
                             className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
                         >
                             Anonymous
-                        </Badge>
+                        </Badge> */}
                         {userLevel > 1 && (
                             <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
                                 <Star weight="duotone" className="w-3 h-3 mr-1" />

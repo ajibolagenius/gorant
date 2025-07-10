@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { generateUUID, generateFriendlyAnonymousName } from "../lib/utils"
+import { storageGet, storageSet } from "@/lib/storage"
 
 interface AnonymousUser {
     id: string
@@ -16,16 +17,16 @@ export function useAnonymousUser(): AnonymousUser {
     const [user, setUser] = useState<AnonymousUser>({ id: "", name: "" })
 
     useEffect(() => {
-        let id = localStorage.getItem("anonymous_user_id")
-        let name = localStorage.getItem("anonymous_user_name")
+        let id = storageGet<string>("anonymous_user_id")
+        let name = storageGet<string>("anonymous_user_name")
 
         if (!id) {
             id = generateUUID()
-            localStorage.setItem("anonymous_user_id", id)
+            storageSet("anonymous_user_id", id)
         }
         if (!name) {
             name = generateFriendlyAnonymousName()
-            localStorage.setItem("anonymous_user_name", name)
+            storageSet("anonymous_user_name", name)
         }
         setUser({ id, name })
     }, [])

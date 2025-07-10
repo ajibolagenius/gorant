@@ -1,3 +1,5 @@
+import { storageGet, storageSet } from "@/lib/storage"
+
 interface UserPreferences {
     favoriteTopics: string[]
     preferredMoods: string[]
@@ -58,9 +60,9 @@ export class PersonalizationService {
     }
 
     private static getUserPreferences(userId: string): UserPreferences {
-        const saved = localStorage.getItem(`preferences_${userId}`)
+        const saved = storageGet<UserPreferences>(`preferences_${userId}`)
         if (saved) {
-            return JSON.parse(saved)
+            return saved
         }
 
         return {
@@ -79,7 +81,7 @@ export class PersonalizationService {
     static updateUserPreferences(userId: string, preferences: Partial<UserPreferences>) {
         const current = this.getUserPreferences(userId)
         const updated = { ...current, ...preferences }
-        localStorage.setItem(`preferences_${userId}`, JSON.stringify(updated))
+        storageSet(`preferences_${userId}`, updated)
     }
 
     static getPersonalizedTags(userId: string, allTags: string[]): string[] {

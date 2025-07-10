@@ -1,113 +1,115 @@
 "use client"
 
-import type React from "react"
+import React from "react"
 
 import { useState, useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
 
 interface MasonryGridProps {
-  children: React.ReactNode[]
-  columns?: number
-  gap?: number
-  className?: string
+    children: React.ReactNode[]
+    columns?: number
+    gap?: number
+    className?: string
 }
 
-export function MasonryGrid({ children, columns = 3, gap = 16, className }: MasonryGridProps) {
-  const [columnHeights, setColumnHeights] = useState<number[]>([])
-  const [itemPositions, setItemPositions] = useState<{ top: number; left: number; width: number }[]>([])
-  const containerRef = useRef<HTMLDivElement>(null)
-  const itemRefs = useRef<(HTMLDivElement | null)[]>([])
+const MasonryGridComponent = ({ children, columns = 3, gap = 16, className }: MasonryGridProps) => {
+    const [columnHeights, setColumnHeights] = useState<number[]>([])
+    const [itemPositions, setItemPositions] = useState<{ top: number; left: number; width: number }[]>([])
+    const containerRef = useRef<HTMLDivElement>(null)
+    const itemRefs = useRef<(HTMLDivElement | null)[]>([])
 
-  // Responsive columns
-  const getColumns = () => {
-    if (typeof window === "undefined") return columns
-    const width = window.innerWidth
-    if (width < 640) return 1
-    if (width < 1024) return 2
-    return columns
-  }
-
-  const [currentColumns, setCurrentColumns] = useState(getColumns())
-
-  useEffect(() => {
-    const handleResize = () => {
-      setCurrentColumns(getColumns())
+    // Responsive columns
+    const getColumns = () => {
+        if (typeof window === "undefined") return columns
+        const width = window.innerWidth
+        if (width < 640) return 1
+        if (width < 1024) return 2
+        return columns
     }
 
-    window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
-  }, [columns])
+    const [currentColumns, setCurrentColumns] = useState(getColumns())
 
-  useEffect(() => {
-    const calculateLayout = () => {
-      if (!containerRef.current) return
-
-      const containerWidth = containerRef.current.offsetWidth
-      const columnWidth = (containerWidth - gap * (currentColumns - 1)) / currentColumns
-      const heights = new Array(currentColumns).fill(0)
-      const positions: { top: number; left: number; width: number }[] = []
-
-      itemRefs.current.forEach((item, index) => {
-        if (!item) return
-
-        // Find the shortest column
-        const shortestColumnIndex = heights.indexOf(Math.min(...heights))
-        const left = shortestColumnIndex * (columnWidth + gap)
-        const top = heights[shortestColumnIndex]
-
-        positions[index] = {
-          top,
-          left,
-          width: columnWidth,
+    useEffect(() => {
+        const handleResize = () => {
+            setCurrentColumns(getColumns())
         }
 
-        // Update column height
-        heights[shortestColumnIndex] += item.offsetHeight + gap
-      })
+        window.addEventListener("resize", handleResize)
+        return () => window.removeEventListener("resize", handleResize)
+    }, [columns])
 
-      setColumnHeights(heights)
-      setItemPositions(positions)
+    useEffect(() => {
+        const calculateLayout = () => {
+            if (!containerRef.current) return
 
-      // Set container height
-      if (containerRef.current) {
-        containerRef.current.style.height = `${Math.max(...heights)}px`
-      }
-    }
+            const containerWidth = containerRef.current.offsetWidth
+            const columnWidth = (containerWidth - gap * (currentColumns - 1)) / currentColumns
+            const heights = new Array(currentColumns).fill(0)
+            const positions: { top: number; left: number; width: number }[] = []
 
-    // Use ResizeObserver to recalculate when items change size
-    const resizeObserver = new ResizeObserver(() => {
-      setTimeout(calculateLayout, 100) // Small delay to ensure DOM updates
-    })
+            itemRefs.current.forEach((item, index) => {
+                if (!item) return
 
-    itemRefs.current.forEach((item) => {
-      if (item) resizeObserver.observe(item)
-    })
+                // Find the shortest column
+                const shortestColumnIndex = heights.indexOf(Math.min(...heights))
+                const left = shortestColumnIndex * (columnWidth + gap)
+                const top = heights[shortestColumnIndex]
 
-    calculateLayout()
+                positions[index] = {
+                    top,
+                    left,
+                    width: columnWidth,
+                }
 
-    return () => {
-      resizeObserver.disconnect()
-    }
-  }, [children, currentColumns, gap])
+                // Update column height
+                heights[shortestColumnIndex] += item.offsetHeight + gap
+            })
 
-  return (
-    <div ref={containerRef} className={cn("relative w-full", className)} style={{ minHeight: "200px" }}>
-      {children.map((child, index) => (
-        <div
-          key={index}
-          ref={(el) => (itemRefs.current[index] = el)}
-          className="absolute transition-all duration-300 ease-in-out"
-          style={{
-            top: itemPositions[index]?.top || 0,
-            left: itemPositions[index]?.left || 0,
-            width: itemPositions[index]?.width || "100%",
-            transform: itemPositions[index] ? "translateZ(0)" : "translateY(20px)",
-            opacity: itemPositions[index] ? 1 : 0,
-          }}
-        >
-          {child}
+            setColumnHeights(heights)
+            setItemPositions(positions)
+
+            // Set container height
+            if (containerRef.current) {
+                containerRef.current.style.height = `${Math.max(...heights)}px`
+            }
+        }
+
+        // Use ResizeObserver to recalculate when items change size
+        const resizeObserver = new ResizeObserver(() => {
+            setTimeout(calculateLayout, 100) // Small delay to ensure DOM updates
+        })
+
+        itemRefs.current.forEach((item) => {
+            if (item) resizeObserver.observe(item)
+        })
+
+        calculateLayout()
+
+        return () => {
+            resizeObserver.disconnect()
+        }
+    }, [children, currentColumns, gap])
+
+    return (
+        <div ref={containerRef} className={cn("relative w-full", className)} style={{ minHeight: "200px" }}>
+            {children.map((child, index) => (
+                <div
+                    key={index}
+                    ref={(el) => (itemRefs.current[index] = el)}
+                    className="absolute transition-all duration-300 ease-in-out"
+                    style={{
+                        top: itemPositions[index]?.top || 0,
+                        left: itemPositions[index]?.left || 0,
+                        width: itemPositions[index]?.width || "100%",
+                        transform: itemPositions[index] ? "translateZ(0)" : "translateY(20px)",
+                        opacity: itemPositions[index] ? 1 : 0,
+                    }}
+                >
+                    {child}
+                </div>
+            ))}
         </div>
-      ))}
-    </div>
-  )
+    )
 }
+
+export const MasonryGrid = React.memo(MasonryGridComponent)
