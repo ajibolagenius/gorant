@@ -29,6 +29,7 @@ A comprehensive guide to the visual and interaction standards for the Rant platf
 - **Font Family:**
   - Headings: `Montserrat`, sans-serif (Google Fonts)
   - Body: `Lora`, serif (Google Fonts)
+  - Pills/Buttons: `JetBrains Mono`, monospace (Google Fonts, recommended for clarity and modern look)
 - **Font Sizes:**
   - `text-xs` (0.75rem/12px) – tags, pills, badges
   - `text-sm` (0.875rem/14px) – UI, buttons, search
@@ -70,6 +71,13 @@ A comprehensive guide to the visual and interaction standards for the Rant platf
 - **Pill (Mood, Trending, Sentiment, Verified):** `text-xs px-2 py-0.5 font-medium` (smaller, subtle)
 - **Reputation:** `inline-flex items-center text-yellow-700 dark:text-yellow-300` with tooltip modal `border-yellow-400`
 
+### Mood Pills & Badges
+- Mood icons are always duotone and colored according to their mood
+- Pills and badges use the mood color for both background and icon
+
+### Rant of the Day
+- No likes or comments UI is shown on the Rant of the Day card—only the mood icon, title, and content
+
 ---
 
 ## 🖼️ UI Patterns
@@ -98,10 +106,12 @@ A comprehensive guide to the visual and interaction standards for the Rant platf
 
 ## 🖌️ Iconography
 
-- **Library:** [Phosphor Icons](https://phosphoricons.com/?weight=duotone)
-- **Style:** Duotone
+- **Library:** [Phosphor Icons](https://phosphoricons.com/?weight=duotone) and [Lucide Icons](https://lucide.dev/)
+- **Style:** Duotone for moods and actions, consistent with mood color
 - **Usage:**
   - All navigation, sidebar, and action icons use `weight="duotone"`
+  - Mood icons are always duotone and colored according to their mood (e.g., blue for sad, yellow for happy, etc.)
+  - Close actions use the `X` icon, filter actions use the `Filter` icon, and clear actions use the `Eraser` icon for clarity
   - Neutral: `text-gray-500 dark:text-gray-300`
   - Active: `text-purple-600 dark:text-purple-400`
   - Hover: `hover:text-purple-600 dark:hover:text-purple-400`

@@ -17,7 +17,7 @@ import {
     Confetti,
     SmileySticker
 } from "phosphor-react"
-import { HelpCircle, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, MoreHorizontal, Dot, GripVertical, Search, PanelLeft, Award, MessageCircle, Send } from "lucide-react"
+import { HelpCircle, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, MoreHorizontal, Dot, GripVertical, Search, PanelLeft, Award, MessageCircle, Send, X, Filter, Eraser } from "lucide-react"
 import { toast } from "sonner"
 import confetti from "canvas-confetti"
 import Link from "next/link"
@@ -36,7 +36,7 @@ import { getAnonymousId, normalizeRant } from "@/lib/utils"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { SidebarContent } from "@/components/sidebar-content"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
-import { usePathname } from "next/navigation"
+import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { useSettings } from "@/hooks/use-settings"
 import { useFilteredRants } from "@/hooks/use-filtered-rants"
 import { storageSet } from "@/lib/storage"
@@ -210,6 +210,33 @@ const FILTER_OPTIONS = [
     { icon: Award, label: "Recommended", value: "recommended" },
 ]
 
+// ErrorBoundary component
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+    constructor(props: { children: React.ReactNode }) {
+        super(props)
+        this.state = { hasError: false }
+    }
+    static getDerivedStateFromError() {
+        return { hasError: true }
+    }
+    componentDidCatch(error: any, errorInfo: any) {
+        // Log error if needed
+        console.error("ErrorBoundary caught an error:", error, errorInfo)
+    }
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800">
+                    <h2 className="text-2xl font-bold mb-4 text-red-600">Something went wrong.</h2>
+                    <p className="text-gray-700 dark:text-gray-300 mb-6">An unexpected error occurred. Please refresh the page or try again later.</p>
+                    <Button onClick={() => window.location.reload()}>Reload</Button>
+                </div>
+            )
+        }
+        return this.props.children
+    }
+}
+
 export default function RantApp() {
     const [rants, setRants] = useState<Rant[]>(mockRants)
     // Remove filteredRants state, use hook instead
@@ -242,7 +269,29 @@ export default function RantApp() {
     const { theme, toggleTheme } = useTheme()
     const { userPoints, userLevel, addPoints, checkAchievements } = useGameification()
     const { fontSize, contrast, screenReaderMode, updateAccessibility } = useAccessibility()
+    const router = useRouter()
+    const searchParams = useSearchParams()
     const pathname = usePathname()
+
+    // Initialize state from URL on mount
+    useEffect(() => {
+        const urlSearch = searchParams.get("search") || ""
+        const urlMood = searchParams.get("mood") || ""
+        const urlSort = searchParams.get("sort") || "latest"
+        setSearchQuery(urlSearch)
+        setMoodFilter(urlMood)
+        setSortFilter(urlSort)
+    }, [])
+
+    // Update URL when filters/search change
+    useEffect(() => {
+        const params = new URLSearchParams()
+        if (searchQuery) params.set("search", searchQuery)
+        if (moodFilter) params.set("mood", moodFilter)
+        if (sortFilter && sortFilter !== "latest") params.set("sort", sortFilter)
+        const query = params.toString()
+        router.replace(query ? `/?${query}` : "/", { scroll: false })
+    }, [searchQuery, moodFilter, sortFilter])
 
     // Load settings from localStorage on mount
     useEffect(() => {
@@ -336,7 +385,10 @@ export default function RantApp() {
             }
 
             // Supabase implementation would go here
-            const { data, error } = await supabase.from("rants").select("*").order("created_at", { ascending: false })
+            const { data, error } = await supabase
+                .from("rants")
+                .select("id, content, mood, created_at, likes_count, comments_count, anonymous_id, tags, is_trending, sentiment_score, moderation_status, reputation_impact, reported, moderation_score")
+                .order("created_at", { ascending: false })
 
             if (error) throw error
 
@@ -518,245 +570,269 @@ export default function RantApp() {
     }
 
     return (
-        <div
-            className={`min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800 transition-colors ${fontSize} ${contrast}`}
-            style={{ fontSize: fontSize === "text-lg" ? "1.125rem" : fontSize === "text-xl" ? "1.25rem" : "1rem" }}
-        >
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{
-                    __html: JSON.stringify({
-                        "@context": "https://schema.org",
-                        "@type": "WebSite",
-                        "name": "Rant - Anonymous Expression Platform",
-                        "url": "https://gorant.live/",
-                        "description": "A safe, anonymous space to express your thoughts and feelings. Join the community and share your story anonymously.",
-                        "publisher": {
-                            "@type": "Organization",
-                            "name": "Rant Team",
-                            "url": "https://gorant.live/"
-                        }
-                    })
-                }}
-            />
-            {/* Main Content */}
-            <div className="container mx-auto px-4 py-8 max-w-7xl pb-32">
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                    {/* Main Content */}
-                    <div className="lg:col-span-3 space-y-6">
-                        {/* Rant of the Day */}
-                        {rantOfTheDay && (
-                            <>
-                                <Card
-                                    className="shadow-lg border-0 bg-gradient-to-r from-yellow-100 to-orange-100 dark:from-yellow-900/30 dark:to-orange-900/30 dark:border-yellow-800/30 cursor-pointer relative"
-                                    onClick={() => setShowRantOfTheDayModal(true)}
-                                >
-                                    <button
-                                        onClick={e => { e.stopPropagation(); setRantOfTheDay(null); }}
-                                        aria-label="Close Rant of the Day"
-                                        className="absolute top-3 right-3 z-10 p-1 rounded-full hover:bg-yellow-200 dark:hover:bg-yellow-800 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+        <ErrorBoundary>
+            <div
+                className={`min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800 transition-colors ${fontSize} ${contrast}`}
+                style={{ fontSize: fontSize === "text-lg" ? "1.125rem" : fontSize === "text-xl" ? "1.25rem" : "1rem" }}
+            >
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{
+                        __html: JSON.stringify({
+                            "@context": "https://schema.org",
+                            "@type": "WebSite",
+                            "name": "Rant - Anonymous Expression Platform",
+                            "url": "https://gorant.live/",
+                            "description": "A safe, anonymous space to express your thoughts and feelings. Join the community and share your story anonymously.",
+                            "publisher": {
+                                "@type": "Organization",
+                                "name": "Rant Team",
+                                "url": "https://gorant.live/"
+                            }
+                        })
+                    }}
+                />
+                {/* Main Content */}
+                <div className="container mx-auto px-4 py-8 max-w-7xl pb-32">
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                        {/* Main Content */}
+                        <div className="lg:col-span-3 space-y-6">
+                            {/* Rant of the Day */}
+                            {rantOfTheDay && (
+                                <>
+                                    <Card
+                                        className="shadow-lg border-0 bg-gradient-to-r from-yellow-100 to-orange-100 dark:from-yellow-900/30 dark:to-orange-900/30 dark:border-yellow-800/30 cursor-pointer relative"
+                                        onClick={() => setShowRantOfTheDayModal(true)}
                                     >
-                                        <SmileySticker className="w-5 h-5 text-yellow-700 dark:text-yellow-300" />
-                                    </button>
-                                    <CardHeader>
-                                        <div className="flex items-center space-x-2">
-                                            <SmileySticker weight="duotone" className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
-                                            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Rant of the Day</h2>
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="flex items-start space-x-3">
-                                            <div className="text-2xl">{React.createElement(getMoodIcon(rantOfTheDay.mood), { weight: 'duotone', className: 'w-5 h-5' })}</div>
-                                            <div className="flex-1">
-                                                <p className="text-gray-800 dark:text-gray-200 mb-2 line-clamp-3">{rantOfTheDay.content}</p>
-                                                <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-300">
-                                                    <span className="flex items-center">
-                                                        <SmileySticker weight="duotone" className="w-4 h-4 mr-1" />
-                                                        {rantOfTheDay.likes_count} likes
-                                                    </span>
-                                                    <span className="flex items-center">
-                                                        <MessageCircle className="w-4 h-4 mr-1" />
-                                                        {rantOfTheDay.comments_count} comments
-                                                    </span>
+                                        <button
+                                            onClick={e => { e.stopPropagation(); setRantOfTheDay(null); }}
+                                            aria-label="Close Rant of the Day"
+                                            className="absolute top-3 right-3 z-10 p-1 rounded-full hover:bg-yellow-200 dark:hover:bg-yellow-800 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                                        >
+                                            <X className="w-5 h-5 text-yellow-700 dark:text-yellow-300" />
+                                        </button>
+                                        <CardHeader>
+                                            <div className="flex items-center space-x-2">
+                                                <SmileySticker weight="duotone" className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+                                                <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Rant of the Day</h2>
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="flex items-start space-x-3">
+                                                <div className="text-2xl">{React.createElement(getMoodIcon(rantOfTheDay.mood), { weight: 'duotone', className: 'w-5 h-5' })}</div>
+                                                <div className="flex-1">
+                                                    <p className="text-gray-800 dark:text-gray-200 mb-2 line-clamp-3">{rantOfTheDay.content}</p>
+                                                    {/* Removed likes and comments UI here */}
                                                 </div>
                                             </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                                <Dialog open={showRantOfTheDayModal} onOpenChange={setShowRantOfTheDayModal}>
-                                    <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-                                        <DialogHeader>
-                                            <DialogTitle className="text-xl font-semibold flex items-center gap-2">
-                                                <SmileySticker weight="duotone" className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
-                                                Rant of the Day
-                                            </DialogTitle>
-                                        </DialogHeader>
-                                        {/* Only show EnhancedRantCard, remove duplicate content */}
-                                        <EnhancedRantCard
-                                            rant={rantOfTheDay}
-                                            onLike={likeRant}
-                                            onBookmark={toggleBookmark}
-                                            onReport={reportRant}
-                                            onShare={shareRant}
-                                            onBlockUser={blockUser}
-                                            onFollowTag={followTag}
-                                            onCommentPost={handleCommentPost}
-                                            onCommentLike={handleCommentLike}
-                                            isLiked={likedRants.has(rantOfTheDay.id)}
-                                            isBookmarked={bookmarkedRants.has(rantOfTheDay.id)}
-                                            isUserBlocked={blockedUsers.has(rantOfTheDay.anonymous_id)}
-                                            followedTags={followedTags}
-                                            getMoodIcon={getMoodIcon}
-                                            getMoodColor={getMoodColor}
-                                            formatTimeAgo={formatTimeAgo}
-                                            moods={MOODS}
-                                            showSentiment={true}
-                                            showModeration={true}
-                                            comments={comments[rantOfTheDay.id] || []}
-                                            showBookmark={true}
-                                            showReport={true}
-                                            showShare={true}
-                                        />
-                                    </DialogContent>
-                                </Dialog>
-                            </>
-                        )}
+                                        </CardContent>
+                                    </Card>
+                                    <Dialog open={showRantOfTheDayModal} onOpenChange={setShowRantOfTheDayModal}>
+                                        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+                                            <DialogHeader>
+                                                <DialogTitle className="text-xl font-semibold flex items-center gap-2">
+                                                    <SmileySticker weight="duotone" className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+                                                    Rant of the Day
+                                                </DialogTitle>
+                                            </DialogHeader>
+                                            {/* Only show EnhancedRantCard, remove duplicate content */}
+                                            <EnhancedRantCard
+                                                rant={rantOfTheDay}
+                                                onLike={likeRant}
+                                                onBookmark={toggleBookmark}
+                                                onReport={reportRant}
+                                                onShare={shareRant}
+                                                onBlockUser={blockUser}
+                                                onFollowTag={followTag}
+                                                onCommentPost={handleCommentPost}
+                                                onCommentLike={handleCommentLike}
+                                                isLiked={likedRants.has(rantOfTheDay.id)}
+                                                isBookmarked={bookmarkedRants.has(rantOfTheDay.id)}
+                                                isUserBlocked={blockedUsers.has(rantOfTheDay.anonymous_id)}
+                                                followedTags={followedTags}
+                                                getMoodIcon={getMoodIcon}
+                                                getMoodColor={getMoodColor}
+                                                formatTimeAgo={formatTimeAgo}
+                                                moods={MOODS}
+                                                showSentiment={true}
+                                                showModeration={true}
+                                                comments={comments[rantOfTheDay.id] || []}
+                                                showBookmark={true}
+                                                showReport={true}
+                                                showShare={true}
+                                            />
+                                        </DialogContent>
+                                    </Dialog>
+                                </>
+                            )}
 
-                        {/* Welcome Message */}
-                        <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur">
-                            <CardContent className="pt-6">
-                                <div className="text-center">
-                                    <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
-                                        Welcome to Your Safe Space
-                                    </h2>
-                                    <p className="text-gray-600 dark:text-gray-300 mb-4">
-                                        Express yourself freely and anonymously. Your thoughts matter.
-                                    </p>
-                                    <Button
-                                        onClick={() => setShowPostModal(true)}
-                                        className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-600 text-white"
-                                    >
-                                        <Send className="w-4 h-4 mr-2" />
-                                        Share Your Thoughts
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Enhanced Search with Suggestions */}
-                        <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
-                            <CardContent className="pt-6">
-                                <div className="flex flex-col sm:flex-row gap-4">
-                                    {/* Search */}
-                                    <div className="relative w-full lg:w-2/3">
-                                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
-                                        <Input
-                                            placeholder="Search rants, tags, or users... (min 2 characters)"
-                                            value={searchQuery}
-                                            onChange={(e) => handleSearchChange(e.target.value)}
-                                            className="pl-10 border-gray-200 dark:border-gray-600 focus:border-purple-400 dark:focus:border-purple-500 dark:bg-gray-700 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
-                                        />
-                                        {/* Search Suggestions */}
-                                        {searchSuggestions.length > 0 && (
-                                            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md mt-1 shadow-lg">
-                                                {searchSuggestions.map((suggestion, index) => (
-                                                    <button
-                                                        key={index}
-                                                        className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm dark:text-gray-200"
-                                                        onClick={() => {
-                                                            setSearchQuery(suggestion.startsWith("#") ? suggestion.slice(1) : suggestion)
-                                                            setSearchSuggestions([])
-                                                        }}
-                                                    >
-                                                        {suggestion}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Filter Toggle */}
-                                    <div className="flex flex-row w-full gap-2 mb-2 sm:mb-0">
+                            {/* Welcome Message */}
+                            <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur">
+                                <CardContent className="pt-6">
+                                    <div className="text-center">
+                                        <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
+                                            Welcome to Your Safe Space
+                                        </h2>
+                                        <p className="text-gray-600 dark:text-gray-300 mb-4">
+                                            Express yourself freely and anonymously. Your thoughts matter.
+                                        </p>
                                         <Button
-                                            variant="outline"
-                                            onClick={() => setShowFilters(!showFilters)}
-                                            className="flex-1 flex items-center space-x-2 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 relative"
+                                            onClick={() => setShowPostModal(true)}
+                                            className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-600 text-white"
                                         >
-                                            <SmileySticker weight="duotone" className="w-4 h-4" />
-                                            <span>Filters</span>
-                                            {/* Active filter count badge */}
-                                            {(moodFilter || sortFilter !== 'latest' || followedTags.size > 0 || searchQuery.length > 0) && (
-                                                <span className="ml-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-600 text-white absolute -top-2 -right-2">
-                                                    {[
-                                                        moodFilter ? 1 : 0,
-                                                        sortFilter !== 'latest' ? 1 : 0,
-                                                        followedTags.size > 0 ? 1 : 0,
-                                                        searchQuery.length > 0 ? 1 : 0
-                                                    ].reduce((a, b) => a + b, 0)}
-                                                </span>
-                                            )}
+                                            <Send className="w-4 h-4 mr-2" />
+                                            Share Your Thoughts
                                         </Button>
-                                        {/* Clear filters button */}
-                                        {(moodFilter || sortFilter !== 'latest' || followedTags.size > 0 || searchQuery.length > 0) && (
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="flex-1 text-gray-500 dark:text-gray-300 hover:text-purple-600"
-                                                onClick={() => {
-                                                    setMoodFilter("");
-                                                    setSortFilter("latest");
-                                                    setFollowedTags(new Set());
-                                                    setSearchQuery("");
-                                                }}
-                                            >
-                                                <SmileySticker className="w-4 h-4 mr-1" />
-                                                <span>Clear</span>
-                                            </Button>
-                                        )}
                                     </div>
-                                </div>
-
-                                {/* Expandable Filters */}
-                                {showFilters && (
-                                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-                                        <FilterPanel
-                                            moods={MOODS}
-                                            moodFilter={moodFilter}
-                                            setMoodFilter={setMoodFilter}
-                                            sortFilter={sortFilter}
-                                            setSortFilter={setSortFilter}
-                                            filterOptions={FILTER_OPTIONS}
-                                            followedTags={followedTags}
-                                            onFollowTag={followTag}
-                                        />
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
-
-                        {/* Masonry Grid or Virtualized List Rants Feed */}
-                        {filteredRants.length === 0 ? (
-                            <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
-                                <CardContent className="pt-6 text-center">
-                                    <p className="text-gray-500 dark:text-gray-400">
-                                        {searchQuery.length >= 2 || moodFilter
-                                            ? "No rants match your filters"
-                                            : "No rants yet. Be the first to share!"}
-                                    </p>
                                 </CardContent>
                             </Card>
-                        ) : isVirtualized ? (
-                            <VirtualizedList
-                                height={800}
-                                itemCount={filteredRants.length}
-                                itemSize={340}
-                                width={"100%"}
-                                className="w-full"
-                            >
-                                {({ index, style }: ListChildComponentProps) => (
-                                    <div style={style} key={filteredRants[index].id}>
+
+                            {/* Enhanced Search with Suggestions */}
+                            <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
+                                <CardContent className="pt-6">
+                                    <div className="flex flex-col sm:flex-row gap-4">
+                                        {/* Search */}
+                                        <div className="relative w-full lg:w-2/3">
+                                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
+                                            <Input
+                                                placeholder="Search rants, tags, or users... (min 2 characters)"
+                                                value={searchQuery}
+                                                onChange={(e) => handleSearchChange(e.target.value)}
+                                                className="pl-10 border-gray-200 dark:border-gray-600 focus:border-purple-400 dark:focus:border-purple-500 dark:bg-gray-700 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                                            />
+                                            {/* Search Suggestions */}
+                                            {searchSuggestions.length > 0 && (
+                                                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md mt-1 shadow-lg">
+                                                    {searchSuggestions.map((suggestion, index) => (
+                                                        <button
+                                                            key={index}
+                                                            className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm dark:text-gray-200"
+                                                            onClick={() => {
+                                                                setSearchQuery(suggestion.startsWith("#") ? suggestion.slice(1) : suggestion)
+                                                                setSearchSuggestions([])
+                                                            }}
+                                                        >
+                                                            {suggestion}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Filter Toggle */}
+                                        <div className="flex flex-row w-full gap-2 mb-2 sm:mb-0">
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => setShowFilters(!showFilters)}
+                                                className="flex-1 flex items-center space-x-2 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 relative"
+                                            >
+                                                <Filter className="w-4 h-4" />
+                                                <span>Filters</span>
+                                                {/* Active filter count badge */}
+                                                {(moodFilter || sortFilter !== 'latest' || followedTags.size > 0 || searchQuery.length > 0) && (
+                                                    <span className="ml-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-600 text-white absolute -top-2 -right-2">
+                                                        {[
+                                                            moodFilter ? 1 : 0,
+                                                            sortFilter !== 'latest' ? 1 : 0,
+                                                            followedTags.size > 0 ? 1 : 0,
+                                                            searchQuery.length > 0 ? 1 : 0
+                                                        ].reduce((a, b) => a + b, 0)}
+                                                    </span>
+                                                )}
+                                            </Button>
+                                            {/* Clear filters button */}
+                                            {(moodFilter || sortFilter !== 'latest' || followedTags.size > 0 || searchQuery.length > 0) && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="flex-1 text-gray-500 dark:text-gray-300 hover:text-purple-600"
+                                                    onClick={() => {
+                                                        setMoodFilter("");
+                                                        setSortFilter("latest");
+                                                        setFollowedTags(new Set());
+                                                        setSearchQuery("");
+                                                    }}
+                                                >
+                                                    <Eraser className="w-4 h-4 mr-1" />
+                                                    <span>Clear</span>
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Expandable Filters */}
+                                    {showFilters && (
+                                        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                                            <FilterPanel
+                                                moods={MOODS}
+                                                moodFilter={moodFilter}
+                                                setMoodFilter={setMoodFilter}
+                                                sortFilter={sortFilter}
+                                                setSortFilter={setSortFilter}
+                                                filterOptions={FILTER_OPTIONS}
+                                                followedTags={followedTags}
+                                                onFollowTag={followTag}
+                                            />
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+
+                            {/* Masonry Grid or Virtualized List Rants Feed */}
+                            {filteredRants.length === 0 ? (
+                                <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
+                                    <CardContent className="pt-6 text-center">
+                                        <p className="text-gray-500 dark:text-gray-400">
+                                            {searchQuery.length >= 2 || moodFilter
+                                                ? "No rants match your filters"
+                                                : "No rants yet. Be the first to share!"}
+                                        </p>
+                                    </CardContent>
+                                </Card>
+                            ) : isVirtualized ? (
+                                <VirtualizedList
+                                    height={800}
+                                    itemCount={filteredRants.length}
+                                    itemSize={340}
+                                    width={"100%"}
+                                    className="w-full"
+                                >
+                                    {({ index, style }: ListChildComponentProps) => (
+                                        <div style={style} key={filteredRants[index].id}>
+                                            <EnhancedRantCard
+                                                rant={filteredRants[index]}
+                                                onLike={likeRant}
+                                                onBookmark={toggleBookmark}
+                                                onReport={reportRant}
+                                                onShare={shareRant}
+                                                onBlockUser={blockUser}
+                                                onFollowTag={followTag}
+                                                onCommentPost={handleCommentPost}
+                                                onCommentLike={handleCommentLike}
+                                                isLiked={likedRants.has(filteredRants[index].id)}
+                                                isBookmarked={bookmarkedRants.has(filteredRants[index].id)}
+                                                isUserBlocked={blockedUsers.has(filteredRants[index].anonymous_id)}
+                                                followedTags={followedTags}
+                                                getMoodIcon={getMoodIcon}
+                                                getMoodColor={getMoodColor}
+                                                formatTimeAgo={formatTimeAgo}
+                                                moods={MOODS}
+                                                showSentiment={true}
+                                                showModeration={true}
+                                                comments={comments[filteredRants[index].id] || []}
+                                                showBookmark={true}
+                                                showReport={true}
+                                                showShare={true}
+                                            />
+                                        </div>
+                                    )}
+                                </VirtualizedList>
+                            ) : (
+                                <MasonryGrid columns={2} gap={20} className="w-full">
+                                    {filteredRants.map((rant) => (
                                         <EnhancedRantCard
-                                            rant={filteredRants[index]}
+                                            key={rant.id}
+                                            rant={rant}
                                             onLike={likeRant}
                                             onBookmark={toggleBookmark}
                                             onReport={reportRant}
@@ -765,9 +841,9 @@ export default function RantApp() {
                                             onFollowTag={followTag}
                                             onCommentPost={handleCommentPost}
                                             onCommentLike={handleCommentLike}
-                                            isLiked={likedRants.has(filteredRants[index].id)}
-                                            isBookmarked={bookmarkedRants.has(filteredRants[index].id)}
-                                            isUserBlocked={blockedUsers.has(filteredRants[index].anonymous_id)}
+                                            isLiked={likedRants.has(rant.id)}
+                                            isBookmarked={bookmarkedRants.has(rant.id)}
+                                            isUserBlocked={blockedUsers.has(rant.anonymous_id)}
                                             followedTags={followedTags}
                                             getMoodIcon={getMoodIcon}
                                             getMoodColor={getMoodColor}
@@ -775,70 +851,17 @@ export default function RantApp() {
                                             moods={MOODS}
                                             showSentiment={true}
                                             showModeration={true}
-                                            comments={comments[filteredRants[index].id] || []}
+                                            comments={comments[rant.id] || []}
                                             showBookmark={true}
                                             showReport={true}
                                             showShare={true}
                                         />
-                                    </div>
-                                )}
-                            </VirtualizedList>
-                        ) : (
-                            <MasonryGrid columns={2} gap={20} className="w-full">
-                                {filteredRants.map((rant) => (
-                                    <EnhancedRantCard
-                                        key={rant.id}
-                                        rant={rant}
-                                        onLike={likeRant}
-                                        onBookmark={toggleBookmark}
-                                        onReport={reportRant}
-                                        onShare={shareRant}
-                                        onBlockUser={blockUser}
-                                        onFollowTag={followTag}
-                                        onCommentPost={handleCommentPost}
-                                        onCommentLike={handleCommentLike}
-                                        isLiked={likedRants.has(rant.id)}
-                                        isBookmarked={bookmarkedRants.has(rant.id)}
-                                        isUserBlocked={blockedUsers.has(rant.anonymous_id)}
-                                        followedTags={followedTags}
-                                        getMoodIcon={getMoodIcon}
-                                        getMoodColor={getMoodColor}
-                                        formatTimeAgo={formatTimeAgo}
-                                        moods={MOODS}
-                                        showSentiment={true}
-                                        showModeration={true}
-                                        comments={comments[rant.id] || []}
-                                        showBookmark={true}
-                                        showReport={true}
-                                        showShare={true}
-                                    />
-                                ))}
-                            </MasonryGrid>
-                        )}
-                    </div>
+                                    ))}
+                                </MasonryGrid>
+                            )}
+                        </div>
 
-                    {/* Sidebar */}
-                    <SidebarContent
-                        userPoints={userPoints}
-                        userLevel={userLevel}
-                        nextLevelPoints={userLevel * 100}
-                        followedTags={followedTags}
-                        followTag={followTag}
-                    />
-                </div>
-            </div>
-
-            {/* Floating Action Button for Mobile Sidebar */}
-            <button
-                className="fixed bottom-6 right-6 z-50 p-4 rounded-full bg-purple-600 text-white shadow-lg md:hidden hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-400 mb-20"
-                onClick={() => setSidebarOpen(true)}
-                aria-label="Open Sidebar"
-            >
-                <PanelLeft className="w-6 h-6" />
-            </button>
-            <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-                <SheetContent side="right" className="w-80 max-w-full p-0">
-                    <div className="p-4">
+                        {/* Sidebar */}
                         <SidebarContent
                             userPoints={userPoints}
                             userLevel={userLevel}
@@ -847,90 +870,112 @@ export default function RantApp() {
                             followTag={followTag}
                         />
                     </div>
-                </SheetContent>
-            </Sheet>
+                </div>
 
-            {/* Bottom Navigation Bar for Mobile */}
-            <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/90 dark:bg-gray-900/90 border-t border-gray-200 dark:border-gray-700 flex justify-around items-center h-16 md:hidden backdrop-blur shadow-lg">
-                <Link href="/trending" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/trending" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
-                    <SmileySticker weight="duotone" className="w-6 h-6 mb-1" />
-                    <span className="text-xs">Trending</span>
-                </Link>
-                <Link href="/challenges" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/challenges" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
-                    <SmileySticker weight="duotone" className="w-6 h-6 mb-1" />
-                    <span className="text-xs">Challenges</span>
-                </Link>
-                <Link href="/leaderboard" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/leaderboard" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
-                    <SmileySticker weight="duotone" className="w-6 h-6 mb-1" />
-                    <span className="text-xs">Leaderboard</span>
-                </Link>
-                <Link href="/bookmarks" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/bookmarks" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
-                    <SmileySticker weight="duotone" className="w-6 h-6 mb-1" />
-                    <span className="text-xs">Bookmarks</span>
-                </Link>
-            </nav>
-
-            {/* Enhanced Post Rant Modal */}
-            <PostRantModal
-                isOpen={showPostModal}
-                onClose={() => setShowPostModal(false)}
-                moods={MOODS}
-                onSubmit={async (content, mood, tags) => {
-                    // Content moderation check
-                    const isAppropriate = await moderateContent(content)
-                    if (!isAppropriate) return
-
-                    // Sentiment analysis
-                    const sentimentScore = await SentimentAnalysisService.analyzeSentiment(content)
-
-                    const newRant: Rant = {
-                        id: Date.now().toString(),
-                        content,
-                        mood,
-                        created_at: new Date().toISOString(),
-                        likes_count: 0,
-                        comments_count: 0,
-                        anonymous_id: getAnonymousId(),
-                        tags,
-                        sentiment_score: sentimentScore,
-                        moderation_status: "approved",
-                        reputation_impact: 3,
-                        reported: false,
-                        moderation_score: 1,
-                    }
-
-                    setRants((prev) => [newRant, ...prev])
-
-                    // Add points for posting
-                    addPoints(5, "post")
-                    checkAchievements("posts_created", rants.length + 1)
-
-                    toast.success("Your rant has been posted! +5 points")
-                    confetti({
-                        particleCount: 100,
-                        spread: 70,
-                        origin: { y: 0.6 },
-                    })
-                }}
-            />
-
-            {/* Footer */}
-            <footer className="fixed bottom-0 left-0 w-full z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-t border-gray-200 dark:border-gray-700 mt-12 md:block hidden">
-                <div className="container mx-auto px-4 py-4 max-w-7xl">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-gray-500 dark:text-gray-400 text-sm items-center">
-                        {/* Column 1: Branding */}
-                        <div className="text-center md:text-left">
-                            <p>Your thoughts matter. Share them freely.</p>
+                {/* Floating Action Button for Mobile Sidebar */}
+                <button
+                    className="fixed bottom-6 right-6 z-50 p-4 rounded-full bg-purple-600 text-white shadow-lg md:hidden hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-400 mb-20"
+                    onClick={() => setSidebarOpen(true)}
+                    aria-label="Open Sidebar"
+                >
+                    <PanelLeft className="w-6 h-6" />
+                </button>
+                <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+                    <SheetContent side="right" className="w-80 max-w-full p-0">
+                        <div className="p-4">
+                            <SidebarContent
+                                userPoints={userPoints}
+                                userLevel={userLevel}
+                                nextLevelPoints={userLevel * 100}
+                                followedTags={followedTags}
+                                followTag={followTag}
+                            />
                         </div>
-                        {/* Column 2: Navigation Links */}
-                        <div className="flex flex-col md:flex-row justify-center items-center gap-2 md:gap-6">
-                            <Link href="/privacy" className="hover:text-purple-600 dark:hover:text-purple-400">Privacy</Link>
-                            <Link href="/terms-of-service" className="hover:text-purple-600 dark:hover:text-purple-400">Terms of Service</Link>
-                            <Link href="/guidelines" className="hover:text-purple-600 dark:hover:text-purple-400">Guidelines</Link>
+                    </SheetContent>
+                </Sheet>
+
+                {/* Bottom Navigation Bar for Mobile */}
+                <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/90 dark:bg-gray-900/90 border-t border-gray-200 dark:border-gray-700 flex justify-around items-center h-16 md:hidden backdrop-blur shadow-lg">
+                    <Link href="/trending" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/trending" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
+                        <SmileySticker weight="duotone" className="w-6 h-6 mb-1" />
+                        <span className="text-xs">Trending</span>
+                    </Link>
+                    <Link href="/challenges" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/challenges" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
+                        <SmileySticker weight="duotone" className="w-6 h-6 mb-1" />
+                        <span className="text-xs">Challenges</span>
+                    </Link>
+                    <Link href="/leaderboard" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/leaderboard" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
+                        <SmileySticker weight="duotone" className="w-6 h-6 mb-1" />
+                        <span className="text-xs">Leaderboard</span>
+                    </Link>
+                    <Link href="/bookmarks" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/bookmarks" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
+                        <SmileySticker weight="duotone" className="w-6 h-6 mb-1" />
+                        <span className="text-xs">Bookmarks</span>
+                    </Link>
+                </nav>
+
+                {/* Enhanced Post Rant Modal */}
+                <PostRantModal
+                    isOpen={showPostModal}
+                    onClose={() => setShowPostModal(false)}
+                    moods={MOODS}
+                    onSubmit={async (content, mood, tags) => {
+                        // Content moderation check
+                        const isAppropriate = await moderateContent(content)
+                        if (!isAppropriate) return
+
+                        // Sentiment analysis
+                        const sentimentScore = await SentimentAnalysisService.analyzeSentiment(content)
+
+                        const newRant: Rant = {
+                            id: Date.now().toString(),
+                            content,
+                            mood,
+                            created_at: new Date().toISOString(),
+                            likes_count: 0,
+                            comments_count: 0,
+                            anonymous_id: getAnonymousId(),
+                            tags,
+                            sentiment_score: sentimentScore,
+                            moderation_status: "approved",
+                            reputation_impact: 3,
+                            reported: false,
+                            moderation_score: 1,
+                        }
+
+                        setRants((prev) => [newRant, ...prev])
+
+                        // Add points for posting
+                        addPoints(5, "post")
+                        checkAchievements("posts_created", rants.length + 1)
+
+                        toast.success("Your rant has been posted! +5 points")
+                        confetti({
+                            particleCount: 100,
+                            spread: 70,
+                            origin: { y: 0.6 },
+                        })
+                    }}
+                />
+
+                {/* Footer */}
+                <footer className="fixed bottom-0 left-0 w-full z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-t border-gray-200 dark:border-gray-700 mt-12 md:block hidden">
+                    <div className="container mx-auto px-4 py-4 max-w-7xl">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-gray-500 dark:text-gray-400 text-sm items-center">
+                            {/* Column 1: Branding */}
+                            <div className="text-center md:text-left">
+                                <p>Your thoughts matter. Share them freely.</p>
+                            </div>
+                            {/* Column 2: Navigation Links */}
+                            <div className="flex flex-col md:flex-row justify-center items-center gap-2 md:gap-6">
+                                <Link href="/privacy" className="hover:text-purple-600 dark:hover:text-purple-400">Privacy</Link>
+                                <Link href="/terms-of-service" className="hover:text-purple-600 dark:hover:text-purple-400">Terms of Service</Link>
+                                <Link href="/guidelines" className="hover:text-purple-600 dark:hover:text-purple-400">Guidelines</Link>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </footer>
-        </div>
+                </footer>
+            </div>
+        </ErrorBoundary>
     )
 }

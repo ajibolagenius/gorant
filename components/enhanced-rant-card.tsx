@@ -120,6 +120,24 @@ const EnhancedRantCardComponent = ({
     const [likedComments, setLikedComments] = useState<Set<string>>(new Set())
     const [isMobile, setIsMobile] = useState(false)
     const [showRepTooltip, setShowRepTooltip] = useState(false)
+    const [commentCooldown, setCommentCooldown] = useState(0)
+
+    // Cooldown logic for comments
+    useEffect(() => {
+        if (!showComments) return
+        const lastComment = localStorage.getItem("lastCommentPost")
+        if (lastComment) {
+            const diff = 10 - Math.floor((Date.now() - Number(lastComment)) / 1000)
+            if (diff > 0) setCommentCooldown(diff)
+        }
+    }, [showComments])
+
+    useEffect(() => {
+        if (commentCooldown > 0) {
+            const timer = setTimeout(() => setCommentCooldown(commentCooldown - 1), 1000)
+            return () => clearTimeout(timer)
+        }
+    }, [commentCooldown])
 
     useEffect(() => {
         setIsMobile(window.matchMedia('(pointer: coarse)').matches)
@@ -153,7 +171,7 @@ const EnhancedRantCardComponent = ({
     }
 
     const handleCommentSubmit = async () => {
-        if (!newComment.trim() || isPostingComment) return
+        if (!newComment.trim() || isPostingComment || commentCooldown > 0) return
 
         setIsPostingComment(true)
         try {
@@ -162,6 +180,9 @@ const EnhancedRantCardComponent = ({
             setLocalCommentsCount((prev) => prev + 1)
             setNewComment("")
             toast.success("Comment posted successfully!")
+            // Set cooldown
+            localStorage.setItem("lastCommentPost", Date.now().toString())
+            setCommentCooldown(10)
         } catch (error) {
             toast.error("Failed to post comment")
             console.error("Error posting comment:", error)
@@ -223,7 +244,7 @@ const EnhancedRantCardComponent = ({
                 <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-2 flex-wrap gap-2">
                         <Badge variant="secondary" className={`${getMoodColor(rant.mood)} text-xs px-2 py-0.5 font-medium`}>
-                            <MoodIcon weight="duotone" className="w-5 h-5 mr-1" />
+                            <MoodIcon weight="duotone" className={`w-5 h-5 mr-1 ${getMoodColor(rant.mood).replace(/bg-[^ ]+/, '').replace('text-', 'text-')}`} />
                             {moods.find((m) => m.value === rant.mood)?.label}
                         </Badge>
                         {rant.is_trending && (
@@ -402,7 +423,7 @@ const EnhancedRantCardComponent = ({
                                 <span className="text-xs text-gray-500 dark:text-gray-400">{newComment.length}/500 characters</span>
                                 <Button
                                     size="sm"
-                                    disabled={!newComment.trim() || isPostingComment}
+                                    disabled={!newComment.trim() || isPostingComment || commentCooldown > 0}
                                     onClick={handleCommentSubmit}
                                     className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-600 text-white"
                                 >
@@ -411,7 +432,7 @@ const EnhancedRantCardComponent = ({
                                     ) : (
                                         <Send className="w-4 h-4 mr-2" />
                                     )}
-                                    {isPostingComment ? "Posting..." : "Post Comment"}
+                                    {isPostingComment ? "Posting..." : commentCooldown > 0 ? `Wait ${commentCooldown}s` : "Post Comment"}
                                 </Button>
                             </div>
                         </div>

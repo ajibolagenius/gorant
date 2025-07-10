@@ -65,7 +65,7 @@ export function FilterPanel({
                                 : "hover:bg-purple-50 dark:hover:bg-purple-900"
                                 }`}
                         >
-                            <mood.icon weight="duotone" className="w-5 h-5 mr-1" />
+                            <mood.icon weight="duotone" className={`w-5 h-5 mr-1 ${mood.color.replace(/bg-[^ ]+/, '').replace('text-', 'text-')}`} />
                             {mood.label}
                         </Button>
                     ))}

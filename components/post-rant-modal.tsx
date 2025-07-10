@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -27,12 +27,31 @@ export function PostRantModal({ isOpen, onClose, moods, onSubmit }: PostRantModa
     const [selectedMood, setSelectedMood] = useState("")
     const [tags, setTags] = useState<string[]>([])
     const [tagInput, setTagInput] = useState("")
+    const [cooldown, setCooldown] = useState(0)
+
+    // Cooldown logic
+    useEffect(() => {
+        if (!isOpen) return
+        const lastPost = localStorage.getItem("lastRantPost")
+        if (lastPost) {
+            const diff = 10 - Math.floor((Date.now() - Number(lastPost)) / 1000)
+            if (diff > 0) setCooldown(diff)
+        }
+    }, [isOpen])
+
+    useEffect(() => {
+        if (cooldown > 0) {
+            const timer = setTimeout(() => setCooldown(cooldown - 1), 1000)
+            return () => clearTimeout(timer)
+        }
+    }, [cooldown])
 
     const handleSubmit = () => {
-        if (!content.trim() || !selectedMood) return
-
+        if (!content.trim() || !selectedMood || cooldown > 0) return
         onSubmit(content.trim(), selectedMood, tags)
-
+        // Set cooldown
+        localStorage.setItem("lastRantPost", Date.now().toString())
+        setCooldown(10)
         // Reset form
         setContent("")
         setSelectedMood("")
@@ -91,11 +110,11 @@ export function PostRantModal({ isOpen, onClose, moods, onSubmit }: PostRantModa
                                     size="sm"
                                     onClick={() => setSelectedMood(mood.value)}
                                     className={`${selectedMood === mood.value
-                                            ? "bg-purple-600 hover:bg-purple-700 text-white"
-                                            : "hover:bg-purple-50 dark:hover:bg-purple-900"
+                                        ? "bg-purple-600 hover:bg-purple-700 text-white"
+                                        : "hover:bg-purple-50 dark:hover:bg-purple-900"
                                         } justify-start`}
                                 >
-                                    <mood.icon weight="duotone" className="w-5 h-5 mr-2" />
+                                    <mood.icon weight="duotone" className={`w-5 h-5 mr-2 ${mood.color.replace(/bg-[^ ]+/, '').replace('text-', 'text-')}`} />
                                     {mood.label}
                                 </Button>
                             ))}
@@ -151,11 +170,11 @@ export function PostRantModal({ isOpen, onClose, moods, onSubmit }: PostRantModa
                         </Button>
                         <Button
                             onClick={handleSubmit}
-                            disabled={!content.trim() || !selectedMood}
+                            disabled={!content.trim() || !selectedMood || cooldown > 0}
                             className="bg-purple-600 hover:bg-purple-700 text-white"
                         >
                             <Send className="w-4 h-4 mr-2" />
-                            Post Rant
+                            {cooldown > 0 ? `Wait ${cooldown}s` : "Post Rant"}
                         </Button>
                     </div>
                 </div>

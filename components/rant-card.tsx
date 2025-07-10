@@ -139,7 +139,7 @@ export const RantCard = React.memo(function RantCard({
                 <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center space-x-2 flex-wrap gap-2">
                         <Badge variant="secondary" className={`${getMoodColor(rant.mood)} text-xs px-2 py-0.5 font-medium`}>
-                            <MoodIcon weight="duotone" className="w-5 h-5 mr-1" />
+                            <MoodIcon weight="duotone" className={`w-5 h-5 mr-1 ${getMoodColor(rant.mood).replace(/bg-[^ ]+/, '').replace('text-', 'text-')}`} />
                             {moods.find((m) => m.value === rant.mood)?.label}
                         </Badge>
                         {rant.is_trending && (
