@@ -297,7 +297,7 @@ export default function SettingsPage() {
                                 <Button variant="outline" asChild>
                                     <Link href="/guidelines">Community Guidelines</Link>
                                 </Button>
-                                <Button variant="destructive" onClick={handleDeleteAccount}>Delete Account</Button>
+                                <Button variant="destructive" onClick={handleDeleteAccount} className="w-full">Delete Account</Button>
                             </div>
                         </CardContent>
                     </Card>

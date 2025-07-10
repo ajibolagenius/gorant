@@ -114,7 +114,6 @@ By following this phased, tool-driven strategy, Rant will evolve into a visually
 - [ ] Scalability and fault tolerance
 - [ ] Backup and disaster
 
-
 ### Phase 3: Community Features 📋
 - [ ] User following system
 - [ ] Notification system
