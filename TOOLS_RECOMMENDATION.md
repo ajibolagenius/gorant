@@ -168,7 +168,6 @@ By integrating and prioritizing these tools, the Rant application will evolve fr
 
 ---
 
-``` md
 ## Enhancement Implementation Plan for 'Rant' Application
 
 ### 1. **Codebase Modifications**
@@ -236,10 +235,10 @@ By integrating and prioritizing these tools, the Rant application will evolve fr
   - Fix navigation links to/from trending page.
   - Validate like, bookmark, and report features on trending rants.
 
-### 10. **Community Features Implementation**
+### 10. **Community Features Implementation (add the comming soon pill to the features here)**
 - **Join Challenge:** Implement in `app/challenges/page.tsx` with join/leave logic.
 - **Support Group:** Add a support group join feature (new page/component).
-- **Crisis Hotline:** Integrate hotline info in footer, sidebar, or as a modal for quick access.
+- **Crisis Hotline:** Integrate hotline info in sidebar, or as a modal for quick access.
 
 ### 11. **Sidebar Accessibility & Sticky Footer**
 - **Sidebar:** On mobile, convert sidebar to a slide-in drawer or floating action button for easy access above the infinite feed.
@@ -248,35 +247,43 @@ By integrating and prioritizing these tools, the Rant application will evolve fr
 ### 12. **Phosphor Icons (Duotone) Integration**
 - **Action:** Replace all existing icons with Phosphor Icons in duotone style for visual consistency. Update imports and usage across all components.
 
-### 13. **Design System Document**
-- **Action:** Create `DESIGN_SYSTEM.md` including:
-  - Color palettes
-  - Typography
-  - Component styles
-  - UI patterns
-  - Iconography guidelines
-  - Accessibility standards
 
+### 14. Coming Soon
+- Weekly challenge card
+- Challenge page (including the nav link)
+- Support group page
+- Crisis hotline page
 ---
 
 **Note:** For each enhancement, document code changes, update relevant files, and ensure compatibility with the existing codebase. Test thoroughly to avoid regressions and maintain a seamless user experience.
 
----
+## 🎯 Roadmap
 
-## 9. **Trending Page Fix**
+### **Phase 1: Core Features** ✅
+- [x] Basic rant posting and viewing
+- [x] Mood-based categorization
+- [x] Tag system
+- [x] Like and comment functionality
+- [x] Responsive design
 
-- **Observation:** `app/trending/page.tsx` exists.
-- **Action:**
-  - Review trending logic (ensure correct rants are shown).
-  - Fix navigation links.
-  - Ensure like/bookmark/report work as expected.
+### **Phase 2: Enhanced UX** 🚧
+- [ ] Motion.js animations
+- [ ] Swiper for mobile browsing
+- [ ] Simple Analytics integration
+- [ ] Advanced filtering options
+- [ ] User preferences
 
----
+### **Phase 3: Community Features** 📋
+- [ ] User following system
+- [ ] Notification system
+- [ ] Content moderation tools
+- [ ] Reporting system
+- [ ] Community guidelines
 
-## 10. **Community Features Implementation**
-
-- **Join Challenge:** Implement in `app/challenges/page.tsx`.
-- **Support Group:** Add support group join feature (new page/component).
-- **Crisis Hotline:** Add hotline info (footer, sidebar, or modal).
-
-```
+### **Phase 4: Advanced Features** 🔮
+- [ ] AI-powered content suggestions
+- [ ] Sentiment analysis
+- [ ] Multi-language support
+- [ ] Video rant support
+- [ ] Mobile app (React Native)
+- [ ] Ads, sponsorships, and other monetization options

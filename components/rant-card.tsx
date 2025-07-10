@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -18,6 +18,7 @@ import {
     Eye,
     Shield,
     TrendingUp,
+    Star,
 } from "lucide-react"
 import type { Rant } from "@/components/enhanced-rant-card"
 import {
@@ -28,6 +29,8 @@ import {
     DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { SentimentAnalysisService } from "@/services/sentiment-analysis"
+import { Star as PhosphorStar } from "phosphor-react"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface RantCardProps {
     rant: Rant
@@ -47,6 +50,9 @@ interface RantCardProps {
     moods: Array<{ emoji: string; label: string; value: string; color: string }>
     showSentiment?: boolean
     showModeration?: boolean
+    showBookmark?: boolean // Show bookmark action (default true)
+    showReport?: boolean   // Show report action (default true)
+    showShare?: boolean    // Show share action (default true)
 }
 
 export function RantCard({
@@ -67,10 +73,19 @@ export function RantCard({
     moods,
     showSentiment = false,
     showModeration = false,
+    showBookmark = true,
+    showReport = true,
+    showShare = true,
 }: RantCardProps) {
     const [showComments, setShowComments] = useState(false)
     const [newComment, setNewComment] = useState("")
     const [showReportDialog, setShowReportDialog] = useState(false)
+    const [isMobile, setIsMobile] = useState(false)
+    const [showRepTooltip, setShowRepTooltip] = useState(false)
+
+    useEffect(() => {
+        setIsMobile(window.matchMedia('(pointer: coarse)').matches)
+    }, [])
 
     if (isUserBlocked) {
         return (
@@ -104,10 +119,10 @@ export function RantCard({
             <Badge
                 variant="outline"
                 className={`${label === "positive"
-                        ? "text-green-600 border-green-300 bg-green-50 dark:bg-green-900/20"
-                        : label === "negative"
-                            ? "text-red-600 border-red-300 bg-red-50 dark:bg-red-900/20"
-                            : "text-gray-600 border-gray-300 bg-gray-50 dark:bg-gray-700"
+                    ? "text-green-600 border-green-300 bg-green-50 dark:bg-green-900/20"
+                    : label === "negative"
+                        ? "text-red-600 border-red-300 bg-red-50 dark:bg-red-900/20"
+                        : "text-gray-600 border-gray-300 bg-gray-50 dark:bg-gray-700"
                     }`}
             >
                 {emoji} {label}
@@ -116,11 +131,11 @@ export function RantCard({
     }
 
     return (
-        <Card className="shadow-sm border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur hover:shadow-md transition-all duration-200">
+        <Card className="shadow-sm border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur hover:shadow-md transition-all duration-200 relative">
             <CardContent className="pt-6">
                 <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center space-x-2 flex-wrap gap-2">
-                        <Badge variant="secondary" className={getMoodColor(rant.mood)}>
+                        <Badge variant="secondary" className={`${getMoodColor(rant.mood)} text-xs px-2 py-0.5 font-medium`}>
                             {getMoodEmoji(rant.mood)} {moods.find((m) => m.value === rant.mood)?.label}
                         </Badge>
                         {rant.is_trending && (
@@ -149,19 +164,23 @@ export function RantCard({
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={handleShare}>
-                                    <Share2 className="mr-2 h-4 w-4" />
-                                    Share
-                                </DropdownMenuItem>
+                                {showShare && (
+                                    <DropdownMenuItem onClick={handleShare}>
+                                        <Share2 className="mr-2 h-4 w-4" />
+                                        Share
+                                    </DropdownMenuItem>
+                                )}
                                 <DropdownMenuItem onClick={() => onBlockUser(rant.anonymous_id)}>
                                     <UserX className="mr-2 h-4 w-4" />
                                     Block User
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => handleReport("inappropriate")}>
-                                    <Flag className="mr-2 h-4 w-4" />
-                                    Report
-                                </DropdownMenuItem>
+                                {showReport && (
+                                    <DropdownMenuItem onClick={() => handleReport("inappropriate")}>
+                                        <Flag className="mr-2 h-4 w-4" />
+                                        Report
+                                    </DropdownMenuItem>
+                                )}
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
@@ -176,9 +195,9 @@ export function RantCard({
                             <Badge
                                 key={index}
                                 variant="outline"
-                                className={`text-xs cursor-pointer transition-colors ${followedTags.has(tag)
-                                        ? "bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-900 dark:text-purple-200"
-                                        : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900"
+                                className={`text-xs px-2 py-0.5 border font-medium cursor-pointer transition-colors ${followedTags.has(tag)
+                                    ? "bg-purple-100 text-purple-800 border-purple-400 dark:bg-purple-900 dark:text-purple-200 dark:border-purple-400"
+                                    : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-400 dark:border-gray-500 hover:bg-purple-50 dark:hover:bg-purple-900"
                                     }`}
                                 onClick={() => onFollowTag(tag)}
                             >
@@ -190,15 +209,15 @@ export function RantCard({
 
                 <Separator className="mb-4" />
 
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
+                <div className="flex flex-row w-full items-center justify-between mt-4 gap-2">
+                    <div className="flex items-center gap-4 min-w-0">
                         <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => onLike(rant.id)}
                             className={`${isLiked
-                                    ? "text-red-600 hover:text-red-700 dark:text-red-400"
-                                    : "text-gray-600 hover:text-red-600 dark:text-gray-400"
+                                ? "text-red-600 hover:text-red-700 dark:text-red-400"
+                                : "text-gray-600 hover:text-red-600 dark:text-gray-400"
                                 }`}
                         >
                             <Heart className={`w-4 h-4 mr-1 ${isLiked ? "fill-current" : ""}`} />
@@ -215,27 +234,50 @@ export function RantCard({
                             {rant.comments_count}
                         </Button>
 
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onBookmark(rant.id)}
-                            className={`${isBookmarked
+                        {showBookmark && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onBookmark(rant.id)}
+                                className={`${isBookmarked
                                     ? "text-yellow-600 hover:text-yellow-700 dark:text-yellow-400"
                                     : "text-gray-600 hover:text-yellow-600 dark:text-gray-400"
-                                }`}
-                        >
-                            <Bookmark className={`w-4 h-4 ${isBookmarked ? "fill-current" : ""}`} />
-                        </Button>
+                                    }`}
+                            >
+                                <Bookmark className={`w-4 h-4 ${isBookmarked ? "fill-current" : ""}`} />
+                            </Button>
+                        )}
                     </div>
-
-                    <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap justify-end min-w-0">
+                        {rant.reputation_impact && (
+                            <Tooltip open={isMobile ? showRepTooltip : undefined} onOpenChange={isMobile ? setShowRepTooltip : undefined}>
+                                <TooltipTrigger asChild>
+                                    <span
+                                        className="inline-flex items-center text-yellow-700 dark:text-yellow-300 cursor-pointer"
+                                        onClick={isMobile ? () => setShowRepTooltip((v) => !v) : undefined}
+                                        aria-label="Reputation info"
+                                    >
+                                        <PhosphorStar weight="duotone" className="w-4 h-4 mr-0.5" />
+                                        +{rant.reputation_impact}
+                                    </span>
+                                </TooltipTrigger>
+                                <TooltipContent
+                                    side="top"
+                                    sideOffset={8}
+                                    className="bg-popover text-gray-900 dark:bg-gray-900 dark:text-white rounded-xl shadow-lg p-4 max-w-xs border border-yellow-400 dark:border-yellow-400 z-50 whitespace-normal break-words"
+                                >
+                                    <div className="mb-2 flex items-center gap-2">
+                                        <PhosphorStar weight="duotone" className="w-5 h-5 text-yellow-400" />
+                                        <span className="font-semibold text-base">Reputation</span>
+                                    </div>
+                                    <div className="text-sm text-gray-200 mb-2 whitespace-normal break-words">
+                                        Earned by positive community actions. Higher reputation unlocks more features and recognition.
+                                    </div>
+                                </TooltipContent>
+                            </Tooltip>
+                        )}
                         <Eye className="w-3 h-3" />
                         <span>{rant.anonymous_id}</span>
-                        {rant.reputation_impact && (
-                            <Badge variant="outline" className="text-xs">
-                                +{rant.reputation_impact} rep
-                            </Badge>
-                        )}
                     </div>
                 </div>
 

@@ -55,6 +55,7 @@ export default function BookmarksClient() {
                                 getMoodColor={() => ""}
                                 formatTimeAgo={() => ""}
                                 moods={[]}
+                                showBookmark={false}
                             />
                         ))}
                     </div>

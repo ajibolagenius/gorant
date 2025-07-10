@@ -1,12 +1,17 @@
 "use client"
 
 import { useState } from "react"
+import { toast } from "sonner"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { TrendUp, Clock, Calendar, Trophy } from "phosphor-react"
 import Link from "next/link"
 import { RantCard } from "@/components/rant-card"
+import type { Rant } from "@/components/enhanced-rant-card"
 
 const TRENDING_PERIODS = [
     { label: "Today", value: "today", icon: Clock },
@@ -73,6 +78,11 @@ export function TrendingClient() {
     const [trendingRants, setTrendingRants] = useState(mockTrendingRants)
     const [likedRants, setLikedRants] = useState<Set<string>>(new Set())
     const [bookmarkedRants, setBookmarkedRants] = useState<Set<string>>(new Set())
+    const [shareModalOpen, setShareModalOpen] = useState(false)
+    const [blockModalOpen, setBlockModalOpen] = useState(false)
+    // selectedRant: for share, it's a Rant; for block/report, it's a string (userId or rantId)
+    const [selectedRant, setSelectedRant] = useState<Rant | string | null>(null)
+    const [blockedUsers, setBlockedUsers] = useState<Set<string>>(new Set())
 
     const getMoodEmoji = (mood: string) => {
         return MOODS.find((m) => m.value === mood)?.emoji || "😐"
@@ -114,27 +124,63 @@ export function TrendingClient() {
         })
     }
 
-    const handleReport = (rantId: string) => {
-        console.log("Reported rant:", rantId)
+    // Advanced Handlers
+    const handleShare = (rant: Rant) => {
+        setSelectedRant(rant)
+        setShareModalOpen(true)
+    }
+    const handleBlockUser = (userId: string) => {
+        setSelectedRant(userId)
+        setBlockModalOpen(true)
+    }
+    type RantId = string;
+    const handleReport = (rantId: RantId) => {
+        toast.success("Rant reported. Thank you for helping keep the community safe.")
+        // Optionally, add logic to update state or send to backend here
+    }
+    const confirmBlockUser = () => {
+        if (typeof selectedRant === "string") {
+            setBlockedUsers((prev) => {
+                const newSet = new Set(prev)
+                if (selectedRant) newSet.add(selectedRant)
+                return newSet
+            })
+            setBlockModalOpen(false)
+            toast.success("User blocked. You won't see their rants anymore.")
+        }
+    }
+    const handleCopyLink = () => {
+        if (selectedRant && typeof selectedRant !== "string") {
+            navigator.clipboard.writeText(window.location.origin + "/rants/" + selectedRant.id)
+            toast.success("Link copied to clipboard!")
+        }
+    }
+    const handleNativeShare = () => {
+        if (selectedRant && typeof selectedRant !== "string" && typeof navigator.share === "function") {
+            navigator.share({
+                title: "Check out this rant!",
+                text: selectedRant.content,
+                url: window.location.origin + "/rants/" + selectedRant.id,
+            })
+            setShareModalOpen(false)
+        }
     }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800">
             {/* Header */}
-            <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-200 dark:border-gray-700">
-                <div className="container mx-auto px-4 py-6 max-w-6xl">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center">
-                                <TrendUp weight="duotone" className="w-8 h-8 mr-3 text-orange-500" />
-                                Trending Rants
-                            </h1>
-                            <p className="text-gray-600 dark:text-gray-300 mt-2">Discover what's resonating with the community</p>
-                        </div>
-                        <Link href="/">
-                            <Button variant="outline">Back to Feed</Button>
-                        </Link>
+            <div className="container mx-auto px-4 py-6 max-w-6xl">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center">
+                            <TrendUp weight="duotone" className="w-8 h-8 mr-3 text-orange-500" />
+                            Trending Rants
+                        </h1>
+                        <p className="text-gray-600 dark:text-gray-300 mt-2">Discover what's resonating with the community</p>
                     </div>
+                    <Link href="/">
+                        <Button variant="outline">Back to Feed</Button>
+                    </Link>
                 </div>
             </div>
 
@@ -175,22 +221,55 @@ export function TrendingClient() {
                                         rant={rant}
                                         onLike={handleLike}
                                         onBookmark={handleBookmark}
-                                        onReport={handleReport}
-                                        onShare={() => { }}
-                                        onBlockUser={() => { }}
+                                        onReport={() => handleReport(rant.id)}
+                                        onShare={() => handleShare(rant)}
+                                        onBlockUser={() => handleBlockUser(rant.anonymous_id)}
                                         onFollowTag={() => { }}
                                         isLiked={likedRants.has(rant.id)}
                                         isBookmarked={bookmarkedRants.has(rant.id)}
-                                        isUserBlocked={false}
+                                        isUserBlocked={blockedUsers.has(rant.anonymous_id)}
                                         followedTags={new Set()}
                                         getMoodEmoji={getMoodEmoji}
                                         getMoodColor={getMoodColor}
                                         formatTimeAgo={formatTimeAgo}
                                         moods={MOODS}
+                                        showBookmark={true}
+                                        showReport={true}
+                                        showShare={true}
                                     />
                                 </div>
                             ))}
                         </div>
+                        {/* Share Modal */}
+                        <Dialog open={shareModalOpen} onOpenChange={setShareModalOpen}>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Share Rant</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                    <Button onClick={handleCopyLink} className="w-full">Copy Link</Button>
+                                    {typeof navigator.share === "function" && (
+                                        <Button onClick={handleNativeShare} className="w-full" variant="outline">Share via Device</Button>
+                                    )}
+                                </div>
+                                <DialogFooter>
+                                    <Button variant="ghost" onClick={() => setShareModalOpen(false)}>Close</Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+                        {/* Block User Modal */}
+                        <Dialog open={blockModalOpen} onOpenChange={setBlockModalOpen}>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Block User</DialogTitle>
+                                </DialogHeader>
+                                <div className="mb-4">Are you sure you want to block this user? You won't see their rants anymore.</div>
+                                <DialogFooter>
+                                    <Button variant="destructive" onClick={confirmBlockUser}>Block</Button>
+                                    <Button variant="ghost" onClick={() => setBlockModalOpen(false)}>Cancel</Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
                     </div>
 
                     {/* Sidebar */}

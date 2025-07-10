@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { Toaster } from "sonner"
 import ClientLayout from "@/components/ClientLayout"
+import { TooltipProvider } from "@/components/ui/tooltip"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -56,10 +57,12 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body className={inter.className}>
-                <ClientLayout>
-                    {children}
-                    <Toaster position="top-right" richColors />
-                </ClientLayout>
+                <TooltipProvider>
+                    <ClientLayout>
+                        {children}
+                        <Toaster position="top-right" richColors />
+                    </ClientLayout>
+                </TooltipProvider>
             </body>
         </html>
     )

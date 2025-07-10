@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Lightning, Trophy, Medal, Crown, Award, TrendUp, Users, Heart } from "phosphor-react"
+import { Lightning, Trophy, Medal, Crown, TrendUp, Users, Heart } from "phosphor-react"
 import Link from "next/link"
 
 interface LeaderboardCategory {
@@ -55,7 +55,7 @@ export default function LeaderboardClient({ leaderboardCategories, leaderboardDa
             case 2:
                 return <Medal weight="duotone" className="w-6 h-6 text-gray-400" />
             case 3:
-                return <Award weight="duotone" className="w-6 h-6 text-amber-600" />
+                return <Medal weight="duotone" className="w-6 h-6 text-amber-600" />
             default:
                 return <span className="w-6 h-6 flex items-center justify-center text-sm font-bold text-gray-500">#{rank}</span>
         }

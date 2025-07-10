@@ -41,36 +41,6 @@ A modern, anonymous social platform where users can express their thoughts, frus
 - Progressive Web App (PWA) capabilities
 - Accessibility-first design (WCAG compliant)
 
-## 🎯 Roadmap
-
-### **Phase 1: Core Features** ✅
-- [x] Basic rant posting and viewing
-- [x] Mood-based categorization
-- [x] Tag system
-- [x] Like and comment functionality
-- [x] Responsive design
-
-### **Phase 2: Enhanced UX** 🚧
-- [ ] Motion.js animations
-- [ ] Swiper for mobile browsing
-- [ ] Simple Analytics integration
-- [ ] Advanced filtering options
-- [ ] User preferences
-
-### **Phase 3: Community Features** 📋
-- [ ] User following system
-- [ ] Notification system
-- [ ] Content moderation tools
-- [ ] Reporting system
-- [ ] Community guidelines
-
-### **Phase 4: Advanced Features** 🔮
-- [ ] AI-powered content suggestions
-- [ ] Sentiment analysis
-- [ ] Multi-language support
-- [ ] Video rant support
-- [ ] Mobile app (React Native)
-
 ## 🤝 Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.

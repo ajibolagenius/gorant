@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Trophy, Calendar, Users, Target, Award, Clock, CheckCircle } from "phosphor-react"
+import { Trophy, Calendar, Users, Target, Medal, Clock, CheckCircle } from "phosphor-react"
 import Link from "next/link"
 
 interface Challenge {
@@ -54,22 +54,20 @@ export default function ChallengeClient({ currentChallenges, pastChallenges, use
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800">
             {/* Header */}
-            <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-200 dark:border-gray-700">
-                <div className="container mx-auto px-4 py-6 max-w-6xl">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center">
-                                <Trophy weight="duotone" className="w-8 h-8 mr-3 text-yellow-500" />
-                                Rant Challenges
-                            </h1>
-                            <p className="text-gray-600 dark:text-gray-300 mt-2">
-                                Join themed challenges and earn badges for your participation
-                            </p>
-                        </div>
-                        <Link href="/">
-                            <Button variant="outline">Back to Feed</Button>
-                        </Link>
+            <div className="container mx-auto px-4 py-6 max-w-6xl">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center">
+                            <Trophy weight="duotone" className="w-8 h-8 mr-3 text-yellow-500" />
+                            Rant Challenges
+                        </h1>
+                        <p className="text-gray-600 dark:text-gray-300 mt-2">
+                            Join themed challenges and earn badges for your participation
+                        </p>
                     </div>
+                    <Link href="/">
+                        <Button variant="outline">Back to Feed</Button>
+                    </Link>
                 </div>
             </div>
 
@@ -111,7 +109,7 @@ export default function ChallengeClient({ currentChallenges, pastChallenges, use
                                             : "hover:bg-gray-200 dark:hover:bg-gray-600"
                                             }`}
                                     >
-                                        <Award weight="duotone" className="w-4 h-4 mr-2" />
+                                        <Medal weight="duotone" className="w-4 h-4 mr-2" />
                                         Badges
                                     </Button>
                                 </div>

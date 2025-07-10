@@ -90,8 +90,8 @@ const mockComments: { [key: string]: Comment[] } = {
 
 // Ensure all mockRants and Rant objects have all required properties
 const mockRants: Rant[] = [
-  {
-    id: "1",
+    {
+        id: "1",
         content: "Just had the worst day at work. Everything that could go wrong did go wrong. Need to vent somewhere! Sometimes I feel like the universe is conspiring against me. My computer crashed, I spilled coffee on important documents, and my boss was in the worst mood ever.",
         mood: "angry",
         created_at: new Date().toISOString(),
@@ -105,9 +105,9 @@ const mockRants: Rant[] = [
         reputation_impact: 2,
         reported: false,
         moderation_score: 1,
-  },
-  {
-    id: "2",
+    },
+    {
+        id: "2",
         content: "Finally got that promotion I've been working towards for months! So grateful and excited for what's next. Hard work really does pay off! I can't believe it's finally happening. Time to celebrate! 🎉",
         mood: "excited",
         created_at: new Date(Date.now() - 3600000).toISOString(),
@@ -121,9 +121,9 @@ const mockRants: Rant[] = [
         reputation_impact: 5,
         reported: false,
         moderation_score: 1,
-  },
-  {
-    id: "3",
+    },
+    {
+        id: "3",
         content: "Feeling really anxious about the presentation tomorrow. Public speaking has always been my weakness. My heart is already racing just thinking about it. Any tips for dealing with presentation anxiety?",
         mood: "anxious",
         created_at: new Date(Date.now() - 7200000).toISOString(),
@@ -137,9 +137,9 @@ const mockRants: Rant[] = [
         reputation_impact: 1,
         reported: false,
         moderation_score: 1,
-  },
-  {
-    id: "4",
+    },
+    {
+        id: "4",
         content: "My dog passed away today. 15 years of unconditional love. I'm going to miss him so much. He was my best friend through everything - college, breakups, job changes. The house feels so empty without him.",
         mood: "sad",
         created_at: new Date(Date.now() - 10800000).toISOString(),
@@ -153,9 +153,9 @@ const mockRants: Rant[] = [
         reputation_impact: 3,
         reported: false,
         moderation_score: 1,
-  },
-  {
-    id: "5",
+    },
+    {
+        id: "5",
         content: "Sometimes I wonder what the point of it all is. Life feels so confusing and overwhelming lately. Everything seems to be moving so fast and I can't keep up.",
         mood: "confused",
         created_at: new Date(Date.now() - 14400000).toISOString(),
@@ -240,7 +240,7 @@ export default function RantApp() {
     const pathname = usePathname()
 
     // Load settings from localStorage on mount
-  useEffect(() => {
+    useEffect(() => {
         const savedNotifications = localStorage.getItem("settings_notifications")
         const savedPrivacy = localStorage.getItem("settings_privacy")
         const savedContentFilters = localStorage.getItem("settings_contentFilters")
@@ -302,7 +302,7 @@ export default function RantApp() {
                     ...rants
                         .filter((r) => r.content.toLowerCase().includes(query.toLowerCase()))
                         .slice(0, 3)
-                        .map((r) => r.content.substring(0, 50) + "..."),
+                        .map((r) => r.content.length > 50 ? r.content.substring(0, 50) : r.content),
                     ...rants
                         .flatMap((r) => r.tags || [])
                         .filter((tag) => tag.toLowerCase().includes(query.toLowerCase()))
@@ -448,7 +448,7 @@ export default function RantApp() {
         } else {
             filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         }
-    setFilteredRants(filtered)
+        setFilteredRants(filtered)
     }, [rants, searchQuery, moodFilter, sortFilter, blockedUsers, followedTags, contentFilterSettings, settingsLoaded])
 
     // Enhanced like function with gamification
@@ -460,7 +460,7 @@ export default function RantApp() {
 
         try {
             setLikedRants((prev) => new Set([...prev, rantId]))
-    setRants((prev) =>
+            setRants((prev) =>
                 prev.map((rant) => (rant.id === rantId ? { ...rant, likes_count: rant.likes_count + 1 } : rant)),
             )
 
@@ -521,8 +521,8 @@ export default function RantApp() {
         } else {
             // Fallback: copy to clipboard
             await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`)
-    toast.success("Link copied to clipboard!")
-  }
+            toast.success("Link copied to clipboard!")
+        }
     }
 
     // Toggle bookmark
@@ -589,9 +589,9 @@ export default function RantApp() {
                 </div>
             </div>
         )
-  }
+    }
 
-  return (
+    return (
         <div
             className={`min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800 transition-colors ${fontSize} ${contrast}`}
             style={{ fontSize: fontSize === "text-lg" ? "1.125rem" : fontSize === "text-xl" ? "1.25rem" : "1rem" }}
@@ -613,92 +613,10 @@ export default function RantApp() {
                     })
                 }}
             />
-      {/* Header */}
-            <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-200 dark:border-gray-700">
-                <div className="container mx-auto px-4 py-4 max-w-7xl">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                            <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Rant 💭</h1>
-                            <Badge
-                                variant="secondary"
-                                className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
-                            >
-                                Anonymous
-                            </Badge>
-                            {userLevel > 1 && (
-                                <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
-                                    <Star weight="duotone" className="w-3 h-3 mr-1" />
-                                    Level {userLevel}
-            </Badge>
-                            )}
-          </div>
-
-                        <nav className="hidden md:flex items-center space-x-6">
-                            <Link
-                                href="/trending"
-                                className="flex items-center space-x-1 text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400"
-                            >
-                                <TrendUp weight="duotone" className="w-4 h-4" />
-                                <span>Trending</span>
-                            </Link>
-                            <Link
-                                href="/challenges"
-                                className="flex items-center space-x-1 text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400"
-                            >
-                                <Trophy weight="duotone" className="w-4 h-4" />
-                                <span>Challenges</span>
-                            </Link>
-                            <Link
-                                href="/leaderboard"
-                                className="flex items-center space-x-1 text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400"
-                            >
-                                <Lightning weight="duotone" className="w-4 h-4" />
-                                <span>Leaderboard</span>
-                            </Link>
-                            <Link
-                                href="/bookmarks"
-                                className="flex items-center space-x-1 text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400"
-                            >
-                                <Star weight="duotone" className="w-4 h-4" />
-                                <span>Bookmarks</span>
-                            </Link>
-                        </nav>
-
-                        <div className="flex items-center space-x-2">
-            <Button
-                                variant="ghost"
-              size="sm"
-                                onClick={toggleTheme}
-                                className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-            >
-                                {theme === "dark" ? <Sun weight="duotone" className="w-4 h-4" /> : <Moon weight="duotone" className="w-4 h-4" />}
-            </Button>
-                            <Link href="/notifications">
-            <Button
-                                    variant="ghost"
-              size="sm"
-                                    className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-            >
-                                    <Bell weight="duotone" className="w-4 h-4" />
-            </Button>
-                            </Link>
-                            <Link href="/settings">
-            <Button
-                                    variant="ghost"
-              size="sm"
-                                    className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-            >
-                                    <Shield weight="duotone" className="w-4 h-4" />
-            </Button>
-                            </Link>
-                        </div>
-          </div>
-        </div>
-      </header>
-
+            {/* Main Content */}
             <div className="container mx-auto px-4 py-8 max-w-7xl pb-32">
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Main Content */}
+                    {/* Main Content */}
                     <div className="lg:col-span-3 space-y-6">
                         {/* Rant of the Day */}
                         {rantOfTheDay && (
@@ -707,13 +625,13 @@ export default function RantApp() {
                                     className="shadow-lg border-0 bg-gradient-to-r from-yellow-100 to-orange-100 dark:from-yellow-900/30 dark:to-orange-900/30 dark:border-yellow-800/30 cursor-pointer"
                                     onClick={() => setShowRantOfTheDayModal(true)}
                                 >
-                <CardHeader>
+                                    <CardHeader>
                                         <div className="flex items-center space-x-2">
                                             <Trophy weight="duotone" className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
                                             <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Rant of the Day</h2>
                                         </div>
-                </CardHeader>
-                <CardContent>
+                                    </CardHeader>
+                                    <CardContent>
                                         <div className="flex items-start space-x-3">
                                             <div className="text-2xl">{getMoodEmoji(rantOfTheDay.mood)}</div>
                                             <div className="flex-1">
@@ -726,7 +644,7 @@ export default function RantApp() {
                                                     <span className="flex items-center">
                                                         <MessageCircle className="w-4 h-4 mr-1" />
                                                         {rantOfTheDay.comments_count} comments
-                      </span>
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
@@ -762,6 +680,9 @@ export default function RantApp() {
                                             showSentiment={true}
                                             showModeration={true}
                                             comments={comments[rantOfTheDay.id] || []}
+                                            showBookmark={true}
+                                            showReport={true}
+                                            showShare={true}
                                         />
                                     </DialogContent>
                                 </Dialog>
@@ -786,8 +707,8 @@ export default function RantApp() {
                                         Share Your Thoughts
                                     </Button>
                                 </div>
-                </CardContent>
-              </Card>
+                            </CardContent>
+                        </Card>
 
                         {/* Enhanced Search with Suggestions */}
                         <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
@@ -804,7 +725,7 @@ export default function RantApp() {
                                         />
                                         {/* Search Suggestions */}
                                         {searchSuggestions.length > 0 && (
-                                            <div className="absolute top-full left-0 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md mt-1 shadow-lg z-10">
+                                            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md mt-1 shadow-lg">
                                                 {searchSuggestions.map((suggestion, index) => (
                                                     <button
                                                         key={index}
@@ -819,17 +740,47 @@ export default function RantApp() {
                                                 ))}
                                             </div>
                                         )}
-            </div>
+                                    </div>
 
                                     {/* Filter Toggle */}
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => setShowFilters(!showFilters)}
-                                        className="flex items-center space-x-2 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
-                                    >
-                                        <List weight="duotone" className="w-4 h-4" />
-                                        <span>Filters</span>
-                                    </Button>
+                                    <div className="flex flex-row w-full gap-2 mb-2 sm:mb-0">
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => setShowFilters(!showFilters)}
+                                            className="flex-1 flex items-center space-x-2 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 relative"
+                                        >
+                                            <List weight="duotone" className="w-4 h-4" />
+                                            <span>Filters</span>
+                                            {/* Active filter count badge */}
+                                            {(moodFilter || sortFilter !== 'latest' || followedTags.size > 0 || searchQuery.length > 0) && (
+                                                <span className="ml-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-600 text-white absolute -top-2 -right-2">
+                                                    {[
+                                                        moodFilter ? 1 : 0,
+                                                        sortFilter !== 'latest' ? 1 : 0,
+                                                        followedTags.size > 0 ? 1 : 0,
+                                                        searchQuery.length > 0 ? 1 : 0
+                                                    ].reduce((a, b) => a + b, 0)}
+                                                </span>
+                                            )}
+                                        </Button>
+                                        {/* Clear filters button */}
+                                        {(moodFilter || sortFilter !== 'latest' || followedTags.size > 0 || searchQuery.length > 0) && (
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="flex-1 text-gray-500 dark:text-gray-300 hover:text-purple-600"
+                                                onClick={() => {
+                                                    setMoodFilter("");
+                                                    setSortFilter("latest");
+                                                    setFollowedTags(new Set());
+                                                    setSearchQuery("");
+                                                }}
+                                            >
+                                                <X className="w-4 h-4 mr-1" />
+                                                <span>Clear</span>
+                                            </Button>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* Expandable Filters */}
@@ -863,10 +814,10 @@ export default function RantApp() {
                             </Card>
                         ) : (
                             <MasonryGrid columns={2} gap={20} className="w-full">
-                {filteredRants.map((rant) => (
-                  <EnhancedRantCard
-                    key={rant.id}
-                    rant={rant}
+                                {filteredRants.map((rant) => (
+                                    <EnhancedRantCard
+                                        key={rant.id}
+                                        rant={rant}
                                         onLike={likeRant}
                                         onBookmark={toggleBookmark}
                                         onReport={reportRant}
@@ -886,11 +837,14 @@ export default function RantApp() {
                                         showSentiment={true}
                                         showModeration={true}
                                         comments={comments[rant.id] || []}
-                  />
-                ))}
-              </MasonryGrid>
-            )}
-          </div>
+                                        showBookmark={true}
+                                        showReport={true}
+                                        showShare={true}
+                                    />
+                                ))}
+                            </MasonryGrid>
+                        )}
+                    </div>
 
                     {/* Sidebar */}
                     <SidebarContent
@@ -900,8 +854,8 @@ export default function RantApp() {
                         followedTags={followedTags}
                         followTag={followTag}
                     />
-        </div>
-      </div>
+                </div>
+            </div>
 
             {/* Floating Action Button for Mobile Sidebar */}
             <button
@@ -992,26 +946,21 @@ export default function RantApp() {
             {/* Footer */}
             <footer className="fixed bottom-0 left-0 w-full z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-t border-gray-200 dark:border-gray-700 mt-12 md:block hidden">
                 <div className="container mx-auto px-4 py-8 max-w-7xl">
-                    <div className="text-center text-gray-500 dark:text-gray-400 text-sm">
-                        <p className="mb-2">Rant - Anonymous. Safe. Expressive.</p>
-                        <p>Your thoughts matter. Share them freely.</p>
-                        <div className="flex justify-center space-x-4 mt-4">
-                            <Link href="/privacy" className="hover:text-purple-600 dark:hover:text-purple-400">
-              Privacy
-                            </Link>
-                            <Link href="/guidelines" className="hover:text-purple-600 dark:hover:text-purple-400">
-                                Guidelines
-                            </Link>
-                            <Link href="/support" className="hover:text-purple-600 dark:hover:text-purple-400">
-                                Support
-                            </Link>
-                            <Link href="/accessibility" className="hover:text-purple-600 dark:hover:text-purple-400">
-                                Accessibility
-                            </Link>
-          </div>
-          </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-gray-500 dark:text-gray-400 text-sm items-center">
+                        {/* Column 1: Branding */}
+                        <div className="text-center md:text-left">
+                            <p className="mb-2 font-semibold text-gray-700 dark:text-gray-200">Rant - Anonymous. Safe. Expressive.</p>
+                            <p>Your thoughts matter. Share them freely.</p>
+                        </div>
+                        {/* Column 2: Navigation Links */}
+                        <div className="flex flex-col md:flex-row justify-center items-center gap-2 md:gap-6">
+                            <Link href="/privacy" className="hover:text-purple-600 dark:hover:text-purple-400">Privacy</Link>
+                            <Link href="/guidelines" className="hover:text-purple-600 dark:hover:text-purple-400">Guidelines</Link>
+
+                        </div>
+                    </div>
+                </div>
+            </footer>
         </div>
-      </footer>
-    </div>
-  )
+    )
 }

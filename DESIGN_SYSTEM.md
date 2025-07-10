@@ -17,6 +17,8 @@ A comprehensive guide to the visual and interaction standards for the Rant platf
 | Warning      | #facc15                   | #facc15                   | Warnings, caution            |
 | Info         | #38bdf8                   | #38bdf8                   | Info, links                  |
 | Muted        | #e5e7eb                   | #374151                   | Borders, dividers            |
+| Tag Border   | #a259ff, #e5e7eb, etc.    | #a259ff, #374151, etc.    | Tag outlines (contextual)    |
+| Reputation   | #facc15                   | #facc15                   | Reputation badge/tooltip     |
 
 > **Note:** Colors are managed via Tailwind CSS and custom properties in `tailwind.config.ts`.
 
@@ -26,6 +28,8 @@ A comprehensive guide to the visual and interaction standards for the Rant platf
 
 - **Font Family:** `Inter`, sans-serif (Google Fonts)
 - **Font Sizes:**
+  - `text-xs` (0.75rem/12px) – tags, pills, badges
+  - `text-sm` (0.875rem/14px) – UI, buttons, search
   - `text-base` (1rem/16px) – body
   - `text-lg` (1.125rem/18px) – section headings
   - `text-xl` (1.25rem/20px) – main headings
@@ -45,7 +49,9 @@ A comprehensive guide to the visual and interaction standards for the Rant platf
 - **Primary:** `bg-purple-600 text-white hover:bg-purple-700`
 - **Secondary:** `bg-white text-purple-600 border border-purple-600 hover:bg-purple-50`
 - **Outline:** `border border-gray-300 text-gray-700 hover:bg-gray-100`
+- **Ghost:** `bg-transparent text-gray-500 hover:text-purple-600`
 - **Disabled:** `opacity-50 cursor-not-allowed`
+- **Mobile Filter/Clear:** `flex-1 w-full` (side-by-side on mobile)
 
 ### Cards
 - **Base:** `bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4`
@@ -53,10 +59,12 @@ A comprehensive guide to the visual and interaction standards for the Rant platf
 
 ### Inputs
 - **Base:** `border border-gray-200 dark:border-gray-600 rounded px-3 py-2 focus:border-purple-400`
+- **Search:** `pl-10` for icon, push-down suggestions panel below input
 
-### Badges
-- **Primary:** `bg-purple-100 text-purple-800`
-- **Secondary:** `bg-yellow-100 text-yellow-800`
+### Badges & Pills
+- **Tag:** `text-xs px-2 py-0.5 border font-medium rounded` (border color matches tag context)
+- **Pill (Mood, Trending, Sentiment, Verified):** `text-xs px-2 py-0.5 font-medium` (smaller, subtle)
+- **Reputation:** `inline-flex items-center text-yellow-700 dark:text-yellow-300` with tooltip modal `border-yellow-400`
 
 ---
 
@@ -74,6 +82,13 @@ A comprehensive guide to the visual and interaction standards for the Rant platf
   - Centered, with overlay, accessible close icon
 - **Toasts:**
   - Top-right, with close icon, color-coded for type
+- **Search:**
+  - Suggestions panel pushes content down (not floating)
+  - Suggestions show full string (no ellipsis)
+- **Filters:**
+  - Filter and Clear buttons are full-width and side-by-side on mobile
+  - Active filter count badge on Filter button
+  - Clear button resets all filters/search
 
 ---
 
@@ -101,6 +116,7 @@ A comprehensive guide to the visual and interaction standards for the Rant platf
 - **ARIA Labels:** Used for icons/buttons without visible text.
 - **Motion:** Respects `prefers-reduced-motion` for animations.
 - **Touch Targets:** Minimum 44x44px for all buttons and nav items.
+- **Screen Reader:** Search, filter, and action buttons have descriptive labels.
 
 ---
 
