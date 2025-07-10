@@ -247,8 +247,10 @@ export const RantCard = React.memo(function RantCard({
                                     ? "text-yellow-600 hover:text-yellow-700 dark:text-yellow-400"
                                     : "text-gray-600 hover:text-yellow-600 dark:text-gray-400"
                                     }`}
+                                aria-label={isBookmarked ? "Remove bookmark" : "Add bookmark"}
                             >
                                 <Bookmark className={`w-4 h-4 ${isBookmarked ? "fill-current" : ""}`} />
+                                <span className="sr-only">{isBookmarked ? "Remove bookmark" : "Add bookmark"}</span>
                             </Button>
                         )}
                     </div>

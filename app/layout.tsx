@@ -5,12 +5,14 @@ import "./globals.css"
 import { Toaster } from "sonner"
 import ClientLayout from "@/components/ClientLayout"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { SpeedInsights } from "@vercel/speed-insights/next"
+import { Analytics } from "@vercel/analytics/next"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
     title: "Rant - Anonymous Expression Platform",
-    description: "A safe, anonymous space to express your thoughts and feelings",
+    description: "A safe, anonymous space to express your thoughts and feelings.",
     generator: 'v0.dev',
     keywords: [
         "anonymous",
@@ -60,6 +62,7 @@ export default function RootLayout({
                 <TooltipProvider>
                     <ClientLayout>
                         {children}
+                        <Analytics /> <SpeedInsights />
                         <Toaster position="top-right" richColors />
                     </ClientLayout>
                 </TooltipProvider>
