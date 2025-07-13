@@ -43,6 +43,9 @@ import { storageSet } from "@/lib/storage"
 import { FixedSizeList as VirtualizedList, ListChildComponentProps } from "react-window"
 import React from "react"
 
+
+import { audioService } from "@/services/audio-service"
+
 // Initialize Supabase client with fallback for development
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://your-project.supabase.co"
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "your-anon-key"
@@ -273,6 +276,7 @@ export default function RantApp() {
     const searchParams = useSearchParams()
     const pathname = usePathname()
 
+
     // Initialize state from URL on mount
     useEffect(() => {
         const urlSearch = searchParams.get("search") || ""
@@ -430,7 +434,7 @@ export default function RantApp() {
     const isVirtualized = filteredRants.length > VIRTUALIZATION_THRESHOLD
 
     // Enhanced like function with gamification
-    const likeRant = (rantId: string) => {
+    const likeRant = async (rantId: string) => {
         if (likedRants.has(rantId)) {
             toast.info("You already liked this rant!")
             return
@@ -444,7 +448,10 @@ export default function RantApp() {
 
             // Add points for liking
             addPoints(1, "like")
-            checkAchievements("likes_given", likedRants.size + 1)
+            await checkAchievements("likes_given", likedRants.size + 1)
+
+            // Play like sound
+            await audioService.playActionSound('like')
 
             toast.success("Rant liked! +1 point")
 
@@ -528,6 +535,30 @@ export default function RantApp() {
     useEffect(() => {
         fetchRants()
     }, [sortFilter])
+
+    // Initialize audio context on first user interaction
+    useEffect(() => {
+        const handleUserInteraction = () => {
+            // Initialize audio context on first user interaction
+            if (typeof window !== 'undefined' && audioService.isEnabled()) {
+                // This will trigger audio context initialization
+                audioService.playActionSound('like').catch(() => {
+                    // Silently fail if audio context can't be initialized
+                })
+            }
+            // Remove the event listeners after first interaction
+            document.removeEventListener('click', handleUserInteraction)
+            document.removeEventListener('touchstart', handleUserInteraction)
+        }
+
+        document.addEventListener('click', handleUserInteraction)
+        document.addEventListener('touchstart', handleUserInteraction)
+
+        return () => {
+            document.removeEventListener('click', handleUserInteraction)
+            document.removeEventListener('touchstart', handleUserInteraction)
+        }
+    }, [])
 
     // Persist all rants and bookmarks to localStorage for bookmarks page
     useEffect(() => {
@@ -780,7 +811,7 @@ export default function RantApp() {
                                 </CardContent>
                             </Card>
 
-                            {/* Masonry Grid or Virtualized List Rants Feed */}
+                            {/* Masonry Grid, Virtualized List, or Swiper Rants Feed */}
                             {filteredRants.length === 0 ? (
                                 <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
                                     <CardContent className="pt-6 text-center">
@@ -792,6 +823,7 @@ export default function RantApp() {
                                     </CardContent>
                                 </Card>
                             ) : isVirtualized ? (
+                                // Desktop: Use VirtualizedList for performance
                                 <VirtualizedList
                                     height={800}
                                     itemCount={filteredRants.length}
@@ -830,6 +862,7 @@ export default function RantApp() {
                                     )}
                                 </VirtualizedList>
                             ) : (
+                                // Desktop: Use MasonryGrid for layout
                                 <MasonryGrid columns={2} gap={20} className="w-full">
                                     {filteredRants.map((rant) => (
                                         <EnhancedRantCard
@@ -950,7 +983,11 @@ export default function RantApp() {
 
                         // Add points for posting
                         addPoints(5, "post")
-                        checkAchievements("posts_created", rants.length + 1)
+                        await checkAchievements("posts_created", rants.length + 1)
+
+                        // Play post sound and mood sound
+                        await audioService.playActionSound('post')
+                        await audioService.playMoodSound(mood)
 
                         toast.success("Your rant has been posted! +5 points")
                         confetti({

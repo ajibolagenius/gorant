@@ -13,6 +13,7 @@ import { useAccessibility } from "@/hooks/use-accessibility"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { useSettings } from "@/hooks/use-settings"
+import { AudioSettings } from "@/components/audio-settings"
 
 export default function SettingsPage() {
     const { fontSize, contrast, screenReaderMode, reducedMotion, updateAccessibility } = useAccessibility()
@@ -160,6 +161,9 @@ export default function SettingsPage() {
                             </div>
                         </CardContent>
                     </Card>
+
+                    {/* Audio Settings */}
+                    <AudioSettings />
 
                     {/* Notification Settings */}
                     <Card className="shadow-sm border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur">

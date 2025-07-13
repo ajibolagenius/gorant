@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { storageGet, storageSet } from "@/lib/storage"
+import { audioService } from "@/services/audio-service"
 
 interface Achievement {
     id: string
@@ -132,10 +133,13 @@ export function useGameification() {
         })
     }
 
-    const checkAchievements = (type: string, value: number) => {
+    const checkAchievements = async (type: string, value: number) => {
+        let newAchievements: Achievement[] = []
+        let hasNewAchievement = false
+        let unlockedAchievement: Achievement | null = null
+
         setAchievements((prev) => {
             const updated = [...prev]
-            let hasNewAchievement = false
 
             updated.forEach((achievement) => {
                 if (achievement.unlocked) return
@@ -166,13 +170,28 @@ export function useGameification() {
                     achievement.unlocked = true
                     achievement.unlockedAt = new Date()
                     hasNewAchievement = true
-                    toast.success(`🏆 Achievement unlocked: ${achievement.name}!`)
-                    addPoints(20, "achievement")
+                    unlockedAchievement = achievement
                 }
             })
 
-            return hasNewAchievement ? updated : prev
+            newAchievements = hasNewAchievement ? updated : prev
+            return newAchievements
         })
+
+        // Handle async operations outside of setState
+        if (hasNewAchievement && unlockedAchievement) {
+            try {
+                // Play achievement sound
+                await audioService.playActionSound('achievement')
+                toast.success(`🏆 Achievement unlocked: ${unlockedAchievement.name}!`)
+                addPoints(20, "achievement")
+            } catch (error) {
+                console.warn('Failed to play achievement sound:', error)
+                // Still show the toast even if audio fails
+                toast.success(`🏆 Achievement unlocked: ${unlockedAchievement.name}!`)
+                addPoints(20, "achievement")
+            }
+        }
     }
 
     const getProgressToNextLevel = () => {
