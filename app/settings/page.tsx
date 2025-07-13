@@ -1,13 +1,14 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
-import { Shield, Eye, Bell, Lock, Globe } from "phosphor-react"
+import { Shield, Eye, Bell, Lock, Globe, Download } from "phosphor-react"
+import { Filter } from "lucide-react"
 import Link from "next/link"
 import { useAccessibility } from "@/hooks/use-accessibility"
 import { toast } from "sonner"
@@ -29,8 +30,45 @@ export default function SettingsPage() {
     } = useSettings()
     const { addNotification } = useNotifications()
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-    const fileDownloadRef = useRef<HTMLAnchorElement>(null)
     const router = useRouter()
+
+    // Privacy state
+    const [privateAccount, setPrivateAccount] = useState(false)
+    const [hideFromSearch, setHideFromSearch] = useState(false)
+    const [allowMentions, setAllowMentions] = useState(true)
+    // Content filter state
+    const [hideSensitive, setHideSensitive] = useState(false)
+    const [filterNegative, setFilterNegative] = useState(false)
+    const [blockedKeywords, setBlockedKeywords] = useState("")
+
+    // Load from localStorage
+    useEffect(() => {
+        setPrivateAccount(localStorage.getItem("privateAccount") === "true")
+        setHideFromSearch(localStorage.getItem("hideFromSearch") === "true")
+        setAllowMentions(localStorage.getItem("allowMentions") !== "false")
+        setHideSensitive(localStorage.getItem("hideSensitive") === "true")
+        setFilterNegative(localStorage.getItem("filterNegative") === "true")
+        setBlockedKeywords(localStorage.getItem("blockedKeywords") || "")
+    }, [])
+    // Save to localStorage
+    useEffect(() => {
+        localStorage.setItem("privateAccount", privateAccount.toString())
+    }, [privateAccount])
+    useEffect(() => {
+        localStorage.setItem("hideFromSearch", hideFromSearch.toString())
+    }, [hideFromSearch])
+    useEffect(() => {
+        localStorage.setItem("allowMentions", allowMentions.toString())
+    }, [allowMentions])
+    useEffect(() => {
+        localStorage.setItem("hideSensitive", hideSensitive.toString())
+    }, [hideSensitive])
+    useEffect(() => {
+        localStorage.setItem("filterNegative", filterNegative.toString())
+    }, [filterNegative])
+    useEffect(() => {
+        localStorage.setItem("blockedKeywords", blockedKeywords)
+    }, [blockedKeywords])
 
     // Handler wrappers for switches
     const handleNotificationChange = (key: string, value: boolean) => updateNotification(key as any, value)
@@ -46,25 +84,6 @@ export default function SettingsPage() {
     // Save All Settings button handler
     const handleSaveAll = () => {
         toast.success("All settings saved!")
-    }
-
-    // Export My Data handler
-    const handleExportData = () => {
-        const data = {
-            notifications,
-            privacy,
-            contentFilters,
-            accessibility: { fontSize, contrast, screenReaderMode, reducedMotion },
-            // Add more user data here if available (e.g., rants, comments)
-        }
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })
-        const url = URL.createObjectURL(blob)
-        if (fileDownloadRef.current) {
-            fileDownloadRef.current.href = url
-            fileDownloadRef.current.download = "rant-user-data.json"
-            fileDownloadRef.current.click()
-            setTimeout(() => URL.revokeObjectURL(url), 1000)
-        }
     }
 
     // Delete Account handler
@@ -194,13 +213,6 @@ export default function SettingsPage() {
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <h4 className="font-medium text-card-foreground">Email Notifications</h4>
-                                        <p className="text-sm text-muted-foreground">Get email updates for important activities</p>
-                                    </div>
-                                    <Switch />
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <div>
                                         <h4 className="font-medium text-card-foreground">Achievement Alerts</h4>
                                         <p className="text-sm text-muted-foreground">Notify when you unlock achievements</p>
                                     </div>
@@ -230,89 +242,75 @@ export default function SettingsPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Privacy Settings */}
+                    {/* Privacy Section */}
                     <Card className="shadow-sm border-0 bg-card/80 dark:bg-card/80 backdrop-blur">
                         <CardHeader>
                             <div className="flex items-center space-x-2">
-                                <Lock weight="duotone" className="w-5 h-5 text-red-600" />
-                                <h2 className="text-xl font-semibold text-card-foreground">Privacy</h2>
+                                <Lock className="w-5 h-5 text-purple-600" />
+                                <CardTitle>Privacy</CardTitle>
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            {Object.entries(privacy).map(([key, value]) => (
-                                <div key={key} className="flex items-center justify-between">
-                                    <div>
-                                        <div className="font-medium text-gray-800 dark:text-white">
-                                            {key === "showInLeaderboard" && "Show in Leaderboard"}
-                                            {key === "allowDirectMessages" && "Allow Direct Messages"}
-                                            {key === "shareAnalytics" && "Share Analytics Data"}
-                                        </div>
-                                        <div className="text-sm text-gray-600 dark:text-gray-300">
-                                            {key === "showInLeaderboard" && "Display your anonymous ID in public leaderboards"}
-                                            {key === "allowDirectMessages" && "Allow other users to send you direct messages"}
-                                            {key === "shareAnalytics" && "Help improve the platform by sharing anonymous usage data"}
-                                        </div>
-                                    </div>
-                                    <Switch checked={value} onCheckedChange={(checked) => handlePrivacyChange(key, checked)} />
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h4 className="font-medium text-card-foreground">Private Account</h4>
+                                    <p className="text-sm text-muted-foreground">Only approved followers can see your rants and profile.</p>
                                 </div>
-                            ))}
+                                <Switch checked={privateAccount} onCheckedChange={setPrivateAccount} />
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h4 className="font-medium text-card-foreground">Hide from Search</h4>
+                                    <p className="text-sm text-muted-foreground">Prevent your profile from appearing in search results.</p>
+                                </div>
+                                <Switch checked={hideFromSearch} onCheckedChange={setHideFromSearch} />
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h4 className="font-medium text-card-foreground">Allow Mentions</h4>
+                                    <p className="text-sm text-muted-foreground">Allow others to mention you in rants and comments.</p>
+                                </div>
+                                <Switch checked={allowMentions} onCheckedChange={setAllowMentions} />
+                            </div>
                         </CardContent>
                     </Card>
 
-                    {/* Content Moderation */}
+                    {/* Content Filters Section */}
                     <Card className="shadow-sm border-0 bg-card/80 dark:bg-card/80 backdrop-blur">
                         <CardHeader>
                             <div className="flex items-center space-x-2">
-                                <Shield weight="duotone" className="w-5 h-5 text-purple-600" />
-                                <h2 className="text-xl font-semibold text-card-foreground">Content Filters</h2>
+                                <Filter className="w-5 h-5 text-orange-600" />
+                                <CardTitle>Content Filters</CardTitle>
                             </div>
                         </CardHeader>
-                        <CardContent className="space-y-6">
+                        <CardContent className="space-y-4">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <div className="font-medium text-gray-800 dark:text-white">Hide Negative Sentiment</div>
-                                    <div className="text-sm text-gray-600 dark:text-gray-300">
-                                        Automatically hide rants with negative sentiment
-                                    </div>
+                                    <h4 className="font-medium text-card-foreground">Hide Sensitive Content</h4>
+                                    <p className="text-sm text-muted-foreground">Blur or hide posts flagged as sensitive or NSFW.</p>
                                 </div>
-                                <Switch
-                                    checked={contentFilters.hideNegativeSentiment}
-                                    onCheckedChange={(checked) => handleContentFilterChange("hideNegativeSentiment", checked)}
-                                />
+                                <Switch checked={hideSensitive} onCheckedChange={setHideSensitive} />
                             </div>
-
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <div className="font-medium text-gray-800 dark:text-white">Hide Reported Content</div>
-                                    <div className="text-sm text-gray-600 dark:text-gray-300">
-                                        Hide content that has been reported by other users
-                                    </div>
+                                    <h4 className="font-medium text-card-foreground">Filter Negative Language</h4>
+                                    <p className="text-sm text-muted-foreground">Reduce exposure to negative or toxic language.</p>
                                 </div>
-                                <Switch
-                                    checked={contentFilters.hideReportedContent}
-                                    onCheckedChange={(checked) => handleContentFilterChange("hideReportedContent", checked)}
-                                />
+                                <Switch checked={filterNegative} onCheckedChange={setFilterNegative} />
                             </div>
-
-                            <div>
-                                <div className="flex items-center justify-between mb-2">
-                                    <div>
-                                        <div className="font-medium text-gray-800 dark:text-white">Moderation Threshold</div>
-                                        <div className="text-sm text-gray-600 dark:text-gray-300">
-                                            Minimum moderation score to show content
-                                        </div>
-                                    </div>
-                                    <Badge variant="outline">{Math.round(contentFilters.minimumModerationScore * 100)}%</Badge>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h4 className="font-medium text-card-foreground">Blocked Keywords/Tags</h4>
+                                    <p className="text-sm text-muted-foreground">Hide posts containing these keywords or tags (comma separated).</p>
                                 </div>
-                                <Slider
-                                    value={[contentFilters.minimumModerationScore]}
-                                    onValueChange={([value]) => handleContentFilterChange("minimumModerationScore", value)}
-                                    max={1}
-                                    min={0}
-                                    step={0.1}
-                                    className="w-full"
-                                />
                             </div>
+                            <input
+                                type="text"
+                                className="w-full mt-1 rounded border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
+                                placeholder="e.g. politics, spoilers, nsfw"
+                                value={blockedKeywords}
+                                onChange={e => setBlockedKeywords(e.target.value)}
+                            />
                         </CardContent>
                     </Card>
 
@@ -326,8 +324,6 @@ export default function SettingsPage() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                                <Button variant="outline" onClick={handleExportData}>Export My Data</Button>
-                                <a ref={fileDownloadRef} style={{ display: "none" }} />
                                 <Button variant="outline" asChild>
                                     <Link href="/privacy">Privacy Policy</Link>
                                 </Button>
