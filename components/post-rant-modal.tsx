@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Send, X } from "lucide-react"
 import { audioService } from "@/services/audio-service"
+import { useNotifications, notificationHelpers } from "@/hooks/use-notifications"
 
 interface Mood {
     icon: React.ElementType
@@ -29,6 +30,7 @@ export function PostRantModal({ isOpen, onClose, moods, onSubmit }: PostRantModa
     const [tags, setTags] = useState<string[]>([])
     const [tagInput, setTagInput] = useState("")
     const [cooldown, setCooldown] = useState(0)
+    const { addNotification } = useNotifications()
 
     // Cooldown logic
     useEffect(() => {
@@ -55,6 +57,18 @@ export function PostRantModal({ isOpen, onClose, moods, onSubmit }: PostRantModa
         // Set cooldown
         localStorage.setItem("lastRantPost", Date.now().toString())
         setCooldown(10)
+        // Trigger achievement notifications (demo)
+        const rantCount = parseInt(localStorage.getItem("rantCount") || "0") + 1
+        localStorage.setItem("rantCount", rantCount.toString())
+
+        if (rantCount === 1) {
+            addNotification(notificationHelpers.achievement("first-rant", "First Rant"))
+        } else if (rantCount === 10) {
+            addNotification(notificationHelpers.achievement("10-rants", "Rant Master"))
+        } else if (rantCount === 50) {
+            addNotification(notificationHelpers.achievement("50-rants", "Rant Legend"))
+        }
+
         // Reset form
         setContent("")
         setSelectedMood("")

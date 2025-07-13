@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Trophy, Calendar, Users, Target, Medal, Clock, CheckCircle, House } from "phosphor-react"
 import Link from "next/link"
+import { useNotifications, notificationHelpers } from "@/hooks/use-notifications"
 
 interface Challenge {
     id: string;
@@ -38,6 +39,7 @@ interface ChallengeClientProps {
 
 export default function ChallengeClient({ currentChallenges, pastChallenges, userBadges }: ChallengeClientProps) {
     const [activeTab, setActiveTab] = useState<"current" | "past" | "badges">("current")
+    const { addNotification } = useNotifications()
 
     const joinChallenge = (challengeId: string) => {
         console.log("Joining challenge:", challengeId)
@@ -49,6 +51,16 @@ export default function ChallengeClient({ currentChallenges, pastChallenges, use
         if (days === 0) return "Ended"
         if (days === 1) return "1 day left"
         return `${days} days left`
+    }
+
+    const handleChallengeComplete = (challengeId: string, title: string) => {
+        // Trigger achievement notification for completing a challenge
+        addNotification(notificationHelpers.achievement(challengeId, `Challenge Complete: ${title}`))
+
+        // Trigger new challenge notification
+        setTimeout(() => {
+            addNotification(notificationHelpers.challenge("new-challenge", "New Daily Challenge Available"))
+        }, 2000)
     }
 
     return (

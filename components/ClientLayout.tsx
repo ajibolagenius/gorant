@@ -6,7 +6,8 @@ import { useTheme } from "@/hooks/use-theme"
 import { usePathname } from "next/navigation"
 import Header from "./Header"
 import Link from "next/link"
-import { TrendUp, Trophy, Lightning, Star, House } from "phosphor-react"
+import { TrendUp, Trophy, Lightning, Star, House, Bell } from "phosphor-react"
+import { useNotifications } from "@/hooks/use-notifications"
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
     const { fontSize, screenReaderMode } = useAccessibility()
@@ -14,6 +15,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     const { theme, toggleTheme } = useTheme()
     const pathname = usePathname()
     const showFooter = !pathname.startsWith("/settings")
+    const { unreadCount } = useNotifications()
 
     // Lenis smooth scrolling integration
     useEffect(() => {

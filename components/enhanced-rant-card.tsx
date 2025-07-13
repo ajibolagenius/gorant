@@ -34,6 +34,7 @@ import { toast } from "sonner"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import React from "react"
 import { audioService } from "@/services/audio-service"
+import { useNotifications, notificationHelpers } from "@/hooks/use-notifications"
 
 export interface Comment {
     id: string
@@ -122,6 +123,7 @@ const EnhancedRantCardComponent = ({
     const [isMobile, setIsMobile] = useState(false)
     const [showRepTooltip, setShowRepTooltip] = useState(false)
     const [commentCooldown, setCommentCooldown] = useState(0)
+    const { addNotification } = useNotifications()
 
     // Cooldown logic for comments
     useEffect(() => {
@@ -182,6 +184,9 @@ const EnhancedRantCardComponent = ({
             // Set cooldown
             localStorage.setItem("lastCommentPost", Date.now().toString())
             setCommentCooldown(10)
+
+            // Trigger notification for the rant owner (demo: assume current user is not the owner)
+            addNotification(notificationHelpers.comment(rant.id, "current-user-id"))
         } catch (error) {
             toast.error("Failed to post comment")
             console.error("Error posting comment:", error)
@@ -206,6 +211,10 @@ const EnhancedRantCardComponent = ({
     const handleLike = (id: string) => {
         audioService.playActionSound('like')
         onLike(id)
+
+        // Trigger notification for the rant owner (demo: assume current user is not the owner)
+        // In a real app, you'd check if the current user is the rant owner
+        addNotification(notificationHelpers.like(id, "current-user-id"))
     }
 
     const getSentimentDisplay = () => {

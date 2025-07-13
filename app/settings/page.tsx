@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation"
 import { useSettings } from "@/hooks/use-settings"
 import { AudioSettings } from "@/components/audio-settings"
 import { Separator } from "@/components/ui/separator"
+import { useNotifications, notificationHelpers } from "@/hooks/use-notifications"
 
 export default function SettingsPage() {
     const { fontSize, contrast, screenReaderMode, reducedMotion, updateAccessibility } = useAccessibility()
@@ -26,6 +27,7 @@ export default function SettingsPage() {
         updatePrivacy,
         updateContentFilter
     } = useSettings()
+    const { addNotification } = useNotifications()
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
     const fileDownloadRef = useRef<HTMLAnchorElement>(null)
     const router = useRouter()
@@ -74,6 +76,15 @@ export default function SettingsPage() {
         setShowDeleteDialog(false)
         toast.success("Your account and data have been deleted.")
         setTimeout(() => router.push("/"), 1000)
+    }
+
+    const testNotifications = () => {
+        // Test different notification types
+        addNotification(notificationHelpers.like("test-rant-1", "demo-user"))
+        setTimeout(() => addNotification(notificationHelpers.comment("test-rant-2", "demo-user")), 500)
+        setTimeout(() => addNotification(notificationHelpers.mention("test-rant-3", "demo-user")), 1000)
+        setTimeout(() => addNotification(notificationHelpers.challenge("test-challenge", "Daily Rant Challenge")), 1500)
+        setTimeout(() => addNotification(notificationHelpers.achievement("test-achievement", "First Rant")), 2000)
     }
 
     return (
@@ -168,28 +179,54 @@ export default function SettingsPage() {
                     <Card className="shadow-sm border-0 bg-card/80 dark:bg-card/80 backdrop-blur">
                         <CardHeader>
                             <div className="flex items-center space-x-2">
-                                <Bell weight="duotone" className="w-5 h-5 text-green-600" />
+                                <Bell weight="duotone" className="w-5 h-5 text-blue-600" />
                                 <h2 className="text-xl font-semibold text-card-foreground">Notifications</h2>
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            {Object.entries(notifications).map(([key, value]) => (
-                                <div key={key} className="flex items-center justify-between">
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
                                     <div>
-                                        <div className="font-medium text-gray-800 dark:text-white capitalize">
-                                            {key.replace(/([A-Z])/g, " $1").trim()}
-                                        </div>
-                                        <div className="text-sm text-gray-600 dark:text-gray-300">
-                                            {key === "likes" && "Get notified when someone likes your rant"}
-                                            {key === "comments" && "Get notified when someone comments on your rant"}
-                                            {key === "mentions" && "Get notified when someone mentions you"}
-                                            {key === "challenges" && "Get notified about new challenges"}
-                                            {key === "achievements" && "Get notified when you unlock achievements"}
-                                        </div>
+                                        <h4 className="font-medium text-card-foreground">Push Notifications</h4>
+                                        <p className="text-sm text-muted-foreground">Receive notifications for likes, comments, and mentions</p>
                                     </div>
-                                    <Switch checked={value} onCheckedChange={(checked) => handleNotificationChange(key, checked)} />
+                                    <Switch />
                                 </div>
-                            ))}
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h4 className="font-medium text-card-foreground">Email Notifications</h4>
+                                        <p className="text-sm text-muted-foreground">Get email updates for important activities</p>
+                                    </div>
+                                    <Switch />
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h4 className="font-medium text-card-foreground">Achievement Alerts</h4>
+                                        <p className="text-sm text-muted-foreground">Notify when you unlock achievements</p>
+                                    </div>
+                                    <Switch defaultChecked />
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h4 className="font-medium text-card-foreground">Challenge Updates</h4>
+                                        <p className="text-sm text-muted-foreground">Get notified about new challenges</p>
+                                    </div>
+                                    <Switch defaultChecked />
+                                </div>
+                            </div>
+
+                            <Separator />
+
+                            <div>
+                                <h4 className="font-medium text-card-foreground mb-3">Test Notifications</h4>
+                                <Button onClick={testNotifications} variant="outline" className="w-full">
+                                    <Bell className="w-4 h-4 mr-2" />
+                                    Send Test Notifications
+                                </Button>
+                                <p className="text-xs text-muted-foreground mt-2">
+                                    This will send sample notifications to test the system
+                                </p>
+                            </div>
                         </CardContent>
                     </Card>
 

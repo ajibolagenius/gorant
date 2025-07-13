@@ -16,6 +16,9 @@
 - Make sure the Audio feedback includes: Mood-based sounds when posting, Action sounds for likes and achievements, Volume and settings are saved automatically.
 - Implement the Notifications logic to be functional (likes, comments, mentions, challenges, achievements).
 - Implement the Privacy, Content Filters sections.
+13. Update the DESIGN SYSTEM file.
+14. Are all the toggles in the Settings page fucntional and working?
+15. Rewrite the bookmark page code.
 
 
 ## Desktop Fixes
