@@ -129,3 +129,4 @@ By following this phased, tool-driven strategy, Rant will evolve into a visually
 - [ ] PWA Support
 - [ ] Mobile app (React Native)
 - [ ] Ads, sponsorships, and monetization options
+- [ ] Custom Username (3-4 chars)
