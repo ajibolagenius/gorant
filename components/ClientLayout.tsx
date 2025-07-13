@@ -42,10 +42,17 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             if (lenis && lenis.destroy) lenis.destroy()
         }
     }, [])
+
+    // Apply font size globally to <body>
+    useEffect(() => {
+        if (typeof document === 'undefined') return;
+        document.body.classList.remove("text-sm", "text-base", "text-lg", "text-xl");
+        document.body.classList.add(fontSize);
+    }, [fontSize]);
+
     return (
         <div
-            className={fontSize}
-            aria-hidden={screenReaderMode ? undefined : false}
+            className={screenReaderMode ? 'screen-reader' : ''}
             aria-live={screenReaderMode ? "polite" : undefined}
         >
             <Header userLevel={userLevel} theme={theme} toggleTheme={toggleTheme} pathname={pathname} />

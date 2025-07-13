@@ -103,7 +103,7 @@ export default function LeaderboardClient({ leaderboardCategories, leaderboardDa
                     {/* Main Content */}
                     <div className="lg:col-span-3 space-y-6">
                         {/* Category Selector */}
-                        <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
+                        <Card className="shadow-sm border-0 bg-card/60 dark:bg-card/60 backdrop-blur">
                             <CardContent className="pt-2 sm:pt-6">
                                 <div className="flex flex-wrap w-full gap-2 mb-4">
                                     {leaderboardCategories.map((category) => {
@@ -196,7 +196,7 @@ export default function LeaderboardClient({ leaderboardCategories, leaderboardDa
                         </Card>
 
                         {/* Full Leaderboard */}
-                        <Card className="shadow-sm border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur">
+                        <Card className="shadow-sm border-0 bg-card/80 dark:bg-card/80 backdrop-blur">
                             <CardHeader>
                                 <h2 className="text-lg font-semibold text-gray-800 dark:text-white">Full Rankings</h2>
                             </CardHeader>
@@ -206,8 +206,8 @@ export default function LeaderboardClient({ leaderboardCategories, leaderboardDa
                                         <div
                                             key={user.userId}
                                             className={`flex items-center justify-between p-4 rounded-lg transition-colors ${user.rank <= 3
-                                                ? "bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-800"
-                                                : "bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600"
+                                                ? "bg-accent/40 text-accent-foreground border border-accent"
+                                                : "bg-card text-card-foreground hover:bg-accent/10 border border-border"
                                                 }`}
                                         >
                                             <div className="flex items-center space-x-4">
@@ -240,7 +240,7 @@ export default function LeaderboardClient({ leaderboardCategories, leaderboardDa
                     {/* Sidebar */}
                     <div className="space-y-6">
                         {/* Your Rank */}
-                        <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
+                        <Card className="shadow-sm border-0 bg-card/60 dark:bg-card/60 backdrop-blur">
                             <CardHeader>
                                 <h3 className="font-semibold text-gray-800 dark:text-white">Your Rank</h3>
                             </CardHeader>
@@ -264,7 +264,7 @@ export default function LeaderboardClient({ leaderboardCategories, leaderboardDa
                         </Card>
 
                         {/* Recent Achievements */}
-                        <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
+                        <Card className="shadow-sm border-0 bg-card/60 dark:bg-card/60 backdrop-blur">
                             <CardHeader>
                                 <h3 className="font-semibold text-gray-800 dark:text-white">Recent Achievements</h3>
                             </CardHeader>

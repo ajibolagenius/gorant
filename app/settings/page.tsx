@@ -14,6 +14,7 @@ import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { useSettings } from "@/hooks/use-settings"
 import { AudioSettings } from "@/components/audio-settings"
+import { Separator } from "@/components/ui/separator"
 
 export default function SettingsPage() {
     const { fontSize, contrast, screenReaderMode, reducedMotion, updateAccessibility } = useAccessibility()
@@ -76,33 +77,31 @@ export default function SettingsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-background dark:bg-background">
-            {/* Header */}
-            <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-200 dark:border-gray-700">
-                <div className="container mx-auto px-4 py-6 max-w-6xl">
-                    <div className="flex items-center justify-between">
+        <div className="min-h-screen bg-background dark:bg-background py-8">
+            <div className="container mx-auto w-full max-w-full px-4 mb-safe-bottom wrap-screen overflow-x-auto">
+                {/* Enhanced Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                    <div className="flex items-center gap-3">
+                        <div className="rounded-full bg-purple-100 dark:bg-purple-900/30 p-3">
+                            <Shield weight="duotone" className="w-7 h-7 text-purple-600 dark:text-purple-300" />
+                        </div>
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center">
-                                <Shield weight="duotone" className="w-8 h-8 mr-3 text-purple-600" />
+                            <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
                                 Settings & Privacy
                             </h1>
-                            <p className="text-gray-600 dark:text-gray-300 mt-2">Customize your experience and privacy preferences</p>
+                            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Customize your experience and privacy preferences</p>
                         </div>
-                        <Link href="/">
-                            <Button variant="outline">Back to Feed</Button>
-                        </Link>
                     </div>
                 </div>
-            </div>
-
-            <div className="container mx-auto px-4 py-8 max-w-4xl">
+                <Separator className="mb-6" />
+                {/* Main Content */}
                 <div className="space-y-6">
                     {/* Accessibility Settings */}
-                    <Card className="shadow-sm border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur">
+                    <Card className="shadow-sm border-0 bg-card/80 dark:bg-card/80 backdrop-blur">
                         <CardHeader>
                             <div className="flex items-center space-x-2">
                                 <Eye weight="duotone" className="w-5 h-5 text-blue-600" />
-                                <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Accessibility</h2>
+                                <h2 className="text-xl font-semibold text-card-foreground">Accessibility</h2>
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-6">
@@ -166,11 +165,11 @@ export default function SettingsPage() {
                     <AudioSettings />
 
                     {/* Notification Settings */}
-                    <Card className="shadow-sm border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur">
+                    <Card className="shadow-sm border-0 bg-card/80 dark:bg-card/80 backdrop-blur">
                         <CardHeader>
                             <div className="flex items-center space-x-2">
                                 <Bell weight="duotone" className="w-5 h-5 text-green-600" />
-                                <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Notifications</h2>
+                                <h2 className="text-xl font-semibold text-card-foreground">Notifications</h2>
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -195,11 +194,11 @@ export default function SettingsPage() {
                     </Card>
 
                     {/* Privacy Settings */}
-                    <Card className="shadow-sm border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur">
+                    <Card className="shadow-sm border-0 bg-card/80 dark:bg-card/80 backdrop-blur">
                         <CardHeader>
                             <div className="flex items-center space-x-2">
                                 <Lock weight="duotone" className="w-5 h-5 text-red-600" />
-                                <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Privacy</h2>
+                                <h2 className="text-xl font-semibold text-card-foreground">Privacy</h2>
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -224,11 +223,11 @@ export default function SettingsPage() {
                     </Card>
 
                     {/* Content Moderation */}
-                    <Card className="shadow-sm border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur">
+                    <Card className="shadow-sm border-0 bg-card/80 dark:bg-card/80 backdrop-blur">
                         <CardHeader>
                             <div className="flex items-center space-x-2">
                                 <Shield weight="duotone" className="w-5 h-5 text-purple-600" />
-                                <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Content Filters</h2>
+                                <h2 className="text-xl font-semibold text-card-foreground">Content Filters</h2>
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-6">
@@ -281,11 +280,11 @@ export default function SettingsPage() {
                     </Card>
 
                     {/* Account Management */}
-                    <Card className="shadow-sm border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur">
+                    <Card className="shadow-sm border-0 bg-card/80 dark:bg-card/80 backdrop-blur">
                         <CardHeader>
                             <div className="flex items-center space-x-2">
                                 <Globe weight="duotone" className="w-5 h-5 text-indigo-600" />
-                                <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Account</h2>
+                                <h2 className="text-xl font-semibold text-card-foreground">Account</h2>
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -322,7 +321,7 @@ export default function SettingsPage() {
 
                     {/* Save All Settings Button */}
                     <div className="flex justify-center pt-4">
-                        <Button className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-2 rounded" onClick={handleSaveAll}>
+                        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-2 rounded" onClick={handleSaveAll}>
                             Save All Settings
                         </Button>
                     </div>
@@ -330,10 +329,10 @@ export default function SettingsPage() {
             </div>
             {/* Delete Account Confirmation Dialog */}
             {showDeleteDialog && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-                    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 max-w-sm w-full">
-                        <h3 className="text-lg font-semibold mb-4">Delete Account</h3>
-                        <p className="mb-6 text-gray-600 dark:text-gray-300">Are you sure you want to delete your account and all associated data? This action cannot be undone.</p>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/40">
+                    <div className="bg-card dark:bg-card rounded-lg shadow-lg p-8 max-w-sm w-full">
+                        <h3 className="text-lg font-semibold mb-4 text-card-foreground">Delete Account</h3>
+                        <p className="mb-6 text-muted-foreground">Are you sure you want to delete your account and all associated data? This action cannot be undone.</p>
                         <div className="flex justify-end gap-2">
                             <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>Cancel</Button>
                             <Button variant="destructive" onClick={confirmDeleteAccount}>Delete</Button>

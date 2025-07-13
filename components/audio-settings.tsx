@@ -47,7 +47,7 @@ export function AudioSettings({ className = "" }: AudioSettingsProps) {
     }
 
     return (
-        <Card className={`w-full ${className}`}>
+        <Card className={`shadow-sm border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur w-full ${className}`}>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <Settings className="w-5 h-5" />

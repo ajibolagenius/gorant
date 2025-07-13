@@ -75,17 +75,17 @@ export default function BookmarksClient() {
                 {/* Enhanced Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="rounded-full bg-purple-100 dark:bg-purple-900/30 p-3">
-                            <BookmarkSimple weight="duotone" className="w-7 h-7 text-purple-600 dark:text-purple-300" />
+                        <div className="rounded-full bg-accent p-3">
+                            <BookmarkSimple weight="duotone" className="w-7 h-7 text-accent-foreground" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                            <h1 className="text-2xl font-bold text-card-foreground flex items-center gap-2">
                                 Bookmarked Rants
-                                <span className="inline-block bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-200 text-xs font-semibold px-2 py-0.5 rounded ml-2">
+                                <span className="inline-block bg-accent text-accent-foreground text-xs font-semibold px-2 py-0.5 rounded ml-2">
                                     {bookmarked.length}
                                 </span>
                             </h1>
-                            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">All your saved rants in one place.</p>
+                            <p className="text-muted-foreground text-sm mt-1">All your saved rants in one place.</p>
                         </div>
                     </div>
                 </div>

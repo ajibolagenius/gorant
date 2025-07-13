@@ -33,6 +33,7 @@ import { SentimentAnalysisService } from "@/services/sentiment-analysis"
 import { toast } from "sonner"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import React from "react"
+import { audioService } from "@/services/audio-service"
 
 export interface Comment {
     id: string
@@ -202,6 +203,11 @@ const EnhancedRantCardComponent = ({
         toast.success("Comment liked!")
     }
 
+    const handleLike = (id: string) => {
+        audioService.playActionSound('like')
+        onLike(id)
+    }
+
     const getSentimentDisplay = () => {
         if (!rant.sentiment_score) return null
 
@@ -235,7 +241,7 @@ const EnhancedRantCardComponent = ({
 
     return (
         <Card
-            className="shadow-lg border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] group relative"
+            className="shadow-lg border-0 bg-card/90 dark:bg-card/90 backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] group relative"
             style={{ minHeight: `${getCardHeight()}px` }}
         >
             <CardContent className="pt-6">
@@ -257,7 +263,7 @@ const EnhancedRantCardComponent = ({
                                     <Badge
                                         variant="secondary"
                                         size="default"
-                                        className="bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 text-xs"
+                                        className="bg-accent text-accent-foreground dark:bg-accent dark:text-accent-foreground text-xs"
                                     >
                                         <TrendingUp className="w-3 h-3" />
                                     </Badge>
@@ -369,7 +375,7 @@ const EnhancedRantCardComponent = ({
                         <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => onLike(rant.id)}
+                            onClick={() => handleLike(rant.id)}
                             className={`transition-all duration-200 hover:scale-110 ${isLiked
                                 ? "text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                                 : "text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"

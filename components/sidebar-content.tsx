@@ -27,25 +27,25 @@ export function SidebarContent({ userPoints, userLevel, nextLevelPoints, followe
             <GameificationPanel userPoints={userPoints} userLevel={userLevel} nextLevelPoints={nextLevelPoints} />
 
             {/* Quick Stats */}
-            <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
+            <Card className="shadow-sm border-0 bg-card/60 dark:bg-card/60 backdrop-blur">
                 <CardHeader>
-                    <h3 className="font-semibold text-gray-800 dark:text-white">Community Stats</h3>
+                    <h3 className="font-semibold text-card-foreground">Community Stats</h3>
                 </CardHeader>
                 <CardContent className="space-y-3">
                     <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-300">Total Rants</span>
+                        <span className="text-muted-foreground">Total Rants</span>
                         <span className="font-semibold text-purple-600 dark:text-purple-400">1,234</span>
                     </div>
                     <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-300">Active Users</span>
+                        <span className="text-muted-foreground">Active Users</span>
                         <span className="font-semibold text-purple-600 dark:text-purple-400">567</span>
                     </div>
                     <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-300">Today's Rants</span>
+                        <span className="text-muted-foreground">Today's Rants</span>
                         <span className="font-semibold text-purple-600 dark:text-purple-400">89</span>
                     </div>
                     <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-300">Comments Today</span>
+                        <span className="text-muted-foreground">Comments Today</span>
                         <span className="font-semibold text-green-600 dark:text-green-400">156</span>
                     </div>
                 </CardContent>
@@ -53,9 +53,9 @@ export function SidebarContent({ userPoints, userLevel, nextLevelPoints, followe
 
             {/* Followed Tags */}
             {followedTags.size > 0 && (
-                <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
+                <Card className="shadow-sm border-0 bg-card/60 dark:bg-card/60 backdrop-blur">
                     <CardHeader>
-                        <h3 className="font-semibold text-gray-800 dark:text-white">Following</h3>
+                        <h3 className="font-semibold text-card-foreground">Following</h3>
                     </CardHeader>
                     <CardContent>
                         <div className="flex flex-wrap gap-2">
@@ -98,12 +98,12 @@ export function SidebarContent({ userPoints, userLevel, nextLevelPoints, followe
             </Card>
 
             {/* Support Resources */}
-            <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
+            <Card className="shadow-sm border-0 bg-card/60 dark:bg-card/60 backdrop-blur">
                 <CardHeader>
-                    <h3 className="font-semibold text-gray-800 dark:text-white">Need Support?</h3>
+                    <h3 className="font-semibold text-card-foreground">Need Support?</h3>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+                    <p className="text-sm text-muted-foreground mb-3">
                         Remember, you're not alone. Help is always available.
                     </p>
                     <div className="flex items-center mb-2">

@@ -249,17 +249,17 @@ export function TrendingClient() {
             <div className="container mx-auto w-full max-w-full px-4 mb-safe-bottom wrap-screen overflow-x-auto mt-10">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-0 sm:mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="rounded-full bg-orange-100 dark:bg-orange-900/30 p-3">
-                            <TrendUp weight="duotone" className="w-7 h-7 text-orange-600 dark:text-orange-300" />
+                        <div className="rounded-full bg-accent p-3">
+                            <TrendUp weight="duotone" className="w-7 h-7 text-accent-foreground" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                            <h1 className="text-2xl font-bold text-card-foreground flex items-center gap-2">
                                 Trending Rants
-                                <span className="inline-block bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-200 text-xs font-semibold px-2 py-0.5 rounded ml-2">
+                                <span className="inline-block bg-accent text-accent-foreground text-xs font-semibold px-2 py-0.5 rounded ml-2">
                                     {trendingRants.length}
                                 </span>
                             </h1>
-                            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">See what's hot in the community right now.</p>
+                            <p className="text-muted-foreground text-sm mt-1">See what's hot in the community right now.</p>
                         </div>
                     </div>
                     {/* Removed Back to Feed button */}
@@ -280,8 +280,8 @@ export function TrendingClient() {
                                             variant={selectedPeriod === period.value ? "default" : "outline"}
                                             onClick={() => setSelectedPeriod(period.value)}
                                             className={`${selectedPeriod === period.value
-                                                ? "bg-orange-600 hover:bg-orange-700 text-white"
-                                                : "hover:bg-orange-50 dark:hover:bg-orange-900 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-700"
+                                                ? "bg-accent hover:bg-accent-dark text-accent-foreground"
+                                                : "hover:bg-accent/50 dark:hover:bg-accent/10 text-accent-foreground border-accent-dark dark:border-accent-light"
                                                 } flex-1 min-w-[120px]`}
                                         >
                                             <period.icon weight="duotone" className="w-4 h-4 mr-2" />
@@ -305,7 +305,7 @@ export function TrendingClient() {
                                     {({ index, style }: ListChildComponentProps) => (
                                         <div style={style} key={topTrendingRants[index].id} className="relative">
                                             <div className="absolute -left-4 top-4 z-10">
-                                                <Badge className="bg-orange-500 text-white font-bold">#{index + 1}</Badge>
+                                                <Badge className="bg-accent text-accent-foreground font-bold">#{index + 1}</Badge>
                                             </div>
                                             <RantCard
                                                 rant={topTrendingRants[index]}
@@ -333,7 +333,7 @@ export function TrendingClient() {
                                 topTrendingRants.map((rant, index) => (
                                     <div key={rant.id} className="relative">
                                         <div className="absolute -left-4 top-4 z-10">
-                                            <Badge className="bg-orange-500 text-white font-bold">#{index + 1}</Badge>
+                                            <Badge className="bg-accent text-accent-foreground font-bold">#{index + 1}</Badge>
                                         </div>
                                         <RantCard
                                             rant={rant}
@@ -395,20 +395,20 @@ export function TrendingClient() {
                         {/* Trending Stats */}
                         <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
                             <CardHeader>
-                                <h3 className="font-semibold text-gray-800 dark:text-white">Trending Stats</h3>
+                                <h3 className="font-semibold text-card-foreground dark:text-white">Trending Stats</h3>
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 <div className="flex justify-between">
-                                    <span className="text-gray-600 dark:text-gray-300">Top Rant Likes</span>
-                                    <span className="font-semibold text-orange-600 dark:text-orange-400">234</span>
+                                    <span className="text-muted-foreground dark:text-gray-300">Top Rant Likes</span>
+                                    <span className="font-semibold text-accent">234</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-gray-600 dark:text-gray-300">Most Comments</span>
-                                    <span className="font-semibold text-orange-600 dark:text-orange-400">89</span>
+                                    <span className="text-muted-foreground dark:text-gray-300">Most Comments</span>
+                                    <span className="font-semibold text-accent">89</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-gray-600 dark:text-gray-300">Trending Tags</span>
-                                    <span className="font-semibold text-orange-600 dark:text-orange-400">#love</span>
+                                    <span className="text-muted-foreground dark:text-gray-300">Trending Tags</span>
+                                    <span className="font-semibold text-accent">#love</span>
                                 </div>
                             </CardContent>
                         </Card>
@@ -416,34 +416,34 @@ export function TrendingClient() {
                         {/* Popular Moods */}
                         <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
                             <CardHeader>
-                                <h3 className="font-semibold text-gray-800 dark:text-white">Popular Moods Today</h3>
+                                <h3 className="font-semibold text-card-foreground dark:text-white">Popular Moods Today</h3>
                             </CardHeader>
                             <CardContent className="space-y-2">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center space-x-2">
                                         <span>🎉</span>
-                                        <span className="text-sm text-gray-600 dark:text-gray-300">Excited</span>
+                                        <span className="text-sm text-muted-foreground dark:text-gray-300">Excited</span>
                                     </div>
                                     <Badge variant="secondary">45%</Badge>
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center space-x-2">
                                         <span>😡</span>
-                                        <span className="text-sm text-gray-600 dark:text-gray-300">Angry</span>
+                                        <span className="text-sm text-muted-foreground dark:text-gray-300">Angry</span>
                                     </div>
                                     <Badge variant="secondary">23%</Badge>
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center space-x-2">
                                         <span>🤔</span>
-                                        <span className="text-sm text-gray-600 dark:text-gray-300">Confused</span>
+                                        <span className="text-sm text-muted-foreground dark:text-gray-300">Confused</span>
                                     </div>
                                     <Badge variant="secondary">18%</Badge>
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center space-x-2">
                                         <span>😢</span>
-                                        <span className="text-sm text-gray-600 dark:text-gray-300">Sad</span>
+                                        <span className="text-sm text-muted-foreground dark:text-gray-300">Sad</span>
                                     </div>
                                     <Badge variant="secondary">14%</Badge>
                                 </div>
@@ -453,23 +453,23 @@ export function TrendingClient() {
                         {/* Trending Tags */}
                         <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
                             <CardHeader>
-                                <h3 className="font-semibold text-gray-800 dark:text-white">Trending Tags</h3>
+                                <h3 className="font-semibold text-card-foreground dark:text-white">Trending Tags</h3>
                             </CardHeader>
                             <CardContent>
                                 <div className="flex flex-wrap gap-2">
-                                    <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                                    <Badge variant="outline" className="bg-accent/10 text-accent-foreground border-accent-dark">
                                         #work
                                     </Badge>
-                                    <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                                    <Badge variant="outline" className="bg-accent/10 text-accent-foreground border-accent-dark">
                                         #love
                                     </Badge>
-                                    <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                                    <Badge variant="outline" className="bg-accent/10 text-accent-foreground border-accent-dark">
                                         #stress
                                     </Badge>
-                                    <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                                    <Badge variant="outline" className="bg-accent/10 text-accent-foreground border-accent-dark">
                                         #success
                                     </Badge>
-                                    <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                                    <Badge variant="outline" className="bg-accent/10 text-accent-foreground border-accent-dark">
                                         #anxiety
                                     </Badge>
                                 </div>

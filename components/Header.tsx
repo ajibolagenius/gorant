@@ -14,12 +14,12 @@ interface HeaderProps {
 
 export default function Header({ userLevel, theme, toggleTheme, pathname }: HeaderProps) {
     return (
-        <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-200 dark:border-gray-700">
+        <header className="sticky top-0 z-50 bg-background/80 dark:bg-background/80 backdrop-blur border-b border-border dark:border-border">
             <div className="container mx-auto px-4 py-4 max-w-7xl">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                         <Link href="/">
-                            <h1 className="text-2xl font-bold text-gray-800 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors">Rant 💭</h1>
+                            <h1 className="text-2xl font-bold text-foreground dark:text-foreground hover:text-purple-600 dark:hover:text-purple-400 transition-colors">Rant 💭</h1>
                         </Link>
                         {/* <Badge
                             variant="secondary"
@@ -38,35 +38,35 @@ export default function Header({ userLevel, theme, toggleTheme, pathname }: Head
                     <nav className="hidden md:flex items-center space-x-6">
                         <Link
                             href="/"
-                            className={`flex items-center space-x-1 ${pathname === "/" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"} hover:text-purple-600 dark:hover:text-purple-400`}
+                            className={`flex items-center space-x-1 ${pathname === "/" ? "text-purple-600 dark:text-purple-400" : "text-muted-foreground"} hover:text-purple-600 dark:hover:text-purple-400`}
                         >
                             <House weight="duotone" className="w-4 h-4" />
                             <span>Feed</span>
                         </Link>
                         <Link
                             href="/trending"
-                            className={`flex items-center space-x-1 ${pathname === "/trending" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"} hover:text-purple-600 dark:hover:text-purple-400`}
+                            className={`flex items-center space-x-1 ${pathname === "/trending" ? "text-purple-600 dark:text-purple-400" : "text-muted-foreground"} hover:text-purple-600 dark:hover:text-purple-400`}
                         >
                             <TrendUp weight="duotone" className="w-4 h-4" />
                             <span>Trending</span>
                         </Link>
                         <Link
                             href="/challenges"
-                            className={`flex items-center space-x-1 ${pathname === "/challenges" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"} hover:text-purple-600 dark:hover:text-purple-400`}
+                            className={`flex items-center space-x-1 ${pathname === "/challenges" ? "text-purple-600 dark:text-purple-400" : "text-muted-foreground"} hover:text-purple-600 dark:hover:text-purple-400`}
                         >
                             <Trophy weight="duotone" className="w-4 h-4" />
                             <span>Challenges</span>
                         </Link>
                         <Link
                             href="/leaderboard"
-                            className={`flex items-center space-x-1 ${pathname === "/leaderboard" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"} hover:text-purple-600 dark:hover:text-purple-400`}
+                            className={`flex items-center space-x-1 ${pathname === "/leaderboard" ? "text-purple-600 dark:text-purple-400" : "text-muted-foreground"} hover:text-purple-600 dark:hover:text-purple-400`}
                         >
                             <Lightning weight="duotone" className="w-4 h-4" />
                             <span>Leaderboard</span>
                         </Link>
                         <Link
                             href="/bookmarks"
-                            className={`flex items-center space-x-1 ${pathname === "/bookmarks" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"} hover:text-purple-600 dark:hover:text-purple-400`}
+                            className={`flex items-center space-x-1 ${pathname === "/bookmarks" ? "text-purple-600 dark:text-purple-400" : "text-muted-foreground"} hover:text-purple-600 dark:hover:text-purple-400`}
                         >
                             <Star weight="duotone" className="w-4 h-4" />
                             <span>Bookmarks</span>
@@ -78,7 +78,7 @@ export default function Header({ userLevel, theme, toggleTheme, pathname }: Head
                             variant="ghost"
                             size="sm"
                             onClick={toggleTheme}
-                            className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            className="text-muted-foreground hover:bg-accent dark:hover:bg-accent"
                             aria-label="Toggle theme"
                         >
                             {theme === "dark" ? <Sun weight="duotone" className="w-4 h-4" /> : <Moon weight="duotone" className="w-4 h-4" />}
@@ -88,7 +88,7 @@ export default function Header({ userLevel, theme, toggleTheme, pathname }: Head
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                className="text-muted-foreground hover:bg-accent dark:hover:bg-accent"
                                 aria-label="Notifications"
                             >
                                 <Bell weight="duotone" className="w-4 h-4" />
@@ -99,7 +99,7 @@ export default function Header({ userLevel, theme, toggleTheme, pathname }: Head
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                className="text-muted-foreground hover:bg-accent dark:hover:bg-accent"
                                 aria-label="Settings"
                             >
                                 <Shield weight="duotone" className="w-4 h-4" />

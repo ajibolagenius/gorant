@@ -44,13 +44,13 @@ export function FilterPanel({
         <div className="space-y-4">
             {/* Mood Filter */}
             <div>
-                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Filter by Mood</h4>
+                <h4 className="text-sm font-medium text-card-foreground mb-2">Filter by Mood</h4>
                 <div className="flex flex-wrap gap-2">
                     <Button
                         variant={!moodFilter ? "default" : "outline"}
                         size="sm"
                         onClick={() => setMoodFilter("")}
-                        className={!moodFilter ? "bg-purple-600 hover:bg-purple-700" : ""}
+                        className={!moodFilter ? "bg-primary hover:bg-primary/90 text-primary-foreground" : ""}
                     >
                         All Moods
                     </Button>
@@ -61,8 +61,8 @@ export function FilterPanel({
                             size="sm"
                             onClick={() => setMoodFilter(moodFilter === mood.value ? "" : mood.value)}
                             className={`${moodFilter === mood.value
-                                ? "bg-purple-600 hover:bg-purple-700"
-                                : "hover:bg-purple-50 dark:hover:bg-purple-900"
+                                ? "bg-primary hover:bg-primary/90 text-primary-foreground"
+                                : "hover:bg-accent dark:hover:bg-accent"
                                 }`}
                         >
                             <mood.icon weight="duotone" className={`w-5 h-5 mr-1 ${mood.color.replace(/bg-[^ ]+/, '').replace('text-', 'text-')}`} />

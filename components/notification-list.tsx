@@ -42,18 +42,18 @@ export function NotificationList({
                 </Button>
             </div>
             {notifications.length === 0 ? (
-                <div className="text-gray-500 text-center py-8">No notifications yet.</div>
+                <div className="text-muted-foreground text-center py-8">No notifications yet.</div>
             ) : (
-                <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+                <ul className="divide-y divide-border">
                     {notifications.map((n) => (
                         <li
                             key={n.id}
-                            className={`flex items-center gap-3 py-3 px-2 rounded transition bg-white dark:bg-gray-800 ${n.read ? "opacity-60" : "bg-yellow-50 dark:bg-yellow-900/20"}`}
+                            className={`flex items-center gap-3 py-3 px-2 rounded transition bg-card ${n.read ? "opacity-60" : "bg-accent/40 dark:bg-accent/20"}`}
                         >
                             <span>{ICONS[n.type]}</span>
                             <div className="flex-1">
                                 <div className="text-sm font-medium">{n.message}</div>
-                                <div className="text-xs text-gray-400">{n.timestamp}</div>
+                                <div className="text-xs text-muted-foreground">{n.timestamp}</div>
                             </div>
                             {!n.read && (
                                 <Button variant="outline" size="xs" onClick={() => markAsRead(n.id)}>

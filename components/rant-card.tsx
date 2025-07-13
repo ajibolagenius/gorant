@@ -33,6 +33,7 @@ import { Star as PhosphorStar } from "phosphor-react"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import React from "react"
 import { motion } from "framer-motion"
+import { audioService } from "@/services/audio-service"
 
 interface RantCardProps {
     rant: Rant
@@ -111,6 +112,11 @@ export const RantCard = React.memo(function RantCard({
         setShowReportDialog(false)
     }
 
+    const handleLike = (id: string) => {
+        audioService.playActionSound('like')
+        onLike(id)
+    }
+
     const getSentimentDisplay = () => {
         if (!rant.sentiment_score) return null
 
@@ -140,7 +146,7 @@ export const RantCard = React.memo(function RantCard({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
         >
-            <Card className="shadow-sm border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur hover:shadow-md transition-all duration-200 relative">
+            <Card className="shadow-sm border-0 bg-card/80 dark:bg-card/80 backdrop-blur hover:shadow-md transition-all duration-200 relative">
                 <CardContent className="pt-6">
                     <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center space-x-2 flex-wrap gap-2">
@@ -259,7 +265,7 @@ export const RantCard = React.memo(function RantCard({
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => onLike(rant.id)}
+                                onClick={() => handleLike(rant.id)}
                                 className={`${isLiked
                                     ? "text-red-600 hover:text-red-700 dark:text-red-400"
                                     : "text-gray-600 hover:text-red-600 dark:text-gray-400"

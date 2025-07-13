@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Send, X } from "lucide-react"
+import { audioService } from "@/services/audio-service"
 
 interface Mood {
     icon: React.ElementType
@@ -48,6 +49,8 @@ export function PostRantModal({ isOpen, onClose, moods, onSubmit }: PostRantModa
 
     const handleSubmit = () => {
         if (!content.trim() || !selectedMood || cooldown > 0) return
+        audioService.playMoodSound(selectedMood)
+        audioService.playActionSound('post')
         onSubmit(content.trim(), selectedMood, tags)
         // Set cooldown
         localStorage.setItem("lastRantPost", Date.now().toString())
