@@ -176,8 +176,6 @@ const EnhancedRantCardComponent = ({
         setIsPostingComment(true)
         try {
             const comment = await onCommentPost(rant.id, newComment.trim())
-            setLocalComments((prev) => [comment, ...prev])
-            setLocalCommentsCount((prev) => prev + 1)
             setNewComment("")
             toast.success("Comment posted successfully!")
             // Set cooldown
@@ -243,29 +241,61 @@ const EnhancedRantCardComponent = ({
             <CardContent className="pt-6">
                 <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-2 flex-wrap gap-2">
-                        <Badge variant="secondary" className={`${getMoodColor(rant.mood)} text-xs px-2 py-0.5 font-medium`}>
+                        {/* Mood badge */}
+                        <Badge
+                            variant="secondary"
+                            size="default"
+                            className={`${getMoodColor(rant.mood)} text-xs font-medium`}
+                        >
                             <MoodIcon weight="duotone" className={`w-5 h-5 mr-1 ${getMoodColor(rant.mood).replace(/bg-[^ ]+/, '').replace('text-', 'text-')}`} />
                             {moods.find((m) => m.value === rant.mood)?.label}
                         </Badge>
+                        {/* Trending badge */}
                         {rant.is_trending && (
-                            <Badge
-                                variant="secondary"
-                                className="bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 border-orange-200 dark:border-orange-700"
-                            >
-                                <TrendingUp className="w-3 h-3 mr-1" />
-                                Trending
-                            </Badge>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Badge
+                                        variant="secondary"
+                                        size="default"
+                                        className="bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 text-xs"
+                                    >
+                                        <TrendingUp className="w-3 h-3" />
+                                    </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" sideOffset={2} delayDuration={0}>Trending</TooltipContent>
+                            </Tooltip>
                         )}
-                        {showSentiment && getSentimentDisplay()}
+                        {/* Negative sentiment badge */}
+                        {showSentiment && rant.sentiment_score && SentimentAnalysisService.getSentimentLabel(rant.sentiment_score) === "negative" && (
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Badge
+                                        variant="outline"
+                                        size="default"
+                                        className="bg-red-50 text-red-700 dark:bg-red-900 dark:text-red-300 text-xs"
+                                    >
+                                        {SentimentAnalysisService.getSentimentEmoji(rant.sentiment_score)}
+                                    </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" sideOffset={2} delayDuration={0}>Negative</TooltipContent>
+                            </Tooltip>
+                        )}
+                        {/* Verified badge */}
                         {showModeration && rant.moderation_status === "approved" && (
-                            <Badge
-                                variant="outline"
-                                className="text-green-700 border-green-300 bg-green-50 dark:text-green-300 dark:border-green-700 dark:bg-green-900/20"
-                            >
-                                <Shield className="w-3 h-3 mr-1" />
-                                Verified
-                            </Badge>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Badge
+                                        variant="outline"
+                                        size="default"
+                                        className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs"
+                                    >
+                                        <Shield className="w-3 h-3" />
+                                    </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" sideOffset={2} delayDuration={0}>Verified</TooltipContent>
+                            </Tooltip>
                         )}
+                        {/* If tooltips still do not show, ensure TooltipProvider wraps your app in layout.tsx */}
                     </div>
                     <div className="flex items-center space-x-2">
                         <span className="text-sm text-gray-500 dark:text-gray-400">{formatTimeAgo(rant.created_at)}</span>

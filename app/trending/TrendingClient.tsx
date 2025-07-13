@@ -21,7 +21,8 @@ import {
     TrendUp,
     Clock,
     Calendar,
-    Trophy
+    Trophy,
+    House
 } from "phosphor-react"
 import Link from "next/link"
 import { RantCard } from "@/components/rant-card"
@@ -69,6 +70,61 @@ const mockTrendingRants = [
         comments_count: 89,
         anonymous_id: "anon_trending_003",
         tags: ["love", "success", "dating"],
+        is_trending: true,
+    },
+    {
+        id: "trending_4",
+        content: "Lost my wallet on the bus today. If anyone finds a brown leather wallet, please DM!",
+        mood: "sad",
+        created_at: new Date(Date.now() - 14400000).toISOString(),
+        likes_count: 45,
+        comments_count: 12,
+        anonymous_id: "anon_trending_004",
+        tags: ["lost", "help"],
+        is_trending: true,
+    },
+    {
+        id: "trending_5",
+        content: "Got a promotion at work! Drinks on me tonight!",
+        mood: "happy",
+        created_at: new Date(Date.now() - 18000000).toISOString(),
+        likes_count: 120,
+        comments_count: 30,
+        anonymous_id: "anon_trending_005",
+        tags: ["work", "success"],
+        is_trending: true,
+    },
+    {
+        id: "trending_6",
+        content: "Why does coffee taste better on Mondays?",
+        mood: "neutral",
+        created_at: new Date(Date.now() - 21600000).toISOString(),
+        likes_count: 60,
+        comments_count: 10,
+        anonymous_id: "anon_trending_006",
+        tags: ["coffee", "monday"],
+        is_trending: true,
+    },
+    {
+        id: "trending_7",
+        content: "My cat just brought a mouse into the house. Again.",
+        mood: "anxious",
+        created_at: new Date(Date.now() - 25200000).toISOString(),
+        likes_count: 77,
+        comments_count: 15,
+        anonymous_id: "anon_trending_007",
+        tags: ["cat", "pets"],
+        is_trending: true,
+    },
+    {
+        id: "trending_8",
+        content: "Baked my first loaf of sourdough and it actually turned out great!",
+        mood: "confident",
+        created_at: new Date(Date.now() - 28800000).toISOString(),
+        likes_count: 99,
+        comments_count: 22,
+        anonymous_id: "anon_trending_008",
+        tags: ["baking", "success"],
         is_trending: true,
     },
 ]
@@ -185,41 +241,48 @@ export function TrendingClient() {
     const VIRTUALIZATION_THRESHOLD = 30
     const isVirtualized = trendingRants.length > VIRTUALIZATION_THRESHOLD
 
+    const topTrendingRants = trendingRants.slice(0, 5)
+
     return (
-        <main role="main" className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800">
-            {/* Header */}
-            <div className="container mx-auto px-4 py-6 max-w-6xl">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center">
-                            <TrendUp weight="duotone" className="w-8 h-8 mr-3 text-orange-500" />
-                            Trending Rants
-                        </h1>
-                        <p className="text-gray-600 dark:text-gray-300 mt-2">Discover what's resonating with the community</p>
+        <main role="main" className="min-h-screen bg-background dark:bg-background">
+            {/* Enhanced Header */}
+            <div className="container mx-auto w-full max-w-full px-4 mb-safe-bottom wrap-screen overflow-x-auto mt-10">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-0 sm:mb-6">
+                    <div className="flex items-center gap-3">
+                        <div className="rounded-full bg-orange-100 dark:bg-orange-900/30 p-3">
+                            <TrendUp weight="duotone" className="w-7 h-7 text-orange-600 dark:text-orange-300" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                                Trending Rants
+                                <span className="inline-block bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-200 text-xs font-semibold px-2 py-0.5 rounded ml-2">
+                                    {trendingRants.length}
+                                </span>
+                            </h1>
+                            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">See what's hot in the community right now.</p>
+                        </div>
                     </div>
-                    <Link href="/">
-                        <Button variant="outline">Back to Feed</Button>
-                    </Link>
+                    {/* Removed Back to Feed button */}
                 </div>
             </div>
 
-            <div className="container mx-auto px-4 py-8 max-w-6xl mb-safe-bottom wrap-screen">
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div className="container mx-auto px-4 py-8 max-w-6xl mb-safe-bottom wrap-screen overflow-x-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 flex-wrap">
                     {/* Main Content */}
                     <div className="lg:col-span-3 space-y-6">
                         {/* Period Selector */}
                         <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
-                            <CardContent className="pt-6">
-                                <div className="flex flex-wrap gap-2">
+                            <CardContent className="pt-2 sm:pt-6">
+                                <div className="flex flex-wrap w-full gap-2">
                                     {TRENDING_PERIODS.map((period) => (
                                         <Button
                                             key={period.value}
                                             variant={selectedPeriod === period.value ? "default" : "outline"}
                                             onClick={() => setSelectedPeriod(period.value)}
                                             className={`${selectedPeriod === period.value
-                                                ? "bg-orange-600 hover:bg-orange-700"
-                                                : "hover:bg-orange-50 dark:hover:bg-orange-900"
-                                                }`}
+                                                ? "bg-orange-600 hover:bg-orange-700 text-white"
+                                                : "hover:bg-orange-50 dark:hover:bg-orange-900 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-700"
+                                                } flex-1 min-w-[120px]`}
                                         >
                                             <period.icon weight="duotone" className="w-4 h-4 mr-2" />
                                             {period.label}
@@ -234,41 +297,40 @@ export function TrendingClient() {
                             {isVirtualized ? (
                                 <VirtualizedList
                                     height={800}
-                                    itemCount={trendingRants.length}
+                                    itemCount={topTrendingRants.length}
                                     itemSize={340}
                                     width={"100%"}
                                     className="w-full"
                                 >
                                     {({ index, style }: ListChildComponentProps) => (
-                                        <div style={style} key={trendingRants[index].id} className="relative">
+                                        <div style={style} key={topTrendingRants[index].id} className="relative">
                                             <div className="absolute -left-4 top-4 z-10">
                                                 <Badge className="bg-orange-500 text-white font-bold">#{index + 1}</Badge>
                                             </div>
                                             <RantCard
-                                                rant={trendingRants[index]}
+                                                rant={topTrendingRants[index]}
                                                 onLike={handleLike}
                                                 onBookmark={handleBookmark}
-                                                onReport={() => handleReport(trendingRants[index].id)}
-                                                onShare={() => handleShare(trendingRants[index])}
-                                                onBlockUser={() => handleBlockUser(trendingRants[index].anonymous_id)}
+                                                onReport={() => handleReport(topTrendingRants[index].id)}
+                                                onShare={() => handleShare(topTrendingRants[index])}
+                                                onBlockUser={() => handleBlockUser(topTrendingRants[index].anonymous_id)}
                                                 onFollowTag={() => { }}
-                                                isLiked={likedRants.has(trendingRants[index].id)}
-                                                isBookmarked={bookmarkedRants.has(trendingRants[index].id)}
-                                                isUserBlocked={blockedUsers.has(trendingRants[index].anonymous_id)}
+                                                isLiked={likedRants.has(topTrendingRants[index].id)}
+                                                isBookmarked={bookmarkedRants.has(topTrendingRants[index].id)}
+                                                isUserBlocked={blockedUsers.has(topTrendingRants[index].anonymous_id)}
                                                 followedTags={new Set()}
                                                 getMoodIcon={getMoodIcon}
                                                 getMoodColor={getMoodColor}
                                                 formatTimeAgo={formatTimeAgo}
                                                 moods={MOODS}
-                                                showBookmark={true}
-                                                showReport={true}
-                                                showShare={true}
+                                                showSentiment={true}
+                                                showModeration={true}
                                             />
                                         </div>
                                     )}
                                 </VirtualizedList>
                             ) : (
-                                trendingRants.map((rant, index) => (
+                                topTrendingRants.map((rant, index) => (
                                     <div key={rant.id} className="relative">
                                         <div className="absolute -left-4 top-4 z-10">
                                             <Badge className="bg-orange-500 text-white font-bold">#{index + 1}</Badge>
@@ -289,9 +351,8 @@ export function TrendingClient() {
                                             getMoodColor={getMoodColor}
                                             formatTimeAgo={formatTimeAgo}
                                             moods={MOODS}
-                                            showBookmark={true}
-                                            showReport={true}
-                                            showShare={true}
+                                            showSentiment={true}
+                                            showModeration={true}
                                         />
                                     </div>
                                 ))

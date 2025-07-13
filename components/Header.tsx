@@ -2,7 +2,7 @@
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Star, TrendUp, Trophy, Lightning, Moon, Sun, Bell, Shield } from "phosphor-react"
+import { Star, TrendUp, Trophy, Lightning, Moon, Sun, Bell, Shield, House } from "phosphor-react"
 import React from "react"
 
 interface HeaderProps {
@@ -36,6 +36,13 @@ export default function Header({ userLevel, theme, toggleTheme, pathname }: Head
                     </div>
 
                     <nav className="hidden md:flex items-center space-x-6">
+                        <Link
+                            href="/"
+                            className={`flex items-center space-x-1 ${pathname === "/" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"} hover:text-purple-600 dark:hover:text-purple-400`}
+                        >
+                            <House weight="duotone" className="w-4 h-4" />
+                            <span>Feed</span>
+                        </Link>
                         <Link
                             href="/trending"
                             className={`flex items-center space-x-1 ${pathname === "/trending" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"} hover:text-purple-600 dark:hover:text-purple-400`}

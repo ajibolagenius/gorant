@@ -75,7 +75,7 @@ export function SidebarContent({ userPoints, userLevel, nextLevelPoints, followe
             )}
 
             {/* Weekly Challenge */}
-            <Card className="shadow-sm border-0 bg-gradient-to-r from-yellow-100 to-orange-100 dark:from-yellow-900/30 dark:to-orange-900/30">
+            <Card className="shadow-sm border-0 bg-orange-100 dark:bg-orange-900/30">
                 <CardHeader>
                     <div className="flex items-center space-x-2">
                         <Trophy weight="duotone" className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />

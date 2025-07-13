@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Trophy, Calendar, Users, Target, Medal, Clock, CheckCircle } from "phosphor-react"
+import { Trophy, Calendar, Users, Target, Medal, Clock, CheckCircle, House } from "phosphor-react"
 import Link from "next/link"
 
 interface Challenge {
@@ -52,39 +52,42 @@ export default function ChallengeClient({ currentChallenges, pastChallenges, use
     }
 
     return (
-        <main role="main" className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800">
-            {/* Header */}
-            <div className="container mx-auto px-4 py-6 max-w-6xl">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center">
-                            <Trophy weight="duotone" className="w-8 h-8 mr-3 text-yellow-500" />
-                            Rant Challenges
-                        </h1>
-                        <p className="text-gray-600 dark:text-gray-300 mt-2">
-                            Join themed challenges and earn badges for your participation
-                        </p>
+        <main role="main" className="min-h-screen bg-background dark:bg-background">
+            {/* Enhanced Header */}
+            <div className="container mx-auto w-full max-w-full px-4 mb-safe-bottom wrap-screen overflow-x-auto mt-10">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-0 sm:mb-6">
+                    <div className="flex items-center gap-3">
+                        <div className="rounded-full bg-yellow-100 dark:bg-yellow-900/30 p-3">
+                            <Trophy weight="duotone" className="w-7 h-7 text-yellow-600 dark:text-yellow-300" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                                Rant Challenges
+                                <span className="inline-block bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-200 text-xs font-semibold px-2 py-0.5 rounded ml-2">
+                                    {currentChallenges.length}
+                                </span>
+                            </h1>
+                            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Join themed challenges and earn badges for your participation.</p>
+                        </div>
                     </div>
-                    <Link href="/">
-                        <Button variant="outline">Back to Feed</Button>
-                    </Link>
+                    {/* Removed Back to Feed button */}
                 </div>
             </div>
 
-            <div className="container mx-auto px-4 py-8 max-w-6xl mb-safe-bottom wrap-screen">
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div className="container mx-auto px-4 py-8 max-w-6xl mb-safe-bottom wrap-screen overflow-x-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 flex-wrap">
                     {/* Main Content */}
                     <div className="lg:col-span-3 space-y-6">
                         {/* Tab Navigation */}
                         <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
-                            <CardContent className="pt-6">
-                                <div className="flex space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+                            <CardContent className="pt-2 sm:pt-6">
+                                <div className="flex flex-wrap w-full gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
                                     <Button
                                         variant={activeTab === "current" ? "default" : "ghost"}
                                         onClick={() => setActiveTab("current")}
-                                        className={`flex-1 ${activeTab === "current"
-                                            ? "bg-white dark:bg-gray-600 shadow-sm"
-                                            : "hover:bg-gray-200 dark:hover:bg-gray-600"
+                                        className={`flex-1 min-w-[120px] ${activeTab === "current"
+                                            ? "bg-yellow-600 hover:bg-yellow-700 text-white"
+                                            : "hover:bg-yellow-50 dark:hover:bg-yellow-900 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700"
                                             }`}
                                     >
                                         <Target weight="duotone" className="w-4 h-4 mr-2" />
@@ -93,9 +96,9 @@ export default function ChallengeClient({ currentChallenges, pastChallenges, use
                                     <Button
                                         variant={activeTab === "past" ? "default" : "ghost"}
                                         onClick={() => setActiveTab("past")}
-                                        className={`flex-1 ${activeTab === "past"
-                                            ? "bg-white dark:bg-gray-600 shadow-sm"
-                                            : "hover:bg-gray-200 dark:hover:bg-gray-600"
+                                        className={`flex-1 min-w-[120px] ${activeTab === "past"
+                                            ? "bg-yellow-600 hover:bg-yellow-700 text-white"
+                                            : "hover:bg-yellow-50 dark:hover:bg-yellow-900 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700"
                                             }`}
                                     >
                                         <Calendar weight="duotone" className="w-4 h-4 mr-2" />
@@ -104,9 +107,9 @@ export default function ChallengeClient({ currentChallenges, pastChallenges, use
                                     <Button
                                         variant={activeTab === "badges" ? "default" : "ghost"}
                                         onClick={() => setActiveTab("badges")}
-                                        className={`flex-1 ${activeTab === "badges"
-                                            ? "bg-white dark:bg-gray-600 shadow-sm"
-                                            : "hover:bg-gray-200 dark:hover:bg-gray-600"
+                                        className={`flex-1 min-w-[120px] ${activeTab === "badges"
+                                            ? "bg-yellow-600 hover:bg-yellow-700 text-white"
+                                            : "hover:bg-yellow-50 dark:hover:bg-yellow-900 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700"
                                             }`}
                                     >
                                         <Medal weight="duotone" className="w-4 h-4 mr-2" />
@@ -339,7 +342,7 @@ export default function ChallengeClient({ currentChallenges, pastChallenges, use
                         </Card>
 
                         {/* Next Challenge Preview */}
-                        <Card className="shadow-sm border-0 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900 dark:to-pink-900">
+                        <Card className="shadow-sm border-0 bg-orange-100 dark:bg-orange-900/30">
                             <CardHeader>
                                 <div className="flex items-center space-x-2">
                                     <Calendar weight="duotone" className="w-5 h-5 text-purple-600 dark:text-purple-400" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { EnhancedRantCard, Rant } from "@/components/enhanced-rant-card";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
@@ -15,8 +15,12 @@ import {
     HeartBreak,
     Cloud,
     Confetti,
-    SmileySticker
+    SmileySticker,
+    House,
+    BookmarkSimple
 } from "phosphor-react"
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator"
 
 export default function BookmarksClient() {
     const [rants, setRants] = useState<Rant[]>([]);
@@ -30,7 +34,7 @@ export default function BookmarksClient() {
         setBookmarkedRants(new Set(savedBookmarks));
     }, []);
 
-    const bookmarked = rants.filter((rant) => bookmarkedRants.has(rant.id));
+    const bookmarked = useMemo(() => rants.filter((rant) => bookmarkedRants.has(rant.id)), [rants, bookmarkedRants]);
 
     // Helper to determine virtualization
     const VIRTUALIZATION_THRESHOLD = 30;
@@ -50,38 +54,98 @@ export default function BookmarksClient() {
         { icon: Confetti, label: "Excited", value: "excited", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" },
         { icon: SmileySticker, label: "Confident", value: "confident", color: "bg-lime-100 text-lime-800 dark:bg-lime-900/30 dark:text-lime-300" },
     ]
-    const getMoodIcon = (mood: string) => {
+    const getMoodIcon = useCallback((mood: string) => {
         return MOODS.find((m) => m.value === mood)?.icon || SmileyMeh
-    }
+    }, []);
+
+    // Unbookmark functionality
+    const handleUnbookmark = useCallback((rantId: string) => {
+        setBookmarkedRants((prev) => {
+            const updated = new Set(prev);
+            updated.delete(rantId);
+            // Update localStorage
+            localStorage.setItem("bookmarked_rants", JSON.stringify(Array.from(updated)));
+            return updated;
+        });
+    }, []);
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800 py-8">
-            <div className="container mx-auto max-w-2xl px-4 mb-safe-bottom wrap-screen">
-                <div className="flex items-center justify-between mb-6">
-                    <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Bookmarked Rants</h1>
-                    <Link
-                        href="/"
-                        className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-800 dark:text-white hover:bg-purple-50 dark:hover:bg-purple-800 transition"
-                    >
-                        Back to Feed
-                    </Link>
+        <div className="min-h-screen bg-background dark:bg-background py-8">
+            <div className="container mx-auto w-full max-w-full px-4 mb-safe-bottom wrap-screen overflow-x-auto">
+                {/* Enhanced Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                    <div className="flex items-center gap-3">
+                        <div className="rounded-full bg-purple-100 dark:bg-purple-900/30 p-3">
+                            <BookmarkSimple weight="duotone" className="w-7 h-7 text-purple-600 dark:text-purple-300" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                                Bookmarked Rants
+                                <span className="inline-block bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-200 text-xs font-semibold px-2 py-0.5 rounded ml-2">
+                                    {bookmarked.length}
+                                </span>
+                            </h1>
+                            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">All your saved rants in one place.</p>
+                        </div>
+                    </div>
                 </div>
-                {bookmarked.length === 0 ? (
-                    <Card className="p-8 text-center text-gray-500 dark:text-gray-300">No bookmarks yet.</Card>
-                ) : isVirtualized ? (
-                    <VirtualizedList
-                        height={800}
-                        itemCount={bookmarked.length}
-                        itemSize={340}
-                        width={"100%"}
-                        className="w-full"
-                    >
-                        {({ index, style }: ListChildComponentProps) => (
-                            <div style={style} key={bookmarked[index].id}>
+                <Separator className="mb-6" />
+                {/* Main Content */}
+                <div className="bg-white/80 dark:bg-gray-900/80 rounded-xl shadow-sm p-6 min-h-[300px]">
+                    {bookmarked.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-full py-16 text-center gap-4">
+                            <BookmarkSimple weight="duotone" className="w-14 h-14 text-purple-300 mb-2" />
+                            <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-200">No bookmarks yet</h2>
+                            <p className="text-gray-500 dark:text-gray-400 mb-2">You haven’t bookmarked any rants. When you do, they’ll show up here!</p>
+                            <Link href="/">
+                                <Button variant="outline" className="inline-flex items-center gap-2">
+                                    <House weight="duotone" className="w-4 h-4" />
+                                    Go to Feed
+                                </Button>
+                            </Link>
+                        </div>
+                    ) : isVirtualized ? (
+                        <VirtualizedList
+                            height={800}
+                            itemCount={bookmarked.length}
+                            itemSize={340}
+                            width={"100%"}
+                            className="w-full"
+                        >
+                            {({ index, style }: ListChildComponentProps) => (
+                                <div style={style} key={bookmarked[index].id}>
+                                    <EnhancedRantCard
+                                        rant={bookmarked[index]}
+                                        onLike={() => { }}
+                                        onBookmark={handleUnbookmark}
+                                        onReport={() => { }}
+                                        onShare={() => { }}
+                                        onBlockUser={() => { }}
+                                        onFollowTag={() => { }}
+                                        onCommentPost={async () => null as any}
+                                        onCommentLike={() => { }}
+                                        isLiked={false}
+                                        isBookmarked={true}
+                                        isUserBlocked={false}
+                                        followedTags={new Set()}
+                                        getMoodEmoji={() => ""}
+                                        getMoodColor={() => ""}
+                                        formatTimeAgo={() => ""}
+                                        moods={MOODS}
+                                        showBookmark={true}
+                                        getMoodIcon={getMoodIcon}
+                                    />
+                                </div>
+                            )}
+                        </VirtualizedList>
+                    ) : (
+                        <div className="space-y-6">
+                            {bookmarked.map((rant) => (
                                 <EnhancedRantCard
-                                    rant={bookmarked[index]}
+                                    key={rant.id}
+                                    rant={rant}
                                     onLike={() => { }}
-                                    onBookmark={() => { }}
+                                    onBookmark={handleUnbookmark}
                                     onReport={() => { }}
                                     onShare={() => { }}
                                     onBlockUser={() => { }}
@@ -96,40 +160,13 @@ export default function BookmarksClient() {
                                     getMoodColor={() => ""}
                                     formatTimeAgo={() => ""}
                                     moods={MOODS}
-                                    showBookmark={false}
+                                    showBookmark={true}
                                     getMoodIcon={getMoodIcon}
                                 />
-                            </div>
-                        )}
-                    </VirtualizedList>
-                ) : (
-                    <div className="space-y-6">
-                        {bookmarked.map((rant) => (
-                            <EnhancedRantCard
-                                key={rant.id}
-                                rant={rant}
-                                onLike={() => { }}
-                                onBookmark={() => { }}
-                                onReport={() => { }}
-                                onShare={() => { }}
-                                onBlockUser={() => { }}
-                                onFollowTag={() => { }}
-                                onCommentPost={async () => null as any}
-                                onCommentLike={() => { }}
-                                isLiked={false}
-                                isBookmarked={true}
-                                isUserBlocked={false}
-                                followedTags={new Set()}
-                                getMoodEmoji={() => ""}
-                                getMoodColor={() => ""}
-                                formatTimeAgo={() => ""}
-                                moods={MOODS}
-                                showBookmark={false}
-                                getMoodIcon={getMoodIcon}
-                            />
-                        ))}
-                    </div>
-                )}
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

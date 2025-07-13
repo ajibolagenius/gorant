@@ -91,7 +91,7 @@ const MasonryGridComponent = ({ children, columns = 3, gap = 16, className }: Ma
     }, [children, currentColumns, gap])
 
     return (
-        <div ref={containerRef} className={cn("relative w-full", className)} style={{ minHeight: "200px" }}>
+        <div ref={containerRef} className={cn("relative w-full overflow-x-auto", className)} style={{ minHeight: "120px" }}>
             {children.map((child, index) => (
                 <div
                     key={index}

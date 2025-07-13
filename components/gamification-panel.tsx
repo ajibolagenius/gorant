@@ -16,7 +16,7 @@ export function GameificationPanel({ userPoints, userLevel, nextLevelPoints }: G
     const progressToNext = ((userPoints - currentLevelPoints) / (nextLevelPoints - currentLevelPoints)) * 100
 
     return (
-        <Card className="shadow-sm border-0 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900 dark:to-pink-900">
+        <Card className="shadow-sm border-0 bg-green-100 dark:bg-green-900/30">
             <CardHeader>
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">

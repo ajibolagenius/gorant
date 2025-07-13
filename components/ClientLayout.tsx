@@ -6,7 +6,7 @@ import { useTheme } from "@/hooks/use-theme"
 import { usePathname } from "next/navigation"
 import Header from "./Header"
 import Link from "next/link"
-import { TrendUp, Trophy, Lightning, Star } from "phosphor-react"
+import { TrendUp, Trophy, Lightning, Star, House } from "phosphor-react"
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
     const { fontSize, screenReaderMode } = useAccessibility()
@@ -78,21 +78,20 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             )}
             {/* Bottom Navigation Bar for Mobile */}
             <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/90 dark:bg-gray-900/90 border-t border-gray-200 dark:border-gray-700 flex justify-around items-center h-16 md:hidden backdrop-blur shadow-lg">
+                <Link href="/" aria-label="Feed" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
+                    <House weight="duotone" className="w-6 h-6" />
+                </Link>
                 <Link href="/trending" aria-label="Trending" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/trending" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
-                    <TrendUp weight="duotone" className="w-6 h-6 mb-1" />
-                    <span className="text-xs">Trending</span>
+                    <TrendUp weight="duotone" className="w-6 h-6" />
                 </Link>
                 <Link href="/challenges" aria-label="Challenges" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/challenges" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
-                    <Trophy weight="duotone" className="w-6 h-6 mb-1" />
-                    <span className="text-xs">Challenges</span>
+                    <Trophy weight="duotone" className="w-6 h-6" />
                 </Link>
                 <Link href="/leaderboard" aria-label="Leaderboard" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/leaderboard" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
-                    <Lightning weight="duotone" className="w-6 h-6 mb-1" />
-                    <span className="text-xs">Leaderboard</span>
+                    <Lightning weight="duotone" className="w-6 h-6" />
                 </Link>
                 <Link href="/bookmarks" aria-label="Bookmarks" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/bookmarks" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
-                    <Star weight="duotone" className="w-6 h-6 mb-1" />
-                    <span className="text-xs">Bookmarks</span>
+                    <Star weight="duotone" className="w-6 h-6" />
                 </Link>
             </nav>
         </div>

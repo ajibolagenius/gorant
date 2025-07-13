@@ -33,7 +33,7 @@ const sampleNotifications: Notification[] = [
 
 export default function NotificationsPage() {
     return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800 py-8">
+        <div className="min-h-screen bg-background dark:bg-background py-8">
             <div className="container mx-auto max-w-2xl px-4">
                 <NotificationList initialNotifications={sampleNotifications} />
             </div>

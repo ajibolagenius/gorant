@@ -229,7 +229,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
     render() {
         if (this.state.hasError) {
             return (
-                <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800">
+                <div className="min-h-screen flex flex-col items-center justify-center bg-background dark:bg-background">
                     <h2 className="text-2xl font-bold mb-4 text-red-600">Something went wrong.</h2>
                     <p className="text-gray-700 dark:text-gray-300 mb-6">An unexpected error occurred. Please refresh the page or try again later.</p>
                     <Button onClick={() => window.location.reload()}>Reload</Button>
@@ -591,7 +591,7 @@ export default function RantApp() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+            <div className="min-h-screen bg-background dark:bg-background flex items-center justify-center">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
                     <p className="text-gray-600 dark:text-gray-300">Loading rants...</p>
@@ -604,7 +604,7 @@ export default function RantApp() {
         <ErrorBoundary>
             <main
                 role="main"
-                className={`min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800 transition-colors ${fontSize} ${contrast}`}
+                className={`min-h-screen bg-background dark:bg-background transition-colors ${fontSize} ${contrast}`}
                 style={{ fontSize: fontSize === "text-lg" ? "1.125rem" : fontSize === "text-xl" ? "1.25rem" : "1rem" }}
             >
                 <script
@@ -625,15 +625,36 @@ export default function RantApp() {
                     }}
                 />
                 {/* Main Content */}
-                <div className="container mx-auto px-4 py-8 max-w-7xl pb-32 mb-safe-bottom wrap-screen">
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <div className="container mx-auto px-4 py-8 max-w-7xl pb-32 mb-safe-bottom wrap-screen overflow-x-auto lg:overflow-visible">
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 flex-wrap justify-center">
                         {/* Main Content */}
                         <div className="lg:col-span-3 space-y-6">
+                            {/* Welcome Message */}
+                            <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur">
+                                <CardContent className="pt-6">
+                                    <div className="text-center">
+                                        <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
+                                            Welcome to Your Safe Space
+                                        </h2>
+                                        <p className="text-gray-600 dark:text-gray-300 mb-4">
+                                            Express yourself freely and anonymously. Your thoughts matter.
+                                        </p>
+                                        <Button
+                                            onClick={() => setShowPostModal(true)}
+                                            className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-600 text-white"
+                                        >
+                                            <Send className="w-4 h-4 mr-2" />
+                                            Share Your Thoughts
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
                             {/* Rant of the Day */}
                             {rantOfTheDay && (
                                 <>
                                     <Card
-                                        className="shadow-lg border-0 bg-gradient-to-r from-yellow-100 to-orange-100 dark:from-yellow-900/30 dark:to-orange-900/30 dark:border-yellow-800/30 cursor-pointer relative"
+                                        className="shadow-lg border-0 bg-yellow-100 dark:bg-yellow-900/30 dark:border-yellow-800/30 cursor-pointer relative"
                                         onClick={() => setShowRantOfTheDayModal(true)}
                                     >
                                         <button
@@ -699,31 +720,10 @@ export default function RantApp() {
                                 </>
                             )}
 
-                            {/* Welcome Message */}
-                            <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur">
-                                <CardContent className="pt-6">
-                                    <div className="text-center">
-                                        <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
-                                            Welcome to Your Safe Space
-                                        </h2>
-                                        <p className="text-gray-600 dark:text-gray-300 mb-4">
-                                            Express yourself freely and anonymously. Your thoughts matter.
-                                        </p>
-                                        <Button
-                                            onClick={() => setShowPostModal(true)}
-                                            className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-600 text-white"
-                                        >
-                                            <Send className="w-4 h-4 mr-2" />
-                                            Share Your Thoughts
-                                        </Button>
-                                    </div>
-                                </CardContent>
-                            </Card>
-
                             {/* Enhanced Search with Suggestions */}
                             <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
                                 <CardContent className="pt-6">
-                                    <div className="flex flex-col sm:flex-row gap-4">
+                                    <div className="flex flex-col sm:flex-row gap-4 flex-wrap">
                                         {/* Search */}
                                         <div className="relative w-full lg:w-2/3">
                                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
@@ -829,7 +829,7 @@ export default function RantApp() {
                                     itemCount={filteredRants.length}
                                     itemSize={340}
                                     width={"100%"}
-                                    className="w-full"
+                                    className="w-full overflow-x-auto"
                                 >
                                     {({ index, style }: ListChildComponentProps) => (
                                         <div style={style} key={filteredRants[index].id}>
@@ -863,7 +863,7 @@ export default function RantApp() {
                                 </VirtualizedList>
                             ) : (
                                 // Desktop: Use MasonryGrid for layout
-                                <MasonryGrid columns={2} gap={20} className="w-full">
+                                <MasonryGrid columns={2} gap={20} className="w-full overflow-x-auto">
                                     {filteredRants.map((rant) => (
                                         <EnhancedRantCard
                                             key={rant.id}
@@ -897,13 +897,15 @@ export default function RantApp() {
                         </div>
 
                         {/* Sidebar */}
-                        <SidebarContent
-                            userPoints={userPoints}
-                            userLevel={userLevel}
-                            nextLevelPoints={userLevel * 100}
-                            followedTags={followedTags}
-                            followTag={followTag}
-                        />
+                        <div className="sticky top-24 self-start hidden lg:block">
+                            <SidebarContent
+                                userPoints={userPoints}
+                                userLevel={userLevel}
+                                nextLevelPoints={userLevel * 100}
+                                followedTags={followedTags}
+                                followTag={followTag}
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -918,7 +920,7 @@ export default function RantApp() {
                 </button>
                 <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
                     <SheetContent side="right" className="w-80 max-w-full p-0">
-                        <div className="p-4">
+                        <div className="p-4 overflow-y-auto pb-24">
                             <SidebarContent
                                 userPoints={userPoints}
                                 userLevel={userLevel}

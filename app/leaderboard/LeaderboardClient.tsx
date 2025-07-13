@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Lightning, Trophy, Medal, Crown, TrendUp, Users, Heart } from "phosphor-react"
+import { Lightning, Trophy, Medal, Crown, TrendUp, Users, Heart, House } from "phosphor-react"
 import Link from "next/link"
 
 interface LeaderboardCategory {
@@ -64,44 +64,48 @@ export default function LeaderboardClient({ leaderboardCategories, leaderboardDa
     const getRankBadgeColor = (rank: number) => {
         switch (rank) {
             case 1:
-                return "bg-gradient-to-r from-yellow-400 to-yellow-600 text-white"
+                return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
             case 2:
-                return "bg-gradient-to-r from-gray-300 to-gray-500 text-white"
+                return "bg-gray-300 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
             case 3:
-                return "bg-gradient-to-r from-amber-400 to-amber-600 text-white"
+                return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
             default:
                 return "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
         }
     }
 
+    const currentData = getCurrentData();
+
     return (
-        <main role="main" className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800">
-            {/* Header */}
-            <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-200 dark:border-gray-700">
-                <div className="container mx-auto px-4 py-6 max-w-6xl">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center">
-                                <Lightning weight="duotone" className="w-8 h-8 mr-3 text-yellow-500" />
-                                Leaderboard
-                            </h1>
-                            <p className="text-gray-600 dark:text-gray-300 mt-2">See who's leading the community</p>
+        <main role="main" className="min-h-screen bg-background dark:bg-background">
+            {/* Enhanced Header */}
+            <div className="container mx-auto w-full max-w-full px-4 mb-safe-bottom wrap-screen overflow-x-auto mt-10">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-0 sm:mb-6">
+                    <div className="flex items-center gap-3">
+                        <div className="rounded-full bg-green-100 dark:bg-green-900/30 p-3">
+                            <Lightning weight="duotone" className="w-7 h-7 text-green-600 dark:text-green-300" />
                         </div>
-                        <Link href="/">
-                            <Button variant="outline">Back to Feed</Button>
-                        </Link>
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                                Leaderboard
+                                <span className="inline-block bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-200 text-xs font-semibold px-2 py-0.5 rounded ml-2">
+                                    {currentData.length}
+                                </span>
+                            </h1>
+                            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">See who's leading the community.</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div className="container mx-auto px-4 py-8 max-w-6xl mb-safe-bottom wrap-screen">
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div className="container mx-auto px-4 py-8 max-w-6xl mb-safe-bottom wrap-screen overflow-x-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 flex-wrap">
                     {/* Main Content */}
                     <div className="lg:col-span-3 space-y-6">
                         {/* Category Selector */}
                         <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
-                            <CardContent className="pt-6">
-                                <div className="flex flex-wrap gap-2 mb-4">
+                            <CardContent className="pt-2 sm:pt-6">
+                                <div className="flex flex-wrap w-full gap-2 mb-4">
                                     {leaderboardCategories.map((category) => {
                                         const Icon = iconMap[category.icon as keyof typeof iconMap]
                                         return (
@@ -110,9 +114,9 @@ export default function LeaderboardClient({ leaderboardCategories, leaderboardDa
                                                 variant={selectedCategory === category.value ? "default" : "outline"}
                                                 onClick={() => setSelectedCategory(category.value)}
                                                 className={`${selectedCategory === category.value
-                                                    ? "bg-purple-600 hover:bg-purple-700"
-                                                    : "hover:bg-purple-50 dark:hover:bg-purple-900"
-                                                    }`}
+                                                    ? "bg-green-600 hover:bg-green-700 text-white"
+                                                    : "hover:bg-green-50 dark:hover:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700"
+                                                    } flex-1 min-w-[120px]`}
                                             >
                                                 {Icon && <Icon weight="duotone" className="w-4 h-4 mr-2" />}
                                                 {category.label}
@@ -121,12 +125,12 @@ export default function LeaderboardClient({ leaderboardCategories, leaderboardDa
                                     })}
                                 </div>
 
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 w-full flex-wrap mb-4">
                                     <Button
                                         variant={timeframe === "all_time" ? "default" : "outline"}
                                         size="sm"
                                         onClick={() => setTimeframe("all_time")}
-                                        className={timeframe === "all_time" ? "bg-yellow-600 hover:bg-yellow-700" : ""}
+                                        className={timeframe === "all_time" ? "bg-green-600 hover:bg-green-700 text-white flex-1 min-w-[120px]" : "hover:bg-green-50 dark:hover:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700 flex-1 min-w-[120px]"}
                                     >
                                         All Time
                                     </Button>
@@ -134,7 +138,7 @@ export default function LeaderboardClient({ leaderboardCategories, leaderboardDa
                                         variant={timeframe === "monthly" ? "default" : "outline"}
                                         size="sm"
                                         onClick={() => setTimeframe("monthly")}
-                                        className={timeframe === "monthly" ? "bg-yellow-600 hover:bg-yellow-700" : ""}
+                                        className={timeframe === "monthly" ? "bg-green-600 hover:bg-green-700 text-white flex-1 min-w-[120px]" : "hover:bg-green-50 dark:hover:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700 flex-1 min-w-[120px]"}
                                     >
                                         This Month
                                     </Button>
@@ -142,7 +146,7 @@ export default function LeaderboardClient({ leaderboardCategories, leaderboardDa
                                         variant={timeframe === "weekly" ? "default" : "outline"}
                                         size="sm"
                                         onClick={() => setTimeframe("weekly")}
-                                        className={timeframe === "weekly" ? "bg-yellow-600 hover:bg-yellow-700" : ""}
+                                        className={timeframe === "weekly" ? "bg-green-600 hover:bg-green-700 text-white flex-1 min-w-[120px]" : "hover:bg-green-50 dark:hover:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700 flex-1 min-w-[120px]"}
                                     >
                                         This Week
                                     </Button>
@@ -151,7 +155,7 @@ export default function LeaderboardClient({ leaderboardCategories, leaderboardDa
                         </Card>
 
                         {/* Top 3 Podium */}
-                        <Card className="shadow-lg border-0 bg-gradient-to-r from-yellow-100 to-orange-100 dark:from-yellow-900 dark:to-orange-900">
+                        <Card className="shadow-lg border-0 bg-yellow-100 dark:bg-yellow-900/30">
                             <CardContent className="pt-6">
                                 <h2 className="text-xl font-semibold text-center mb-6 text-gray-800 dark:text-white">
                                     🏆 Top Contributors 🏆
@@ -283,7 +287,7 @@ export default function LeaderboardClient({ leaderboardCategories, leaderboardDa
                         </Card>
 
                         {/* Competition Info */}
-                        <Card className="shadow-sm border-0 bg-gradient-to-r from-green-100 to-blue-100 dark:from-green-900 dark:to-blue-900">
+                        <Card className="shadow-sm border-0 bg-green-100 dark:bg-green-900/30">
                             <CardHeader>
                                 <div className="flex items-center space-x-2">
                                     <Users weight="duotone" className="w-5 h-5 text-green-600 dark:text-green-400" />
