@@ -1,6 +1,6 @@
 "use client"
 import { useAccessibility } from "@/hooks/use-accessibility"
-import React from "react"
+import React, { useEffect } from "react"
 import { useGameification } from "@/hooks/use-gamification"
 import { useTheme } from "@/hooks/use-theme"
 import { usePathname } from "next/navigation"
@@ -14,6 +14,34 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     const { theme, toggleTheme } = useTheme()
     const pathname = usePathname()
     const showFooter = !pathname.startsWith("/settings")
+
+    // Lenis smooth scrolling integration
+    useEffect(() => {
+        // Only run on client
+        if (typeof window === "undefined") return
+        // Respect reduced motion
+        const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        if (prefersReducedMotion) return
+        let lenis: any
+        import('lenis').then(({ default: Lenis }) => {
+            lenis = new Lenis({
+                duration: 1.2,
+                smooth: true,
+                direction: 'vertical',
+                gestureOrientation: 'vertical',
+                smoothTouch: false,
+                touchMultiplier: 1.5,
+            })
+            function raf(time: number) {
+                lenis.raf(time)
+                requestAnimationFrame(raf)
+            }
+            requestAnimationFrame(raf)
+        })
+        return () => {
+            if (lenis && lenis.destroy) lenis.destroy()
+        }
+    }, [])
     return (
         <div
             className={fontSize}
@@ -36,6 +64,13 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                                 <Link href="/privacy" className="hover:text-purple-600 dark:hover:text-purple-400">Privacy</Link>
                                 <Link href="/terms-of-service" className="hover:text-purple-600 dark:hover:text-purple-400">Terms</Link>
                                 <Link href="/guidelines" className="hover:text-purple-600 dark:hover:text-purple-400">Community Guidelines</Link>
+                                <a href="https://stats.uptimerobot.com/MfSyiPnv5E/800934564" target="_blank" rel="noopener noreferrer" className="hover:text-purple-600 dark:hover:text-purple-400 text-green-600 flex items-center">
+                                    <span className="relative flex h-3 w-3 mr-2">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-600 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-green-600"></span>
+                                    </span>
+                                    Uptime status
+                                </a>
                             </div>
                         </div>
                     </div>

@@ -289,7 +289,7 @@ export default function SettingsPage() {
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                                 <Button variant="outline" onClick={handleExportData}>Export My Data</Button>
                                 <a ref={fileDownloadRef} style={{ display: "none" }} />
                                 <Button variant="outline" asChild>
@@ -300,6 +300,20 @@ export default function SettingsPage() {
                                 </Button>
                                 <Button variant="outline" asChild>
                                     <Link href="/guidelines">Community Guidelines</Link>
+                                </Button>
+                                <Button variant="outline" asChild>
+                                    <a
+                                        href="https://stats.uptimerobot.com/MfSyiPnv5E/800934564"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-center w-full h-full text-green-600"
+                                    >
+                                        <span className="relative flex h-3 w-3 mr-2">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-600 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-3 w-3 bg-green-600"></span>
+                                        </span>
+                                        Uptime status
+                                    </a>
                                 </Button>
                                 <Button variant="destructive" onClick={handleDeleteAccount} className="w-full">Delete Account</Button>
                             </div>
