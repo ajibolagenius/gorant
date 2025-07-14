@@ -5,9 +5,11 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Trophy, Calendar, Users, Target, Medal, Clock, CheckCircle, House } from "phosphor-react"
+import { Trophy, Calendar, Users, Target, Medal, Clock, CheckCircle, House, MagnifyingGlass, Funnel, SortAscending } from "phosphor-react"
 import Link from "next/link"
 import { useNotifications, notificationHelpers } from "@/hooks/use-notifications"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
 
 interface Challenge {
     id: string;
@@ -40,6 +42,10 @@ interface ChallengeClientProps {
 export default function ChallengeClient({ currentChallenges, pastChallenges, userBadges }: ChallengeClientProps) {
     const [activeTab, setActiveTab] = useState<"current" | "past" | "badges">("current")
     const { addNotification } = useNotifications()
+    const [searchQuery, setSearchQuery] = useState("");
+    const [sortBy, setSortBy] = useState("newest");
+    const [showFilters, setShowFilters] = useState(false);
+    const [challengeTypeFilter, setChallengeTypeFilter] = useState("all");
 
     const joinChallenge = (challengeId: string) => {
         console.log("Joining challenge:", challengeId)
@@ -63,37 +69,118 @@ export default function ChallengeClient({ currentChallenges, pastChallenges, use
         }, 2000)
     }
 
+    // Filter and sort challenges
+    const filteredCurrentChallenges = currentChallenges.filter((challenge) => {
+        if (challengeTypeFilter !== "all" && challenge.type !== challengeTypeFilter) return false;
+        if (!searchQuery.trim()) return true;
+        const query = searchQuery.toLowerCase();
+        return (
+            challenge.title.toLowerCase().includes(query) ||
+            challenge.description.toLowerCase().includes(query) ||
+            (challenge.type && challenge.type.toLowerCase().includes(query))
+        );
+    }).sort((a, b) => {
+        switch (sortBy) {
+            case "newest":
+                return b.participants - a.participants;
+            case "oldest":
+                return a.participants - b.participants;
+            case "most_participants":
+                return b.participants - a.participants;
+            case "progress":
+                return (b.progress || 0) - (a.progress || 0);
+            default:
+                return 0;
+        }
+    });
+
     return (
         <main role="main" className="min-h-screen bg-background dark:bg-background">
             {/* Enhanced Header */}
             <div className="container mx-auto w-full max-w-full px-4 mb-safe-bottom wrap-screen overflow-x-auto mt-10">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-0 sm:mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="rounded-full bg-yellow-100 dark:bg-yellow-900/30 p-3">
+                        <div className="rounded-none bg-yellow-100 dark:bg-yellow-900/30 p-3">
                             <Trophy weight="duotone" className="w-7 h-7 text-yellow-600 dark:text-yellow-300" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                            <h1 className="text-2xl font-bold font-heading text-gray-800 dark:text-white flex items-center gap-2">
                                 Rant Challenges
-                                <span className="inline-block bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-200 text-xs font-semibold px-2 py-0.5 rounded ml-2">
+                                <span className="inline-block bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-200 text-xs font-semibold px-2 py-0.5 rounded-none ml-2">
                                     {currentChallenges.length}
                                 </span>
                             </h1>
                             <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Join themed challenges and earn badges for your participation.</p>
                         </div>
                     </div>
-                    {/* Removed Back to Feed button */}
                 </div>
             </div>
-
             <div className="container mx-auto px-4 py-8 max-w-6xl mb-safe-bottom wrap-screen overflow-x-auto">
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 flex-wrap">
                     {/* Main Content */}
                     <div className="lg:col-span-3 space-y-6">
+                        {/* Search and Filters */}
+                        <Card className="shadow-sm border-0 rounded-none bg-white/80 dark:bg-gray-800/80 backdrop-blur mb-6">
+                            <CardContent className="pt-6">
+                                <div className="space-y-4">
+                                    {/* Search Bar */}
+                                    <div className="relative">
+                                        <MagnifyingGlass className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
+                                        <Input
+                                            placeholder="Search challenges by title, description, or type..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            className="pl-10"
+                                        />
+                                    </div>
+                                    {/* Filter Controls */}
+                                    <div className="flex flex-wrap gap-4 items-center">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setShowFilters(!showFilters)}
+                                            className="flex items-center gap-2 rounded-none"
+                                        >
+                                            <Funnel className="w-4 h-4" />
+                                            Filters
+                                            {challengeTypeFilter !== "all" && (
+                                                <Badge variant="secondary" className="ml-1 rounded-none">1</Badge>
+                                            )}
+                                        </Button>
+                                        <Select value={sortBy} onValueChange={setSortBy}>
+                                            <SelectTrigger className="w-48 rounded-none">
+                                                <SortAscending className="w-4 h-4 mr-2" />
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="newest">Most Participants</SelectItem>
+                                                <SelectItem value="oldest">Least Participants</SelectItem>
+                                                <SelectItem value="progress">By Progress</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        {showFilters && (
+                                            <div className="flex items-center gap-4 ml-4">
+                                                <Select value={challengeTypeFilter} onValueChange={setChallengeTypeFilter}>
+                                                    <SelectTrigger className="w-32 rounded-none">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="all">All Types</SelectItem>
+                                                        <SelectItem value="daily">Daily</SelectItem>
+                                                        <SelectItem value="weekly">Weekly</SelectItem>
+                                                        <SelectItem value="monthly">Monthly</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
                         {/* Tab Navigation */}
-                        <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
+                        <Card className="shadow-sm border-0 rounded-none bg-white/60 dark:bg-gray-800/60 backdrop-blur">
                             <CardContent className="pt-2 sm:pt-6">
-                                <div className="flex flex-wrap w-full gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+                                <div className="flex flex-wrap w-full gap-1 bg-gray-100 dark:bg-gray-700 rounded-none p-1">
                                     <Button
                                         variant={activeTab === "current" ? "default" : "ghost"}
                                         onClick={() => setActiveTab("current")}
@@ -134,10 +221,10 @@ export default function ChallengeClient({ currentChallenges, pastChallenges, use
                         {/* Current Challenges */}
                         {activeTab === "current" && (
                             <div className="space-y-4">
-                                {currentChallenges.map((challenge) => (
+                                {filteredCurrentChallenges.map((challenge) => (
                                     <Card
                                         key={challenge.id}
-                                        className={`shadow-sm border-0 backdrop-blur ${challenge.isActive ? "bg-white/80 dark:bg-gray-800/80" : "bg-gray-100/80 dark:bg-gray-700/80"
+                                        className={`shadow-sm border-0 rounded-none backdrop-blur ${challenge.isActive ? "bg-white/80 dark:bg-gray-800/80" : "bg-gray-100/80 dark:bg-gray-700/80"
                                             }`}
                                     >
                                         <CardContent className="pt-6">
@@ -226,7 +313,7 @@ export default function ChallengeClient({ currentChallenges, pastChallenges, use
                                 {pastChallenges.map((challenge) => (
                                     <Card
                                         key={challenge.id}
-                                        className="shadow-sm border-0 bg-gray-100/80 dark:bg-gray-700/80 backdrop-blur"
+                                        className="shadow-sm border-0 rounded-none bg-gray-100/80 dark:bg-gray-700/80 backdrop-blur"
                                     >
                                         <CardContent className="pt-6">
                                             <div className="flex items-start justify-between">
@@ -270,7 +357,7 @@ export default function ChallengeClient({ currentChallenges, pastChallenges, use
                                 {userBadges.map((badge, index) => (
                                     <Card
                                         key={index}
-                                        className={`shadow-sm border-0 backdrop-blur ${badge.earned
+                                        className={`shadow-sm border-0 rounded-none backdrop-blur ${badge.earned
                                             ? "bg-yellow-50/80 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800"
                                             : "bg-gray-100/80 dark:bg-gray-700/80"
                                             }`}
@@ -303,7 +390,7 @@ export default function ChallengeClient({ currentChallenges, pastChallenges, use
                     {/* Sidebar */}
                     <div className="space-y-6">
                         {/* User Stats */}
-                        <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
+                        <Card className="shadow-sm border-0 rounded-none bg-white/60 dark:bg-gray-800/60 backdrop-blur">
                             <CardHeader>
                                 <h3 className="font-semibold text-gray-800 dark:text-white">Your Stats</h3>
                             </CardHeader>
@@ -324,7 +411,7 @@ export default function ChallengeClient({ currentChallenges, pastChallenges, use
                         </Card>
 
                         {/* Leaderboard */}
-                        <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
+                        <Card className="shadow-sm border-0 rounded-none bg-white/60 dark:bg-gray-800/60 backdrop-blur">
                             <CardHeader>
                                 <h3 className="font-semibold text-gray-800 dark:text-white">Top Participants</h3>
                             </CardHeader>
@@ -354,7 +441,7 @@ export default function ChallengeClient({ currentChallenges, pastChallenges, use
                         </Card>
 
                         {/* Next Challenge Preview */}
-                        <Card className="shadow-sm border-0 bg-orange-100 dark:bg-orange-900/30">
+                        <Card className="shadow-sm border-0 rounded-none bg-orange-100 dark:bg-orange-900/30">
                             <CardHeader>
                                 <div className="flex items-center space-x-2">
                                     <Calendar weight="duotone" className="w-5 h-5 text-purple-600 dark:text-purple-400" />

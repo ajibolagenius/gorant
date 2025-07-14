@@ -3,8 +3,10 @@
 import { useState } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Lightning, Trophy, Medal, Crown, TrendUp, Users, Heart, House } from "phosphor-react"
+import { Lightning, Trophy, Medal, Crown, TrendUp, Users, Heart, House, MagnifyingGlass, Funnel, SortAscending } from "phosphor-react"
 import Link from "next/link"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
 
 interface LeaderboardCategory {
     label: string;
@@ -43,9 +45,38 @@ const iconMap = {
 export default function LeaderboardClient({ leaderboardCategories, leaderboardData }: LeaderboardClientProps) {
     const [selectedCategory, setSelectedCategory] = useState("points")
     const [timeframe, setTimeframe] = useState("all_time")
+    const [searchQuery, setSearchQuery] = useState("");
+    const [sortBy, setSortBy] = useState("rank");
+    const [showFilters, setShowFilters] = useState(false);
+    const [badgeFilter, setBadgeFilter] = useState("all");
 
     const getCurrentData = () => {
-        return leaderboardData[selectedCategory as keyof LeaderboardData] || leaderboardData.points
+        let data = leaderboardData[selectedCategory as keyof LeaderboardData] || leaderboardData.points;
+        // Badge filter
+        if (badgeFilter !== "all") {
+            data = data.filter((user) => user.badge === badgeFilter);
+        }
+        // Search filter
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            data = data.filter((user) =>
+                user.userId.toLowerCase().includes(query) ||
+                (user.badge && user.badge.toLowerCase().includes(query))
+            );
+        }
+        // Sort
+        switch (sortBy) {
+            case "rank":
+                data = [...data].sort((a, b) => a.rank - b.rank);
+                break;
+            case "points":
+                data = [...data].sort((a, b) => (b.points || b.value || 0) - (a.points || a.value || 0));
+                break;
+            case "name":
+                data = [...data].sort((a, b) => a.userId.localeCompare(b.userId));
+                break;
+        }
+        return data;
     }
 
     const getRankIcon = (rank: number) => {
@@ -74,6 +105,23 @@ export default function LeaderboardClient({ leaderboardCategories, leaderboardDa
         }
     }
 
+    // Add a helper to get podium bar color by rank
+    const getPodiumBarColor = (rank: number) => {
+        switch (rank) {
+            case 1:
+                return "bg-yellow-400 dark:bg-yellow-500";
+            case 2:
+                return "bg-gray-300 dark:bg-gray-500";
+            case 3:
+                return "bg-amber-500 dark:bg-amber-600";
+            default:
+                return "bg-gray-200 dark:bg-gray-700";
+        }
+    };
+
+    // Get unique badges for filter options
+    const uniqueBadges = Array.from(new Set((leaderboardData[selectedCategory as keyof LeaderboardData] || []).map(u => u.badge))).filter(Boolean);
+
     const currentData = getCurrentData();
 
     return (
@@ -82,13 +130,13 @@ export default function LeaderboardClient({ leaderboardCategories, leaderboardDa
             <div className="container mx-auto w-full max-w-full px-4 mb-safe-bottom wrap-screen overflow-x-auto mt-10">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-0 sm:mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="rounded-full bg-green-100 dark:bg-green-900/30 p-3">
+                        <div className="rounded-none bg-green-100 dark:bg-green-900/30 p-3">
                             <Lightning weight="duotone" className="w-7 h-7 text-green-600 dark:text-green-300" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                            <h1 className="text-2xl font-bold font-heading text-gray-800 dark:text-white flex items-center gap-2">
                                 Leaderboard
-                                <span className="inline-block bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-200 text-xs font-semibold px-2 py-0.5 rounded ml-2">
+                                <span className="inline-block bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-200 text-xs font-semibold px-2 py-0.5 rounded-none ml-2">
                                     {currentData.length}
                                 </span>
                             </h1>
@@ -102,8 +150,66 @@ export default function LeaderboardClient({ leaderboardCategories, leaderboardDa
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 flex-wrap">
                     {/* Main Content */}
                     <div className="lg:col-span-3 space-y-6">
+                        {/* Search and Filters */}
+                        <Card className="shadow-sm border-0 rounded-none bg-white/80 dark:bg-gray-800/80 backdrop-blur mb-6">
+                            <CardContent className="pt-6">
+                                <div className="space-y-4">
+                                    {/* Search Bar */}
+                                    <div className="relative">
+                                        <MagnifyingGlass className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
+                                        <Input
+                                            placeholder="Search users by name or badge..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            className="pl-10"
+                                        />
+                                    </div>
+                                    {/* Filter Controls */}
+                                    <div className="flex flex-wrap gap-4 items-center">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setShowFilters(!showFilters)}
+                                            className="flex items-center gap-2 rounded-none"
+                                        >
+                                            <Funnel className="w-4 h-4" />
+                                            Filters
+                                            {badgeFilter !== "all" && (
+                                                <span className="ml-1 rounded-none bg-green-200 text-green-800 px-2 py-0.5 text-xs font-semibold">1</span>
+                                            )}
+                                        </Button>
+                                        <Select value={sortBy} onValueChange={setSortBy}>
+                                            <SelectTrigger className="w-48 rounded-none">
+                                                <SortAscending className="w-4 h-4 mr-2" />
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="rank">By Rank</SelectItem>
+                                                <SelectItem value="points">By Points</SelectItem>
+                                                <SelectItem value="name">By Name</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        {showFilters && (
+                                            <div className="flex items-center gap-4 ml-4">
+                                                <Select value={badgeFilter} onValueChange={setBadgeFilter}>
+                                                    <SelectTrigger className="w-32 rounded-none">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="all">All Badges</SelectItem>
+                                                        {uniqueBadges.map((badge) => (
+                                                            <SelectItem key={badge} value={badge}>{badge}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
                         {/* Category Selector */}
-                        <Card className="shadow-sm border-0 bg-card/60 dark:bg-card/60 backdrop-blur">
+                        <Card className="shadow-sm border-0 rounded-none bg-card/60 dark:bg-card/60 backdrop-blur">
                             <CardContent className="pt-2 sm:pt-6">
                                 <div className="flex flex-wrap w-full gap-2 mb-4">
                                     {leaderboardCategories.map((category) => {
@@ -153,9 +259,8 @@ export default function LeaderboardClient({ leaderboardCategories, leaderboardDa
                                 </div>
                             </CardContent>
                         </Card>
-
                         {/* Top 3 Podium */}
-                        <Card className="shadow-lg border-0 bg-yellow-100 dark:bg-yellow-900/30">
+                        <Card className="shadow-lg border-0 rounded-none bg-green-100 dark:bg-green-900/30">
                             <CardContent className="pt-6">
                                 <h2 className="text-xl font-semibold text-center mb-6 text-gray-800 dark:text-white">
                                     🏆 Top Contributors 🏆
@@ -176,7 +281,7 @@ export default function LeaderboardClient({ leaderboardCategories, leaderboardDa
                                                 >
                                                     <div className="text-4xl mb-2">{user.badge}</div>
                                                     <div
-                                                        className={`${height} w-20 bg-gradient-to-t ${getRankBadgeColor(actualRank)} rounded-t-lg flex flex-col justify-end items-center p-2`}
+                                                        className={`${height} w-20 ${getPodiumBarColor(actualRank)} rounded-t-lg flex flex-col justify-end items-center p-2`}
                                                     >
                                                         <div className="text-white font-bold text-lg">#{actualRank}</div>
                                                     </div>
@@ -194,9 +299,8 @@ export default function LeaderboardClient({ leaderboardCategories, leaderboardDa
                                 </div>
                             </CardContent>
                         </Card>
-
                         {/* Full Leaderboard */}
-                        <Card className="shadow-sm border-0 bg-card/80 dark:bg-card/80 backdrop-blur">
+                        <Card className="shadow-sm border-0 rounded-none bg-card/80 dark:bg-card/80 backdrop-blur">
                             <CardHeader>
                                 <h2 className="text-lg font-semibold text-gray-800 dark:text-white">Full Rankings</h2>
                             </CardHeader>
@@ -240,7 +344,7 @@ export default function LeaderboardClient({ leaderboardCategories, leaderboardDa
                     {/* Sidebar */}
                     <div className="space-y-6">
                         {/* Your Rank */}
-                        <Card className="shadow-sm border-0 bg-card/60 dark:bg-card/60 backdrop-blur">
+                        <Card className="shadow-sm border-0 rounded-none bg-card/60 dark:bg-card/60 backdrop-blur">
                             <CardHeader>
                                 <h3 className="font-semibold text-gray-800 dark:text-white">Your Rank</h3>
                             </CardHeader>
@@ -264,7 +368,7 @@ export default function LeaderboardClient({ leaderboardCategories, leaderboardDa
                         </Card>
 
                         {/* Recent Achievements */}
-                        <Card className="shadow-sm border-0 bg-card/60 dark:bg-card/60 backdrop-blur">
+                        <Card className="shadow-sm border-0 rounded-none bg-card/60 dark:bg-card/60 backdrop-blur">
                             <CardHeader>
                                 <h3 className="font-semibold text-gray-800 dark:text-white">Recent Achievements</h3>
                             </CardHeader>
@@ -287,7 +391,7 @@ export default function LeaderboardClient({ leaderboardCategories, leaderboardDa
                         </Card>
 
                         {/* Competition Info */}
-                        <Card className="shadow-sm border-0 bg-green-100 dark:bg-green-900/30">
+                        <Card className="shadow-sm border-0 rounded-none bg-green-100 dark:bg-green-900/30">
                             <CardHeader>
                                 <div className="flex items-center space-x-2">
                                     <Users weight="duotone" className="w-5 h-5 text-green-600 dark:text-green-400" />

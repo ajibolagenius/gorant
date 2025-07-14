@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -22,12 +22,16 @@ import {
     Clock,
     Calendar,
     Trophy,
-    House
+    House,
+    MagnifyingGlass,
+    Funnel,
+    SortAscending
 } from "phosphor-react"
 import Link from "next/link"
 import { RantCard } from "@/components/rant-card"
 import type { Rant } from "@/components/enhanced-rant-card"
 import { FixedSizeList as VirtualizedList, ListChildComponentProps } from "react-window"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const TRENDING_PERIODS = [
     { label: "Today", value: "today", icon: Clock },
@@ -154,6 +158,10 @@ export function TrendingClient() {
     // selectedRant: for share, it's a Rant; for block/report, it's a string (userId or rantId)
     const [selectedRant, setSelectedRant] = useState<Rant | string | null>(null)
     const [blockedUsers, setBlockedUsers] = useState<Set<string>>(new Set())
+    const [searchQuery, setSearchQuery] = useState("");
+    const [moodFilter, setMoodFilter] = useState("all");
+    const [sortBy, setSortBy] = useState("newest");
+    const [showFilters, setShowFilters] = useState(false);
 
     const getMoodIcon = (mood: string) => {
         return MOODS.find((m) => m.value === mood)?.icon || SmileyMeh
@@ -237,11 +245,44 @@ export function TrendingClient() {
         }
     }
 
+    // Filter and sort trending rants
+    const filteredAndSortedRants = useMemo(() => {
+        let filtered = trendingRants;
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            filtered = filtered.filter((rant) =>
+                rant.content.toLowerCase().includes(query) ||
+                rant.tags?.some(tag => tag.toLowerCase().includes(query)) ||
+                rant.mood.toLowerCase().includes(query)
+            );
+        }
+        if (moodFilter !== "all") {
+            filtered = filtered.filter((rant) => rant.mood === moodFilter);
+        }
+        switch (sortBy) {
+            case "newest":
+                filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+                break;
+            case "oldest":
+                filtered.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+                break;
+            case "most_liked":
+                filtered.sort((a, b) => b.likes_count - a.likes_count);
+                break;
+            case "most_commented":
+                filtered.sort((a, b) => b.comments_count - a.comments_count);
+                break;
+            case "mood":
+                filtered.sort((a, b) => a.mood.localeCompare(b.mood));
+                break;
+        }
+        return filtered;
+    }, [trendingRants, searchQuery, moodFilter, sortBy]);
+    const topTrendingRants = filteredAndSortedRants.slice(0, 5);
+
     // Helper to determine virtualization
     const VIRTUALIZATION_THRESHOLD = 30
     const isVirtualized = trendingRants.length > VIRTUALIZATION_THRESHOLD
-
-    const topTrendingRants = trendingRants.slice(0, 5)
 
     return (
         <main role="main" className="min-h-screen bg-background dark:bg-background">
@@ -249,29 +290,91 @@ export function TrendingClient() {
             <div className="container mx-auto w-full max-w-full px-4 mb-safe-bottom wrap-screen overflow-x-auto mt-10">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-0 sm:mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="rounded-full bg-accent p-3">
-                            <TrendUp weight="duotone" className="w-7 h-7 text-accent-foreground" />
+                        <div className="rounded-none bg-orange-100 dark:bg-orange-900/30 p-3">
+                            <TrendUp weight="duotone" className="w-7 h-7 text-orange-600 dark:text-orange-300" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-card-foreground flex items-center gap-2">
+                            <h1 className="text-2xl font-bold font-heading text-gray-800 dark:text-white flex items-center gap-2">
                                 Trending Rants
-                                <span className="inline-block bg-accent text-accent-foreground text-xs font-semibold px-2 py-0.5 rounded ml-2">
-                                    {trendingRants.length}
+                                <span className="inline-block bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-300 text-xs font-semibold px-2 py-0.5 rounded-none ml-2">
+                                    {filteredAndSortedRants.length}
                                 </span>
                             </h1>
-                            <p className="text-muted-foreground text-sm mt-1">See what's hot in the community right now.</p>
+                            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">See what's hot in the community right now.</p>
                         </div>
                     </div>
-                    {/* Removed Back to Feed button */}
                 </div>
             </div>
-
             <div className="container mx-auto px-4 py-8 max-w-6xl mb-safe-bottom wrap-screen overflow-x-auto">
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 flex-wrap">
                     {/* Main Content */}
                     <div className="lg:col-span-3 space-y-6">
+                        {/* Search and Filters */}
+                        <Card className="shadow-sm border-0 rounded-none bg-white/80 dark:bg-gray-800/80 backdrop-blur mb-6">
+                            <CardContent className="pt-6">
+                                <div className="space-y-4">
+                                    {/* Search Bar */}
+                                    <div className="relative">
+                                        <MagnifyingGlass className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
+                                        <Input
+                                            placeholder="Search trending rants by content, tags, or mood..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            className="pl-10"
+                                        />
+                                    </div>
+                                    {/* Filter Controls */}
+                                    <div className="flex flex-wrap gap-4 items-center">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setShowFilters(!showFilters)}
+                                            className="flex items-center gap-2 rounded-none"
+                                        >
+                                            <Funnel className="w-4 h-4" />
+                                            Filters
+                                            {moodFilter !== "all" && (
+                                                <Badge variant="secondary" className="ml-1 rounded-none">
+                                                    1
+                                                </Badge>
+                                            )}
+                                        </Button>
+                                        <Select value={sortBy} onValueChange={setSortBy}>
+                                            <SelectTrigger className="w-48 rounded-none">
+                                                <SortAscending className="w-4 h-4 mr-2" />
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="newest">Newest First</SelectItem>
+                                                <SelectItem value="oldest">Oldest First</SelectItem>
+                                                <SelectItem value="most_liked">Most Liked</SelectItem>
+                                                <SelectItem value="most_commented">Most Commented</SelectItem>
+                                                <SelectItem value="mood">By Mood</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        {showFilters && (
+                                            <div className="flex items-center gap-4 ml-4">
+                                                <Select value={moodFilter} onValueChange={setMoodFilter}>
+                                                    <SelectTrigger className="w-32 rounded-none">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="all">All Moods</SelectItem>
+                                                        {MOODS.map((mood) => (
+                                                            <SelectItem key={mood.value} value={mood.value}>
+                                                                {mood.label}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
                         {/* Period Selector */}
-                        <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
+                        <Card className="shadow-sm border-0 rounded-none bg-white/60 dark:bg-gray-800/60 backdrop-blur">
                             <CardContent className="pt-2 sm:pt-6">
                                 <div className="flex flex-wrap w-full gap-2">
                                     {TRENDING_PERIODS.map((period) => (
@@ -280,9 +383,9 @@ export function TrendingClient() {
                                             variant={selectedPeriod === period.value ? "default" : "outline"}
                                             onClick={() => setSelectedPeriod(period.value)}
                                             className={`${selectedPeriod === period.value
-                                                ? "bg-accent hover:bg-accent-dark text-accent-foreground"
-                                                : "hover:bg-accent/50 dark:hover:bg-accent/10 text-accent-foreground border-accent-dark dark:border-accent-light"
-                                                } flex-1 min-w-[120px]`}
+                                                ? "bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-300"
+                                                : "hover:bg-orange-100/50 dark:hover:bg-orange-900/10 text-orange-600 dark:text-orange-300 border-orange-300 dark:border-orange-700"
+                                                } flex-1 min-w-[120px] rounded-none`}
                                         >
                                             <period.icon weight="duotone" className="w-4 h-4 mr-2" />
                                             {period.label}
@@ -291,7 +394,6 @@ export function TrendingClient() {
                                 </div>
                             </CardContent>
                         </Card>
-
                         {/* Trending Rants */}
                         <div className="space-y-4">
                             {isVirtualized ? (
@@ -305,7 +407,7 @@ export function TrendingClient() {
                                     {({ index, style }: ListChildComponentProps) => (
                                         <div style={style} key={topTrendingRants[index].id} className="relative">
                                             <div className="absolute -left-4 top-4 z-10">
-                                                <Badge className="bg-accent text-accent-foreground font-bold">#{index + 1}</Badge>
+                                                <Badge className="bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-300 font-bold rounded-none">#{index + 1}</Badge>
                                             </div>
                                             <RantCard
                                                 rant={topTrendingRants[index]}
@@ -333,7 +435,7 @@ export function TrendingClient() {
                                 topTrendingRants.map((rant, index) => (
                                     <div key={rant.id} className="relative">
                                         <div className="absolute -left-4 top-4 z-10">
-                                            <Badge className="bg-accent text-accent-foreground font-bold">#{index + 1}</Badge>
+                                            <Badge className="bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-300 font-bold rounded-none">#{index + 1}</Badge>
                                         </div>
                                         <RantCard
                                             rant={rant}
@@ -389,13 +491,12 @@ export function TrendingClient() {
                             </DialogContent>
                         </Dialog>
                     </div>
-
                     {/* Sidebar */}
                     <div className="space-y-6">
                         {/* Trending Stats */}
-                        <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
+                        <Card className="shadow-sm border-0 rounded-none bg-white/60 dark:bg-gray-800/60 backdrop-blur">
                             <CardHeader>
-                                <h3 className="font-semibold text-card-foreground dark:text-white">Trending Stats</h3>
+                                <h3 className="font-semibold text-gray-800 dark:text-white">Trending Stats</h3>
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 <div className="flex justify-between">
@@ -412,11 +513,10 @@ export function TrendingClient() {
                                 </div>
                             </CardContent>
                         </Card>
-
                         {/* Popular Moods */}
-                        <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
+                        <Card className="shadow-sm border-0 rounded-none bg-white/60 dark:bg-gray-800/60 backdrop-blur">
                             <CardHeader>
-                                <h3 className="font-semibold text-card-foreground dark:text-white">Popular Moods Today</h3>
+                                <h3 className="font-semibold text-gray-800 dark:text-white">Popular Moods Today</h3>
                             </CardHeader>
                             <CardContent className="space-y-2">
                                 <div className="flex items-center justify-between">
@@ -449,11 +549,10 @@ export function TrendingClient() {
                                 </div>
                             </CardContent>
                         </Card>
-
                         {/* Trending Tags */}
-                        <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
+                        <Card className="shadow-sm border-0 rounded-none bg-white/60 dark:bg-gray-800/60 backdrop-blur">
                             <CardHeader>
-                                <h3 className="font-semibold text-card-foreground dark:text-white">Trending Tags</h3>
+                                <h3 className="font-semibold text-gray-800 dark:text-white">Trending Tags</h3>
                             </CardHeader>
                             <CardContent>
                                 <div className="flex flex-wrap gap-2">

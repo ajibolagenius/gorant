@@ -39,42 +39,6 @@ A modern, multi-sensory platform like Rant benefits from a thoughtfully selected
 
 ---
 
-## 📊 Implementation Roadmap
-
-**Phase 1: Core Enhancements (Weeks 1–2)**
-- Integrate Motion for UI animations.
-- Set up Self Analytics.
-
-**Phase 2: Mobile Optimization (Weeks 3–4)**
-- Implement Swiper for mobile browsing.
-- Add howler.js for mood-based audio.
-
-**Phase 3: Advanced Features (Weeks 5–8)**
-- Enable Remotion for video content.
-- Integrate Lenis for smooth scrolling.
-
-**Phase 4: Monitoring & Creative Tools (Weeks 9–12)**
-- Set up Checkmate for monitoring.
-- Add Fabric.js for visual rant creation.
-
----
-
-## 🎨 Design & Accessibility Guidelines
-
-- **Animation:** 200–300ms for micro-interactions; use `ease-out` for entrances, `ease-in` for exits; stagger lists by 50–100ms; respect `prefers-reduced-motion`.
-- **Audio:** Subtle (10–20% volume), only for key actions; provide audio toggle; map tones to moods.
-- **Mobile:** Minimum 44px touch targets; clear swipe indicators; optimize for 60fps; minimize heavy animations.
-
----
-
-## 📈 Expected Impact
-
-- **User Experience:** +25–40% session duration, +15–30% return visits, +50–70% mobile interactions, improved accessibility.
-- **Technical:** Optimized interactions, proactive monitoring, data-driven improvements, scalable foundation.
-- **Business:** Higher ratings, viral/shareable content, premium feel, community growth.
-
----
-
 ## 🛠️ Implementation Checklist
 
 - **Pre:** Audit metrics, prep dev environment, set feature flags, plan A/B tests.
@@ -114,12 +78,14 @@ By following this phased, tool-driven strategy, Rant will evolve into a visually
 - [ ] Scalability and fault tolerance
 - [ ] Backup and disaster
 
+## Future Features
 ### Phase 3: Community Features 📋
-- [ ] User following system
 - [ ] Notification system
 - [ ] Content moderation tools
 - [ ] Reporting system
 - [ ] Community guidelines
+- [ ] Community/Group Feature
+- [ ] Roadmap Page
 
 ### Phase 4: Advanced Features 🔮
 - [ ] AI-powered content suggestions
