@@ -270,8 +270,8 @@ const EnhancedRantCardComponent = ({
     const MoodIcon = getMoodIcon(rant.mood)
 
     return (
-        <Card className={`shadow-lg border-2 border-purple-200 dark:border-purple-700 bg-card/90 dark:bg-card/90 backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] group relative rounded-none ${feedLayout === "compact" ? "p-2 text-sm" : "p-6 text-base"}`}>
-            <CardContent className={feedLayout === "compact" ? "pt-3 pb-3" : "pt-6 pb-6"}>
+        <Card className={`shadow-lg bg-card/90 dark:bg-card/90 backdrop-blur-sm group relative rounded-none ${feedLayout === "compact" ? "p-1 text-sm" : "p-3 text-base"}`}>
+            <CardContent className={feedLayout === "compact" ? "pt-2 pb-2" : "pt-3 pb-3"}>
                 <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-2 flex-wrap gap-2">
                         {/* Mood badge */}
@@ -410,8 +410,10 @@ const EnhancedRantCardComponent = ({
 
                 <Separator className="mb-4 dark:bg-gray-700 rounded-none" />
 
+                {/* Action buttons row */}
                 <div className="flex flex-row w-full items-center justify-between gap-2 mt-4">
-                    <div className="flex items-center gap-4 min-w-0">
+                    <div className="flex flex-1 items-center gap-4 min-w-0 justify-between">
+                        {/* Like, comment, bookmark buttons */}
                         <Button
                             variant="ghost"
                             size="sm"
@@ -456,7 +458,11 @@ const EnhancedRantCardComponent = ({
                             </Button>
                         )}
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap justify-end min-w-0">
+                </div>
+                {/* User ID row below action buttons */}
+                <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap justify-between min-w-0 mt-2 w-full">
+                    {/* Left: Reputation */}
+                    <div>
                         {rant.reputation_impact && (
                             <Tooltip open={isMobile ? showRepTooltip : undefined} onOpenChange={isMobile ? setShowRepTooltip : undefined}>
                                 <TooltipTrigger asChild>
@@ -484,6 +490,9 @@ const EnhancedRantCardComponent = ({
                                 </TooltipContent>
                             </Tooltip>
                         )}
+                    </div>
+                    {/* Right: Eye + User ID */}
+                    <div className="flex items-center gap-2">
                         <Eye className="w-3 h-3" />
                         <span>{rant.anonymous_id}</span>
                     </div>

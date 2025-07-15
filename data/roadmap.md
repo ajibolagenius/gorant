@@ -130,8 +130,3 @@ Typical items in this phase (from your earlier roadmap and best practices) inclu
 
 ---
 
-Would you like to:
-- Start with the **User Following System**?
-- Or focus on another community feature first?
-
-Let me know your preference, and I’ll break down the next steps!

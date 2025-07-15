@@ -12,9 +12,17 @@ class AudioService {
 
     constructor() {
         this.loadConfig()
-        // Initialize audio context lazily to avoid SSR issues
+        // Only initialize audio context after a user gesture to comply with browser autoplay policy
         if (typeof window !== 'undefined') {
-            this.initializeAudioContext()
+            document.addEventListener(
+                'click',
+                () => {
+                    if (!this.audioContext) {
+                        this.initializeAudioContext();
+                    }
+                },
+                { once: true }
+            );
         }
     }
 

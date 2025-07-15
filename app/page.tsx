@@ -978,6 +978,11 @@ export default function RantApp() {
                                                 recommended={sortFilter === "recommended"}
                                                 isSelected={index === selectedRantIndex}
                                             />
+                                            {index === filteredRants.length - 1 && (
+                                                <div className="w-full text-center text-gray-400 dark:text-gray-500 py-6 text-base font-mono">
+                                                    You’ve reached the end of the feed!
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </VirtualizedList>
@@ -985,34 +990,40 @@ export default function RantApp() {
                                 // Desktop: Use MasonryGrid for layout
                                 <MasonryGrid columns={2} gap={20} className={`w-full overflow-x-auto ${feedLayout === "compact" ? "feed-compact" : "feed-comfortable"}`}>
                                     {filteredRants.map((rant, index) => (
-                                        <EnhancedRantCard
-                                            key={rant.id}
-                                            rant={rant}
-                                            onLike={likeRant}
-                                            onBookmark={toggleBookmark}
-                                            onReport={reportRant}
-                                            onShare={shareRant}
-                                            onBlockUser={blockUser}
-                                            onFollowTag={followTag}
-                                            onCommentPost={handleCommentPost}
-                                            onCommentLike={handleCommentLike}
-                                            isLiked={likedRants.has(rant.id)}
-                                            isBookmarked={bookmarkedRants.has(rant.id)}
-                                            isUserBlocked={blockedUsers.has(rant.anonymous_id)}
-                                            followedTags={followedTags}
-                                            getMoodIcon={getMoodIcon}
-                                            getMoodColor={getMoodColor}
-                                            formatTimeAgo={formatTimeAgo}
-                                            moods={MOODS}
-                                            showSentiment={true}
-                                            showModeration={true}
-                                            comments={comments[rant.id] || []}
-                                            showBookmark={true}
-                                            showReport={true}
-                                            showShare={true}
-                                            recommended={sortFilter === "recommended"}
-                                            isSelected={index === selectedRantIndex}
-                                        />
+                                        <React.Fragment key={rant.id}>
+                                            <EnhancedRantCard
+                                                rant={rant}
+                                                onLike={likeRant}
+                                                onBookmark={toggleBookmark}
+                                                onReport={reportRant}
+                                                onShare={shareRant}
+                                                onBlockUser={blockUser}
+                                                onFollowTag={followTag}
+                                                onCommentPost={handleCommentPost}
+                                                onCommentLike={handleCommentLike}
+                                                isLiked={likedRants.has(rant.id)}
+                                                isBookmarked={bookmarkedRants.has(rant.id)}
+                                                isUserBlocked={blockedUsers.has(rant.anonymous_id)}
+                                                followedTags={followedTags}
+                                                getMoodIcon={getMoodIcon}
+                                                getMoodColor={getMoodColor}
+                                                formatTimeAgo={formatTimeAgo}
+                                                moods={MOODS}
+                                                showSentiment={true}
+                                                showModeration={true}
+                                                comments={comments[rant.id] || []}
+                                                showBookmark={true}
+                                                showReport={true}
+                                                showShare={true}
+                                                recommended={sortFilter === "recommended"}
+                                                isSelected={index === selectedRantIndex}
+                                            />
+                                            {index === filteredRants.length - 1 && (
+                                                <div className="w-full text-center text-gray-400 dark:text-gray-500 py-6 text-base font-mono">
+                                                    You’ve reached the end of the feed!
+                                                </div>
+                                            )}
+                                        </React.Fragment>
                                     ))}
                                 </MasonryGrid>
                             )}
