@@ -384,6 +384,9 @@ export default function SettingsPage() {
                                     <Link href="/guidelines">Community Guidelines</Link>
                                 </Button>
                                 <Button variant="outline" asChild>
+                                    <Link href="/roadmap">Roadmap</Link>
+                                </Button>
+                                <Button variant="outline" asChild>
                                     <a
                                         href="https://stats.uptimerobot.com/MfSyiPnv5E/800934564"
                                         target="_blank"
