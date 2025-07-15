@@ -105,7 +105,8 @@ function parseRoadmapMarkdown(markdown: string) {
     // Parse phases
     const phaseRegex = /^# (.+)$/gm
     const checklistRegex = /^[-*] \[( |x)\] (.+)$/gm
-    const tableSectionRegex = /# 🟡 MVP Gaps & Priorities([\s\S]*?)---/m
+    // Parse MVP Gaps table
+    const tableSectionRegex = /# 🟡 MVP Gaps & Priorities([\s\S]*?)\n---\n/m
     const checklistSectionRegex = /# 🏁 MVP Checklist([\s\S]*)$/m
 
     const phases: Array<{ emoji: string; title: string; items: Array<{ text: string; checked: boolean }> }> = []
@@ -133,11 +134,13 @@ function parseRoadmapMarkdown(markdown: string) {
     }
     // Parse MVP Gaps table
     const tableSection = tableSectionRegex.exec(markdown)?.[1] || ''
+    console.log("Table Section:", tableSection)
     const tableRows = tableSection.split('\n').filter(l => l.trim().startsWith('|'))
     const gaps = tableRows.slice(2).map(row => {
         const cols = row.split('|').map(c => c.trim()).filter(Boolean)
         return cols.length === 3 ? { feature: cols[0], priority: cols[1], status: cols[2] } : null
     }).filter(Boolean)
+    console.log("Gaps:", gaps)
     // Parse MVP Checklist
     const checklistSection = checklistSectionRegex.exec(markdown)?.[1] || ''
     const checklistItems = checklistSection.split(/\n\d+\. /).slice(1).map(s => s.trim()).filter(Boolean)
