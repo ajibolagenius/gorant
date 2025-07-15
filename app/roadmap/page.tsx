@@ -370,7 +370,7 @@ export default function RoadmapPage() {
                 initial={{ opacity: 0, y: 40 }}
                 animate={showTopBtn ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
                 transition={{ duration: 0.3 }}
-                className="fixed bottom-6 right-6 z-40 bg-primary text-primary-foreground rounded-full shadow-lg p-3 hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all"
+                className="fixed bottom-24 right-6 z-40 bg-primary text-primary-foreground rounded-none shadow-lg p-3 hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all"
                 style={{ pointerEvents: showTopBtn ? 'auto' : 'none' }}
             >
                 <ArrowUpCircle className="w-7 h-7" />
