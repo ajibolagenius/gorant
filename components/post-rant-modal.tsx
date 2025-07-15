@@ -124,8 +124,8 @@ export function PostRantModal({ isOpen, onClose, moods, onSubmit }: PostRantModa
                                 ]
                             }}
                             theme="snow"
-                            className="bg-white dark:bg-gray-700 dark:text-white rounded border border-gray-200 dark:border-gray-600 min-h-[120px] text-sm sm:text-base"
-                            style={{ minHeight: 120 }}
+                            className="bg-white dark:bg-gray-700 dark:text-white rounded border border-gray-200 dark:border-gray-600 min-h-[120px] max-h-[240px] text-sm sm:text-base"
+                            style={{ minHeight: 120, maxHeight: 240, overflowY: 'auto' }}
                         />
                         <div className="flex justify-between items-center mt-2">
                             <span className="text-sm text-gray-500 dark:text-gray-400">{content.replace(/<[^>]+>/g, '').length}/1000 characters</span>
