@@ -13,6 +13,7 @@
 - [x] WYSIWYG editor, keyboard shortcuts
 - [x] Animations, user preferences
 - [ ] Self Analytics integration, advanced filtering
+- [ ] Anonymous feature suggestion form on roadmap page
 
 ---
 

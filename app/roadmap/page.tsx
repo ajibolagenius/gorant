@@ -227,7 +227,7 @@ export default function RoadmapPage() {
             {/* Suggest a Feature Button */}
             <div className="flex justify-end mb-4">
                 <a
-                    href="mailto:feedback@gorant.app?subject=Feature%20Suggestion"
+                    href=""
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
