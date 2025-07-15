@@ -35,7 +35,7 @@ const featureIcons: Record<string, React.ReactNode> = {
     analytics: <ChartBar className="inline w-5 h-5 mr-1 text-violet-500" />,
     settings: <Gear className="inline w-5 h-5 mr-1 text-gray-500" />,
     bug: <Bug className="inline w-5 h-5 mr-1 text-red-400" />,
-    view: <Eye className="inline w-5 h-5 mr-1 text-gray-400" />,
+    view: <Eye className="inline w-5 h-5 mr-1 text-gray-500" />,
     edit: <Pencil className="inline w-5 h-5 mr-1 text-blue-400" />,
     add: <PlusCircle className="inline w-5 h-5 mr-1 text-green-400" />,
 }
@@ -56,7 +56,7 @@ const lucideIcons: Record<string, React.ReactNode> = {
     globe: <LucideGlobe className="inline w-5 h-5 mr-1 text-blue-400" />,
     rocket: <LucideRocket className="inline w-5 h-5 mr-1 text-fuchsia-500" />,
     bug: <LucideBug className="inline w-5 h-5 mr-1 text-red-400" />,
-    eye: <LucideEye className="inline w-5 h-5 mr-1 text-gray-400" />,
+    eye: <LucideEye className="inline w-5 h-5 mr-1 text-gray-500" />,
     pencil: <LucidePencil className="inline w-5 h-5 mr-1 text-blue-400" />,
     plus: <LucidePlus className="inline w-5 h-5 mr-1 text-green-400" />,
     list: <LucideList className="inline w-5 h-5 mr-1 text-teal-500" />,

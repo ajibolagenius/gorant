@@ -84,7 +84,7 @@ export default function LeaderboardClient({ leaderboardCategories, leaderboardDa
             case 1:
                 return <Crown weight="duotone" className="w-6 h-6 text-yellow-500" />
             case 2:
-                return <Medal weight="duotone" className="w-6 h-6 text-gray-400" />
+                return <Medal weight="duotone" className="w-6 h-6 text-gray-500" />
             case 3:
                 return <Medal weight="duotone" className="w-6 h-6 text-amber-600" />
             default:

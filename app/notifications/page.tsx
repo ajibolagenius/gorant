@@ -11,7 +11,7 @@ export default function NotificationsPage() {
                 {/* Enhanced Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="rounded-full bg-accent p-3">
+                        <div className="rounded-none bg-accent p-3">
                             <Bell className="w-7 h-7 text-accent-foreground" />
                         </div>
                         <div>
@@ -24,7 +24,7 @@ export default function NotificationsPage() {
                 <Separator className="mb-6" />
 
                 {/* Main Content */}
-                <div className="bg-white/80 dark:bg-gray-900/80 rounded-xl shadow-sm p-6 min-h-[300px]">
+                <div className="bg-white/80 dark:bg-gray-900/80 rounded-none shadow-sm p-6 min-h-[300px]">
                     <NotificationList />
                 </div>
             </div>

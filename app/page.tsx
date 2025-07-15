@@ -978,7 +978,7 @@ export default function RantApp() {
                                                 recommended={sortFilter === "recommended"}
                                             />
                                             {index === filteredRants.length - 1 && (
-                                                <div className="w-full text-center text-gray-400 dark:text-gray-500 py-6 text-base font-mono">
+                                                <div className="w-full text-center text-gray-500 dark:text-gray-300 py-6 text-base font-mono">
                                                     You’ve reached the end of the feed!
                                                 </div>
                                             )}
@@ -1017,7 +1017,7 @@ export default function RantApp() {
                                                 recommended={sortFilter === "recommended"}
                                             />
                                             {index === filteredRants.length - 1 && (
-                                                <div className="w-full text-center text-gray-400 dark:text-gray-500 py-6 text-base font-mono">
+                                                <div className="w-full text-center text-gray-500 dark:text-gray-300 py-6 text-base font-mono">
                                                     You’ve reached the end of the feed! 🎬
                                                 </div>
                                             )}

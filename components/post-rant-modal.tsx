@@ -129,7 +129,7 @@ export function PostRantModal({ isOpen, onClose, moods, onSubmit }: PostRantModa
                         />
                         <div className="flex justify-between items-center mt-2">
                             <span className="text-sm text-gray-500 dark:text-gray-400">{content.replace(/<[^>]+>/g, '').length}/1000 characters</span>
-                            <span className="text-xs text-gray-400 dark:text-gray-500">Anonymous • Safe • Private</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-300">Anonymous • Safe • Private</span>
                         </div>
                     </div>
 
