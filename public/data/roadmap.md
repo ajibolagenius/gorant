@@ -23,14 +23,21 @@
 ---
 
 # 📋 Phase 4: Community
-- [ ] Notifications, moderation tools, reporting, groups, user following, profiles, roadmap page
+- [x] Notifications
+- [x] Moderation tools
+- [x] Reporting
+- [ ] Groups
+- [ ] User following
+- [ ] Profiles
+- [x] Roadmap page
 
 ---
 
 # 🔮 Phase 5: Advanced
 - [ ] AI suggestions, sentiment analysis
-- [ ] Multi-language, video support
-- [ ] PWA, mobile app, monetization, donations
+- [ ] Multi-language, video support, drawing support
+- [ ] PWA and mobile app
+- [ ] Monetization and donations
 - [ ] Custom usernames
 
 ---
@@ -46,17 +53,5 @@
 | Search                     | Medium   | Add full-text/tag search bar.                 |
 | Public Profiles            | Low      | Allow viewing user profiles.                  |
 | Status Page Link           | Low      | Make status badge/link more visible.          |
-
----
-
-# 🏁 MVP Checklist
-
-1. Auth/User Management
-2. Analytics
-3. User Reporting
-4. Admin/Moderation Panel
-5. Search
-6. Public Profiles
-7. Polish & QA
 
 ---

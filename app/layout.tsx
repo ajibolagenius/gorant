@@ -1,6 +1,5 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
 import "./globals.css"
 import { Toaster } from "sonner"
 import ClientLayout from "@/components/ClientLayout"
@@ -8,8 +7,6 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Analytics } from "@vercel/analytics/next"
 import Script from "next/script"
-
-const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
     title: "Rant - Anonymous Expression Platform",
@@ -62,7 +59,7 @@ export default function RootLayout({
             <head>
                 {/*  */}
             </head>
-            <body className={inter.className}>
+            <body>
                 <TooltipProvider>
                     <ClientLayout>
                         {children}

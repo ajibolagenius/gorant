@@ -359,16 +359,7 @@ export default function RoadmapPage() {
                             </tbody>
                         </table>
                     </div>
-                    {/* MVP Checklist */}
-                    <h2 className="text-xl font-bold mt-10 mb-2 font-heading tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>🏁 MVP Checklist</h2>
-                    <ul className="ml-2 mb-4 space-y-1">
-                        {parsed.checklist.map((item: string, idx: number) => (
-                            <li key={item} className="flex items-center gap-2 text-base font-body tracking-normal" style={{ fontFamily: 'Manrope, sans-serif' }}>
-                                <span className="inline-block w-6 text-center font-mono text-xs font-bold">{idx + 1}.</span>
-                                <span>{item}</span>
-                            </li>
-                        ))}
-                    </ul>
+                    {/*  */}
                 </div>
             </div>
             {/* Floating Back to Top Button */}
