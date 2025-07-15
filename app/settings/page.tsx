@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
-import { Shield, Eye, Bell, Lock, Globe, Download } from "phosphor-react"
+import { Shield, Eye, Bell, Lock, Globe, Download, Gear } from "@phosphor-icons/react"
 import { Filter } from "lucide-react"
 import Link from "next/link"
 import { useAccessibility } from "@/hooks/use-accessibility"
@@ -26,7 +26,13 @@ export default function SettingsPage() {
         contentFilters,
         updateNotification,
         updatePrivacy,
-        updateContentFilter
+        updateContentFilter,
+        feedLayout,
+        setFeedLayout,
+        defaultSort,
+        setDefaultSort,
+        keyboardShortcuts,
+        setKeyboardShortcuts,
     } = useSettings()
     const { addNotification } = useNotifications()
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -97,13 +103,13 @@ export default function SettingsPage() {
         setTimeout(() => router.push("/"), 1000)
     }
 
+    // Test Notifications handler (now uses toast for visible popups)
     const testNotifications = () => {
-        // Test different notification types
-        addNotification(notificationHelpers.like("test-rant-1", "demo-user"))
-        setTimeout(() => addNotification(notificationHelpers.comment("test-rant-2", "demo-user")), 500)
-        setTimeout(() => addNotification(notificationHelpers.mention("test-rant-3", "demo-user")), 1000)
-        setTimeout(() => addNotification(notificationHelpers.challenge("test-challenge", "Daily Rant Challenge")), 1500)
-        setTimeout(() => addNotification(notificationHelpers.achievement("test-achievement", "First Rant")), 2000)
+        addNotification(notificationHelpers.like("demo-rant", "demo-user"))
+        setTimeout(() => addNotification(notificationHelpers.comment("demo-rant", "demo-user")), 500)
+        setTimeout(() => addNotification(notificationHelpers.mention("demo-rant", "demo-user")), 1000)
+        setTimeout(() => addNotification(notificationHelpers.challenge("demo-challenge", "Daily Rant Challenge")), 1500)
+        setTimeout(() => addNotification(notificationHelpers.achievement("first-rant", "First Rant")), 2000)
     }
 
     return (
@@ -113,7 +119,7 @@ export default function SettingsPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                     <div className="flex items-center gap-3">
                         <div className="rounded-full bg-purple-100 dark:bg-purple-900/30 p-3">
-                            <Shield weight="duotone" className="w-7 h-7 text-purple-600 dark:text-purple-300" />
+                            <Gear weight="duotone" className="w-7 h-7 text-purple-600 dark:text-purple-300" />
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
@@ -193,6 +199,50 @@ export default function SettingsPage() {
 
                     {/* Audio Settings */}
                     <AudioSettings />
+
+                    {/* Feed & Personalization Card */}
+                    <Card className="shadow-sm border-0 bg-card/80 dark:bg-card/80 backdrop-blur mb-6">
+                        <CardHeader>
+                            <div className="flex items-center space-x-2">
+                                <Filter className="w-5 h-5 text-orange-600" />
+                                <h2 className="text-xl font-semibold text-card-foreground">Feed & Personalization</h2>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="flex flex-col md:flex-row gap-6">
+                                <div className="flex-1">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Feed Layout</label>
+                                    <Select value={feedLayout} onValueChange={v => setFeedLayout(v as any)}>
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="comfortable">Comfortable</SelectItem>
+                                            <SelectItem value="compact">Compact</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="flex-1">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Default Sort</label>
+                                    <Select value={defaultSort} onValueChange={v => setDefaultSort(v as any)}>
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="latest">Latest</SelectItem>
+                                            <SelectItem value="trending">Trending</SelectItem>
+                                            <SelectItem value="most_liked">Most Liked</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="flex-1 flex flex-col justify-center">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Keyboard Shortcuts</label>
+                                    <Switch checked={keyboardShortcuts} onCheckedChange={setKeyboardShortcuts} />
+                                    <span className="text-xs text-muted-foreground mt-1">Enable or disable keyboard shortcuts for navigation and actions.</span>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
 
                     {/* Notification Settings */}
                     <Card className="shadow-sm border-0 bg-card/80 dark:bg-card/80 backdrop-blur">

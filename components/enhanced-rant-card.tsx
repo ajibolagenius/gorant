@@ -21,7 +21,7 @@ import {
     ChevronDown,
     ChevronUp,
 } from "lucide-react"
-import { Star } from "phosphor-react"
+import { Star } from "@phosphor-icons/react"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -35,6 +35,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import React from "react"
 import { audioService } from "@/services/audio-service"
 import { useNotifications, notificationHelpers } from "@/hooks/use-notifications"
+import { trackEvent } from "@/lib/self-analytics"
+import { getAnonymousId } from "@/lib/utils"
 
 export interface Comment {
     id: string
@@ -87,6 +89,8 @@ interface EnhancedRantCardProps {
     showBookmark?: boolean // Show bookmark action (default true)
     showReport?: boolean   // Show report action (default true)
     showShare?: boolean    // Show share action (default true)
+    recommended?: boolean  // Show recommended pill if true
+    feedLayout?: "compact" | "comfortable"
 }
 
 const EnhancedRantCardComponent = ({
@@ -113,6 +117,8 @@ const EnhancedRantCardComponent = ({
     showBookmark = true,
     showReport = true,
     showShare = true,
+    recommended = false,
+    feedLayout = "comfortable",
 }: EnhancedRantCardProps) => {
     const [showComments, setShowComments] = useState(false)
     const [newComment, setNewComment] = useState("")
@@ -154,7 +160,7 @@ const EnhancedRantCardComponent = ({
 
     if (isUserBlocked) {
         return (
-            <Card className="shadow-sm border-0 bg-gray-100/80 dark:bg-gray-800/80 backdrop-blur">
+            <Card className="shadow-sm border-0 bg-gray-100/80 dark:bg-gray-800/80 backdrop-blur rounded-none">
                 <CardContent className="pt-6 text-center">
                     <div className="flex items-center justify-center space-x-2 text-gray-500 dark:text-gray-400">
                         <UserX className="w-5 h-5" />
@@ -173,9 +179,32 @@ const EnhancedRantCardComponent = ({
         onReport(rant.id, reason)
     }
 
+    const handleLike = (id: string) => {
+        audioService.playActionSound('like')
+        onLike(id)
+
+        // Trigger notification for the rant owner (demo: assume current user is not the owner)
+        // In a real app, you'd check if the current user is the rant owner
+        addNotification(notificationHelpers.like(id, "current-user-id"))
+    }
+
+    const handleBookmark = (id: string) => {
+        audioService.playActionSound('bookmark')
+        onBookmark(id)
+    }
+
+    const handleFollowTag = (tag: string) => {
+        audioService.playActionSound('tag')
+        onFollowTag(tag)
+    }
+
     const handleCommentSubmit = async () => {
         if (!newComment.trim() || isPostingComment || commentCooldown > 0) return
-
+        trackEvent("comment_posted", {
+            rantId: rant.id,
+            contentLength: newComment.length,
+            anonId: getAnonymousId(),
+        })
         setIsPostingComment(true)
         try {
             const comment = await onCommentPost(rant.id, newComment.trim())
@@ -187,6 +216,7 @@ const EnhancedRantCardComponent = ({
 
             // Trigger notification for the rant owner (demo: assume current user is not the owner)
             addNotification(notificationHelpers.comment(rant.id, "current-user-id"))
+            audioService.playActionSound('comment')
         } catch (error) {
             toast.error("Failed to post comment")
             console.error("Error posting comment:", error)
@@ -206,15 +236,6 @@ const EnhancedRantCardComponent = ({
         )
         onCommentLike(commentId)
         toast.success("Comment liked!")
-    }
-
-    const handleLike = (id: string) => {
-        audioService.playActionSound('like')
-        onLike(id)
-
-        // Trigger notification for the rant owner (demo: assume current user is not the owner)
-        // In a real app, you'd check if the current user is the rant owner
-        addNotification(notificationHelpers.like(id, "current-user-id"))
     }
 
     const getSentimentDisplay = () => {
@@ -249,22 +270,29 @@ const EnhancedRantCardComponent = ({
     const MoodIcon = getMoodIcon(rant.mood)
 
     return (
-        <Card
-            className="shadow-lg border-0 bg-card/90 dark:bg-card/90 backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] group relative"
-            style={{ minHeight: `${getCardHeight()}px` }}
-        >
-            <CardContent className="pt-6">
+        <Card className={`shadow-lg border-2 border-purple-200 dark:border-purple-700 bg-card/90 dark:bg-card/90 backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] group relative rounded-none ${feedLayout === "compact" ? "p-2 text-sm" : "p-6 text-base"}`}>
+            <CardContent className={feedLayout === "compact" ? "pt-3 pb-3" : "pt-6 pb-6"}>
                 <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-2 flex-wrap gap-2">
                         {/* Mood badge */}
                         <Badge
                             variant="secondary"
                             size="default"
-                            className={`${getMoodColor(rant.mood)} text-xs font-medium`}
+                            className={`${getMoodColor(rant.mood)} text-xs font-medium rounded-none`}
                         >
                             <MoodIcon weight="duotone" className={`w-5 h-5 mr-1 ${getMoodColor(rant.mood).replace(/bg-[^ ]+/, '').replace('text-', 'text-')}`} />
                             {moods.find((m) => m.value === rant.mood)?.label}
                         </Badge>
+                        {/* Recommended pill */}
+                        {recommended && (
+                            <Badge
+                                variant="secondary"
+                                size="default"
+                                className="bg-green-500 text-white font-mono text-xs px-2 py-0.5 rounded-none"
+                            >
+                                Recommended
+                            </Badge>
+                        )}
                         {/* Trending badge */}
                         {rant.is_trending && (
                             <Tooltip>
@@ -272,7 +300,7 @@ const EnhancedRantCardComponent = ({
                                     <Badge
                                         variant="secondary"
                                         size="default"
-                                        className="bg-accent text-accent-foreground dark:bg-accent dark:text-accent-foreground text-xs"
+                                        className="bg-accent text-accent-foreground dark:bg-accent dark:text-accent-foreground text-xs rounded-none"
                                     >
                                         <TrendingUp className="w-3 h-3" />
                                     </Badge>
@@ -287,7 +315,7 @@ const EnhancedRantCardComponent = ({
                                     <Badge
                                         variant="outline"
                                         size="default"
-                                        className="bg-red-50 text-red-700 dark:bg-red-900 dark:text-red-300 text-xs"
+                                        className="bg-red-50 text-red-700 dark:bg-red-900 dark:text-red-300 text-xs rounded-none"
                                     >
                                         {SentimentAnalysisService.getSentimentEmoji(rant.sentiment_score)}
                                     </Badge>
@@ -302,7 +330,7 @@ const EnhancedRantCardComponent = ({
                                     <Badge
                                         variant="outline"
                                         size="default"
-                                        className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs"
+                                        className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs rounded-none"
                                     >
                                         <Shield className="w-3 h-3" />
                                     </Badge>
@@ -356,7 +384,8 @@ const EnhancedRantCardComponent = ({
                     </div>
                 </div>
 
-                <p className="text-gray-800 dark:text-gray-100 mb-4 leading-relaxed text-base">{rant.content}</p>
+                {/* Rant Content */}
+                <div className="prose prose-sm dark:prose-invert max-w-none mb-4" dangerouslySetInnerHTML={{ __html: rant.content }} />
 
                 {/* Tags */}
                 {rant.tags && rant.tags.length > 0 && (
@@ -365,11 +394,13 @@ const EnhancedRantCardComponent = ({
                             <Badge
                                 key={index}
                                 variant="outline"
-                                className={`text-xs px-2 py-0.5 border font-medium cursor-pointer transition-all duration-200 hover:scale-105 ${followedTags.has(tag)
+                                className={`text-xs px-2 py-0.5 border font-medium cursor-pointer transition-all duration-200 hover:scale-105 rounded-none ${followedTags.has(tag)
                                     ? "bg-purple-100 text-purple-800 border-purple-400 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-400"
                                     : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-400 dark:border-gray-500 hover:bg-purple-50 dark:hover:bg-purple-900/20"
                                     }`}
-                                onClick={() => onFollowTag(tag)}
+                                onClick={() => handleFollowTag(tag)}
+                                aria-label={followedTags.has(tag) ? `Unfollow tag ${tag}` : `Follow tag ${tag}`}
+                                aria-pressed={followedTags.has(tag)}
                             >
                                 #{tag} {followedTags.has(tag) && "✓"}
                             </Badge>
@@ -377,7 +408,7 @@ const EnhancedRantCardComponent = ({
                     </div>
                 )}
 
-                <Separator className="mb-4 dark:bg-gray-700" />
+                <Separator className="mb-4 dark:bg-gray-700 rounded-none" />
 
                 <div className="flex flex-row w-full items-center justify-between gap-2 mt-4">
                     <div className="flex items-center gap-4 min-w-0">
@@ -385,10 +416,12 @@ const EnhancedRantCardComponent = ({
                             variant="ghost"
                             size="sm"
                             onClick={() => handleLike(rant.id)}
-                            className={`transition-all duration-200 hover:scale-110 ${isLiked
+                            className={`transition-all duration-200 hover:scale-110 rounded-none ${isLiked
                                 ? "text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                                 : "text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
                                 }`}
+                            aria-label={isLiked ? "Unlike rant" : "Like rant"}
+                            aria-pressed={isLiked}
                         >
                             <Heart className={`w-4 h-4 mr-1 ${isLiked ? "fill-current" : ""}`} />
                             {rant.likes_count}
@@ -398,7 +431,9 @@ const EnhancedRantCardComponent = ({
                             variant="ghost"
                             size="sm"
                             onClick={() => setShowComments(!showComments)}
-                            className="text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-all duration-200 hover:scale-110"
+                            className="text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-all duration-200 hover:scale-110 rounded-none"
+                            aria-label={showComments ? "Hide comments" : "Show comments"}
+                            aria-pressed={showComments}
                         >
                             <MessageCircle className="w-4 h-4 mr-1" />
                             {localCommentsCount}
@@ -409,11 +444,13 @@ const EnhancedRantCardComponent = ({
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => onBookmark(rant.id)}
-                                className={`transition-all duration-200 hover:scale-110 ${isBookmarked
+                                onClick={() => handleBookmark(rant.id)}
+                                className={`transition-all duration-200 hover:scale-110 rounded-none ${isBookmarked
                                     ? "text-yellow-600 hover:text-yellow-700 dark:text-yellow-400 dark:hover:text-yellow-300"
                                     : "text-gray-600 hover:text-yellow-600 dark:text-gray-400 dark:hover:text-yellow-400"
                                     }`}
+                                aria-label={isBookmarked ? "Remove bookmark" : "Bookmark rant"}
+                                aria-pressed={isBookmarked}
                             >
                                 <Bookmark className={`w-4 h-4 ${isBookmarked ? "fill-current" : ""}`} />
                             </Button>
@@ -470,7 +507,7 @@ const EnhancedRantCardComponent = ({
                                     size="sm"
                                     disabled={!newComment.trim() || isPostingComment || commentCooldown > 0}
                                     onClick={handleCommentSubmit}
-                                    className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-600 text-white"
+                                    className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-600 text-white rounded-none"
                                 >
                                     {isPostingComment ? (
                                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
@@ -508,7 +545,7 @@ const EnhancedRantCardComponent = ({
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => handleCommentLike(comment.id)}
-                                                className={`h-6 px-2 ${likedComments.has(comment.id)
+                                                className={`h-6 px-2 rounded-none ${likedComments.has(comment.id)
                                                     ? "text-red-600 dark:text-red-400"
                                                     : "text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
                                                     }`}

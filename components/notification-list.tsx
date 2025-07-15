@@ -96,7 +96,7 @@ export default function NotificationList() {
                         >
                             <Trash2 className="w-4 h-4 mr-1" />
                             Clear all
-                        </Button>
+                </Button>
                     )}
                 </div>
             </div>
@@ -140,8 +140,8 @@ export default function NotificationList() {
                                                 className="h-6 w-6 p-0"
                                             >
                                                 <Check className="w-3 h-3" />
-                                            </Button>
-                                        )}
+                                </Button>
+                            )}
                                         <Button
                                             variant="ghost"
                                             size="sm"

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { createClient } from "@supabase/supabase-js"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,7 +16,7 @@ import {
     Cloud,
     Confetti,
     SmileySticker
-} from "phosphor-react"
+} from "@phosphor-icons/react"
 import { HelpCircle, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, MoreHorizontal, Dot, GripVertical, Search, PanelLeft, Award, MessageCircle, Send, X, Filter, Eraser } from "lucide-react"
 import { toast } from "sonner"
 import confetti from "canvas-confetti"
@@ -42,6 +42,8 @@ import { useFilteredRants } from "@/hooks/use-filtered-rants"
 import { storageSet } from "@/lib/storage"
 import { FixedSizeList as VirtualizedList, ListChildComponentProps } from "react-window"
 import React from "react"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts"
 
 
 import { audioService } from "@/services/audio-service"
@@ -210,7 +212,7 @@ const FILTER_OPTIONS = [
     { icon: Cloud, label: "Latest", value: "latest" },
     { icon: SmileySticker, label: "Popular", value: "popular" },
     { icon: SmileySticker, label: "Most Liked", value: "most_liked" },
-    { icon: Award, label: "Recommended", value: "recommended" },
+    { icon: Award, label: <span className="inline-flex items-center gap-1">Recommended <span className="ml-1 px-1 py-0.5 text-xs bg-green-500 text-white rounded font-mono">Personalized</span></span>, value: "recommended" },
 ]
 
 // ErrorBoundary component
@@ -265,9 +267,27 @@ export default function RantApp() {
         updateNotification,
         updatePrivacy,
         updateContentFilter,
-        loaded: settingsLoaded
+        loaded: settingsLoaded,
+        feedLayout,
+        defaultSort,
+        keyboardShortcuts,
     } = useSettings()
     const [sidebarOpen, setSidebarOpen] = useState(false)
+    const [showPersonalizationTip, setShowPersonalizationTip] = useState(false)
+    const personalizationTipDismissed = useRef(false)
+
+    // Show onboarding tip for personalization
+    useEffect(() => {
+        if (sortFilter === "recommended" && !localStorage.getItem("personalizationTipDismissed")) {
+            setShowPersonalizationTip(true)
+        }
+    }, [sortFilter])
+
+    const dismissPersonalizationTip = () => {
+        setShowPersonalizationTip(false)
+        personalizationTipDismissed.current = true
+        localStorage.setItem("personalizationTipDismissed", "true")
+    }
 
     const { theme, toggleTheme } = useTheme()
     const { userPoints, userLevel, addPoints, checkAchievements } = useGameification()
@@ -301,6 +321,11 @@ export default function RantApp() {
     useEffect(() => {
         // The useSettings hook already handles loading from localStorage
     }, [])
+
+    // Set initial sortFilter to defaultSort
+    useEffect(() => {
+        setSortFilter(defaultSort)
+    }, [defaultSort])
 
     // Enhanced comment posting function
     const handleCommentPost = async (rantId: string, content: string): Promise<Comment> => {
@@ -568,6 +593,14 @@ export default function RantApp() {
         storageSet("bookmarked_rants", Array.from(bookmarkedRants))
     }, [bookmarkedRants])
 
+    // Show a toast the first time keyboard shortcuts are enabled
+    useEffect(() => {
+        if (keyboardShortcuts && typeof window !== "undefined" && !localStorage.getItem("shortcutsHintShown")) {
+            toast.info("Tip: Press ? to see all keyboard shortcuts!")
+            localStorage.setItem("shortcutsHintShown", "true")
+        }
+    }, [keyboardShortcuts])
+
     const getMoodIcon = (mood: string) => {
         return MOODS.find((m) => m.value === mood)?.icon || SmileyMeh
     }
@@ -589,13 +622,75 @@ export default function RantApp() {
         return `${Math.floor(diffInMinutes / 1440)}d ago`
     }
 
+    // Keyboard shortcut state
+    const [selectedRantIndex, setSelectedRantIndex] = useState(0)
+    const searchInputRef = useRef<HTMLInputElement>(null)
+    const [showShortcutsHelp, setShowShortcutsHelp] = useState(false)
+
+    // Keyboard shortcut handlers
+    useKeyboardShortcuts({
+        enabled: keyboardShortcuts,
+        onNewRant: () => setShowPostModal(true),
+        onNextRant: () => setSelectedRantIndex((i) => Math.min(i + 1, filteredRants.length - 1)),
+        onPrevRant: () => setSelectedRantIndex((i) => Math.max(i - 1, 0)),
+        onLike: () => {
+            const rant = filteredRants[selectedRantIndex]
+            if (rant) likeRant(rant.id)
+        },
+        onBookmark: () => {
+            const rant = filteredRants[selectedRantIndex]
+            if (rant) toggleBookmark(rant.id)
+        },
+        onComment: () => {
+            // Optionally focus comment input if available
+        },
+        onFocusSearch: () => {
+            if (searchInputRef.current) searchInputRef.current.focus()
+        },
+        onClose: () => {
+            setShowPostModal(false)
+            setShowShortcutsHelp(false)
+        },
+        onShowHelp: () => setShowShortcutsHelp(true),
+    })
+
     if (loading) {
         return (
             <div className="min-h-screen bg-background dark:bg-background flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600 dark:text-gray-300">Loading rants...</p>
-                </div>
+                <main className="container mx-auto px-4 py-8 max-w-7xl pb-32 mb-safe-bottom wrap-screen overflow-x-auto lg:overflow-visible w-full">
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 flex-wrap justify-center">
+                        {/* Feed Skeletons */}
+                        <div className="lg:col-span-3 space-y-6">
+                            {/* Header Skeleton */}
+                            <Skeleton className="h-16 w-full rounded-none mb-2" />
+                            {/* Welcome Card Skeleton */}
+                            <Skeleton className="h-32 w-full rounded-none mb-2" />
+                            {/* Rant of the Day Skeleton */}
+                            <Skeleton className="h-28 w-full rounded-none mb-2" />
+                            {/* Search/Filter Bar Skeleton */}
+                            <Skeleton className="h-20 w-full rounded-none mb-2" />
+                            {/* Feed Card Skeletons (grid) */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {Array.from({ length: 6 }).map((_, i) => (
+                                    <Skeleton key={i} className="h-56 w-full rounded-none" />
+                                ))}
+                            </div>
+                        </div>
+                        {/* Sidebar Skeletons */}
+                        <div className="sticky top-24 self-start hidden lg:block w-full max-w-xs space-y-6">
+                            {/* Gamification Panel Skeleton */}
+                            <Skeleton className="h-32 w-full rounded-none" />
+                            {/* Community Stats Skeleton */}
+                            <Skeleton className="h-40 w-full rounded-none" />
+                            {/* Followed Tags Skeleton */}
+                            <Skeleton className="h-24 w-full rounded-none" />
+                            {/* Weekly Challenge Skeleton */}
+                            <Skeleton className="h-32 w-full rounded-none" />
+                            {/* Support Resources Skeleton */}
+                            <Skeleton className="h-40 w-full rounded-none" />
+                        </div>
+                    </div>
+                </main>
             </div>
         )
     }
@@ -629,6 +724,15 @@ export default function RantApp() {
                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 flex-wrap justify-center">
                         {/* Main Content */}
                         <div className="lg:col-span-3 space-y-6">
+                            {/* Modern Feed Header */}
+                            <div className="flex items-center justify-between rounded-none bg-purple-100/80 dark:bg-purple-900/40 backdrop-blur px-6 py-4 mb-2 shadow border-0">
+                                <div className="flex items-center gap-3">
+                                    <SmileySticker className="w-8 h-8 text-purple-600 dark:text-purple-300" weight="duotone" />
+                                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight font-heading">Feed</h1>
+                                    <Badge className="ml-2 bg-green-500 text-white font-mono text-xs px-2 py-1 rounded-none">Live</Badge>
+                                    <span className="text-xs text-muted-foreground ml-4">Press <kbd className="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">?</kbd> for shortcuts</span>
+                                </div>
+                            </div>
                             {/* Welcome Message */}
                             <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur">
                                 <CardContent className="pt-6">
@@ -721,25 +825,26 @@ export default function RantApp() {
                             )}
 
                             {/* Enhanced Search with Suggestions */}
-                            <Card className="shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur">
+                            <Card className="shadow-lg border-2 border-purple-200 dark:border-purple-700 bg-white/60 dark:bg-gray-800/60 backdrop-blur rounded-none">
                                 <CardContent className="pt-6">
                                     <div className="flex flex-col sm:flex-row gap-4 flex-wrap">
                                         {/* Search */}
-                                        <div className="relative w-full lg:w-2/3">
-                                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
+                                        <div className="relative w-full">
+                                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-purple-400 dark:text-purple-300 w-4 h-4" />
                                             <Input
+                                                ref={searchInputRef}
                                                 placeholder="Search rants, tags, or users... (min 2 characters)"
                                                 value={searchQuery}
                                                 onChange={(e) => handleSearchChange(e.target.value)}
-                                                className="pl-10 border-gray-200 dark:border-gray-600 focus:border-purple-400 dark:focus:border-purple-500 dark:bg-gray-700 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                                                className="w-full pl-10 border-2 border-purple-200 dark:border-purple-700 focus:border-purple-500 dark:focus:border-purple-400 dark:bg-gray-700 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 rounded-none shadow-sm"
                                             />
                                             {/* Search Suggestions */}
                                             {searchSuggestions.length > 0 && (
-                                                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md mt-1 shadow-lg">
+                                                <div className="bg-white dark:bg-gray-800 border-2 border-purple-200 dark:border-purple-700 rounded-none mt-1 shadow-lg z-10 absolute w-full left-0">
                                                     {searchSuggestions.map((suggestion, index) => (
                                                         <button
                                                             key={index}
-                                                            className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm dark:text-gray-200"
+                                                            className="w-full text-left px-3 py-2 hover:bg-purple-50 dark:hover:bg-purple-900 text-sm dark:text-gray-200 rounded-none"
                                                             onClick={() => {
                                                                 setSearchQuery(suggestion.startsWith("#") ? suggestion.slice(1) : suggestion)
                                                                 setSearchSuggestions([])
@@ -757,13 +862,13 @@ export default function RantApp() {
                                             <Button
                                                 variant="outline"
                                                 onClick={() => setShowFilters(!showFilters)}
-                                                className="flex-1 flex items-center space-x-2 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 relative"
+                                                className="flex-1 flex items-center space-x-2 border-2 border-purple-200 dark:border-purple-700 dark:text-gray-300 dark:hover:bg-gray-700 relative rounded-none"
                                             >
-                                                <Filter className="w-4 h-4" />
+                                                <Filter className="w-4 h-4 text-purple-500" />
                                                 <span>Filters</span>
                                                 {/* Active filter count badge */}
                                                 {(moodFilter || sortFilter !== 'latest' || followedTags.size > 0 || searchQuery.length > 0) && (
-                                                    <span className="ml-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-600 text-white absolute -top-2 -right-2">
+                                                    <span className="ml-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-semibold rounded-none bg-purple-600 text-white absolute -top-2 -right-2">
                                                         {[
                                                             moodFilter ? 1 : 0,
                                                             sortFilter !== 'latest' ? 1 : 0,
@@ -778,7 +883,7 @@ export default function RantApp() {
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    className="flex-1 text-gray-500 dark:text-gray-300 hover:text-purple-600"
+                                                    className="flex-1 text-purple-600 dark:text-purple-300 hover:text-purple-800 border-2 border-purple-200 dark:border-purple-700 rounded-none"
                                                     onClick={() => {
                                                         setMoodFilter("");
                                                         setSortFilter("latest");
@@ -795,7 +900,7 @@ export default function RantApp() {
 
                                     {/* Expandable Filters */}
                                     {showFilters && (
-                                        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                                        <div className="mt-4 pt-4 border-t border-purple-200 dark:border-purple-700">
                                             <FilterPanel
                                                 moods={MOODS}
                                                 moodFilter={moodFilter}
@@ -810,6 +915,19 @@ export default function RantApp() {
                                     )}
                                 </CardContent>
                             </Card>
+
+                            {/* Personalization Tip */}
+                            {sortFilter === "recommended" && showPersonalizationTip && (
+                                <div className="flex items-center justify-between bg-green-100 dark:bg-green-900/40 border border-green-300 dark:border-green-700 rounded px-4 py-2 mb-4">
+                                    <span className="text-green-800 dark:text-green-200 text-sm">Try the Recommended feed for a personalized experience! These rants are tailored to your interests and activity. <span className="italic">(Anonymous & private)</span></span>
+                                    <button onClick={dismissPersonalizationTip} className="ml-4 text-green-700 dark:text-green-300 hover:underline text-xs">Dismiss</button>
+                                </div>
+                            )}
+                            {sortFilter === "recommended" && !showPersonalizationTip && (
+                                <div className="flex items-center bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded px-4 py-2 mb-4">
+                                    <span className="text-green-800 dark:text-green-200 text-sm">These rants are recommended for you based on your interests and activity. <span className="italic">(Anonymous & private)</span></span>
+                                </div>
+                            )}
 
                             {/* Masonry Grid, Virtualized List, or Swiper Rants Feed */}
                             {filteredRants.length === 0 ? (
@@ -857,14 +975,16 @@ export default function RantApp() {
                                                 showBookmark={true}
                                                 showReport={true}
                                                 showShare={true}
+                                                recommended={sortFilter === "recommended"}
+                                                isSelected={index === selectedRantIndex}
                                             />
                                         </div>
                                     )}
                                 </VirtualizedList>
                             ) : (
                                 // Desktop: Use MasonryGrid for layout
-                                <MasonryGrid columns={2} gap={20} className="w-full overflow-x-auto">
-                                    {filteredRants.map((rant) => (
+                                <MasonryGrid columns={2} gap={20} className={`w-full overflow-x-auto ${feedLayout === "compact" ? "feed-compact" : "feed-comfortable"}`}>
+                                    {filteredRants.map((rant, index) => (
                                         <EnhancedRantCard
                                             key={rant.id}
                                             rant={rant}
@@ -890,6 +1010,8 @@ export default function RantApp() {
                                             showBookmark={true}
                                             showReport={true}
                                             showShare={true}
+                                            recommended={sortFilter === "recommended"}
+                                            isSelected={index === selectedRantIndex}
                                         />
                                     ))}
                                 </MasonryGrid>
@@ -1017,6 +1139,27 @@ export default function RantApp() {
                         </div>
                     </div>
                 </footer>
+                {showShortcutsHelp && (
+                    <Dialog open={showShortcutsHelp} onOpenChange={setShowShortcutsHelp}>
+                        <DialogContent className="max-w-md">
+                            <DialogHeader>
+                                <DialogTitle>Keyboard Shortcuts</DialogTitle>
+                            </DialogHeader>
+                            <ul className="space-y-2 mt-4 text-sm">
+                                <li><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded">n</kbd> — New rant (open post modal)</li>
+                                <li><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded">j</kbd> / <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded">↓</kbd> — Next rant</li>
+                                <li><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded">k</kbd> / <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded">↑</kbd> — Previous rant</li>
+                                <li><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded">l</kbd> — Like selected rant</li>
+                                <li><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded">b</kbd> — Bookmark selected rant</li>
+                                <li><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded">c</kbd> — Comment on selected rant</li>
+                                <li><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded">/</kbd> — Focus search</li>
+                                <li><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded">Esc</kbd> — Close modals/help</li>
+                                <li><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded">?</kbd> — Show this help</li>
+                            </ul>
+                            <Button className="mt-6 w-full" onClick={() => setShowShortcutsHelp(false)}>Close</Button>
+                        </DialogContent>
+                    </Dialog>
+                )}
             </main>
         </ErrorBoundary>
     )

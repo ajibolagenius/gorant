@@ -91,7 +91,7 @@ const MasonryGridComponent = ({ children, columns = 3, gap = 16, className }: Ma
     }, [children, currentColumns, gap])
 
     return (
-        <div ref={containerRef} className={cn("relative w-full overflow-x-auto", className)} style={{ minHeight: "120px" }}>
+        <div ref={containerRef} className={cn("relative w-full overflow-x-auto", className)} style={{ minHeight: "120px" }} role="list">
             {children.map((child, index) => (
                 <div
                     key={index}
@@ -104,6 +104,7 @@ const MasonryGridComponent = ({ children, columns = 3, gap = 16, className }: Ma
                         transform: itemPositions[index] ? "translateZ(0)" : "translateY(20px)",
                         opacity: itemPositions[index] ? 1 : 0,
                     }}
+                    role="listitem"
                 >
                     {child}
                 </div>

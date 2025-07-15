@@ -26,61 +26,74 @@ interface NotificationStore {
     clearAll: () => void
 }
 
-export const useNotifications = create<NotificationStore>()(
-    persist(
-        (set, get) => ({
-            notifications: [],
-            unreadCount: 0,
+// Only create the store on the client to avoid Next.js hydration issues
+let useNotifications: () => NotificationStore = () => ({
+    notifications: [],
+    unreadCount: 0,
+    addNotification: () => { },
+    markAsRead: () => { },
+    markAllAsRead: () => { },
+    removeNotification: () => { },
+    clearAll: () => { },
+})
 
-            addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
-                const newNotification: Notification = {
-                    ...notification,
-                    id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-                    timestamp: Date.now(),
-                    read: false,
-                }
+if (typeof window !== 'undefined') {
+    useNotifications = create<NotificationStore>()(
+        persist(
+            (set, get) => ({
+                notifications: [],
+                unreadCount: 0,
 
-                set((state: NotificationStore) => ({
-                    notifications: [newNotification, ...state.notifications],
-                    unreadCount: state.unreadCount + 1,
-                }))
-            },
-
-            markAsRead: (id: string) => {
-                set((state: NotificationStore) => ({
-                    notifications: state.notifications.map((n: Notification) =>
-                        n.id === id ? { ...n, read: true } : n
-                    ),
-                    unreadCount: Math.max(0, state.unreadCount - 1),
-                }))
-            },
-
-            markAllAsRead: () => {
-                set((state: NotificationStore) => ({
-                    notifications: state.notifications.map((n: Notification) => ({ ...n, read: true })),
-                    unreadCount: 0,
-                }))
-            },
-
-            removeNotification: (id: string) => {
-                set((state: NotificationStore) => {
-                    const notification = state.notifications.find((n: Notification) => n.id === id)
-                    return {
-                        notifications: state.notifications.filter((n: Notification) => n.id !== id),
-                        unreadCount: notification?.read ? state.unreadCount : Math.max(0, state.unreadCount - 1),
+                addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
+                    const newNotification: Notification = {
+                        ...notification,
+                        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+                        timestamp: Date.now(),
+                        read: false,
                     }
-                })
-            },
 
-            clearAll: () => {
-                set({ notifications: [], unreadCount: 0 })
-            },
-        }),
-        {
-            name: 'notifications-storage',
-        }
+                    set((state: NotificationStore) => ({
+                        notifications: [newNotification, ...state.notifications],
+                        unreadCount: state.unreadCount + 1,
+                    }))
+                },
+
+                markAsRead: (id: string) => {
+                    set((state: NotificationStore) => ({
+                        notifications: state.notifications.map((n: Notification) =>
+                            n.id === id ? { ...n, read: true } : n
+                        ),
+                        unreadCount: Math.max(0, state.unreadCount - 1),
+                    }))
+                },
+
+                markAllAsRead: () => {
+                    set((state: NotificationStore) => ({
+                        notifications: state.notifications.map((n: Notification) => ({ ...n, read: true })),
+                        unreadCount: 0,
+                    }))
+                },
+
+                removeNotification: (id: string) => {
+                    set((state: NotificationStore) => {
+                        const notification = state.notifications.find((n: Notification) => n.id === id)
+                        return {
+                            notifications: state.notifications.filter((n: Notification) => n.id !== id),
+                            unreadCount: notification?.read ? state.unreadCount : Math.max(0, state.unreadCount - 1),
+                        }
+                    })
+                },
+
+                clearAll: () => {
+                    set({ notifications: [], unreadCount: 0 })
+                },
+            }),
+            {
+                name: 'notifications-storage',
+            }
+        )
     )
-)
+}
 
 // Helper functions for common notification types
 export const notificationHelpers = {
@@ -119,3 +132,5 @@ export const notificationHelpers = {
         data: { achievementId },
     }),
 }
+
+export { useNotifications }

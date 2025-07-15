@@ -6,8 +6,10 @@ import { useTheme } from "@/hooks/use-theme"
 import { usePathname } from "next/navigation"
 import Header from "./Header"
 import Link from "next/link"
-import { TrendUp, Trophy, Lightning, Star, House, Bell } from "phosphor-react"
+import { TrendUp, Trophy, Lightning, Star, House, Bell } from "@phosphor-icons/react"
 import { useNotifications } from "@/hooks/use-notifications"
+import { trackEvent } from "@/lib/self-analytics"
+import { getAnonymousId } from "@/lib/utils"
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
     const { fontSize, screenReaderMode } = useAccessibility()
@@ -16,6 +18,17 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     const pathname = usePathname()
     const showFooter = !pathname.startsWith("/settings")
     const { unreadCount } = useNotifications()
+
+    // Pageview analytics tracking
+    useEffect(() => {
+        trackEvent("pageview", {
+            page: pathname,
+            anonId: getAnonymousId(),
+            referrer: typeof document !== "undefined" ? document.referrer : null,
+            userAgent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+            platform: typeof navigator !== "undefined" ? navigator.platform : null,
+        })
+    }, [pathname])
 
     // Lenis smooth scrolling integration
     useEffect(() => {

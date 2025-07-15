@@ -1,22 +1,6 @@
 # Rant Application Design System
 
-> **Recent Updates (July 2025)**
-> - All documentation files moved to `/docs` directory.
-> - All elements now use sharp corners (no border-radius) for a modern, square look.
-> - All content and elements are fully responsive and wrap appropriately for all screen sizes.
-> - The "Feed" is now present in the navigation bar and routes to the homepage.
-> - Gradients have been reduced or removed for a cleaner look.
-> - Typeface updated to modern fonts: Space Grotesk (headings), Manrope (body), JetBrains Mono (badges/pills).
-> - Rant card now uses only icons for statuses like Trending, Negative, Verified (mood still shows icon + label).
-> - Tabs in Trending, Challenges, Leaderboard, and Bookmark pages are full-width and wrappable for responsiveness.
-> - "Back to Feed" button is now minimal, compact, and includes an icon.
-> - Trending list now shows top 5 items.
-> - Bookmark page visually enhanced and code rewritten for maintainability.
-> - Comment duplication bug fixed.
-> - Settings page: Accessibility, Audio, Notifications, Privacy, and Content Filters are all implemented and functional.
-> - All toggles in the Settings page are now fully functional.
-> - Desktop: Sidebars are sticky when scrolling.
-> - Mobile: Nav bar is icon-only; sidebar content removed from feed; FAB is scrollable.
+A comprehensive guide to the visual and interaction standards for the Rant platform. This document ensures consistency, scalability, and accessibility across all UI/UX touchpoints.
 
 ---
 
@@ -63,7 +47,7 @@
   - High contrast mode available
   - Screen reader mode with enhanced compatibility
 
-> **Note:** Space Grotesk provides modern, geometric headings. Manrope offers excellent readability for body text. JetBrains Mono ensures clarity for badges and pills. All fonts are loaded via Google Fonts in `/app/globals.css`.
+> **Note:** Space Grotesk provides modern, geometric headings. Manrope offers excellent readability for body text. JetBrains Mono ensures clarity for badges and pills. All fonts are loaded via Google Fonts in `app/globals.css`.
 
 ---
 
@@ -109,7 +93,7 @@
 ## 🖼️ UI Patterns
 
 - **Navigation:**
-  - Desktop: Top bar with nav links and icons (Feed always present)
+  - Desktop: Top bar with nav links and icons
   - Mobile: Bottom nav bar (icon-only), floating action button (FAB), slide-in sidebar
 - **Sidebar:**
   - Desktop: Sticky/fixed, collapsible
@@ -141,7 +125,7 @@
 - **Usage:**
   - All navigation, sidebar, and action icons use `weight="duotone"`
   - Mood icons are always duotone and colored according to their mood (e.g., blue for sad, yellow for happy, etc.)
-  - Close actions use the `X` icon, filter actions use the `Filter` icon (from Lucide), and clear actions use the `Eraser` icon for clarity
+  - Close actions use the `X` icon, filter actions use the `Filter` icon, and clear actions use the `Eraser` icon for clarity
   - Neutral: `text-gray-500 dark:text-gray-300`
   - Active: `text-purple-600 dark:text-purple-400`
   - Hover: `hover:text-purple-600 dark:hover:text-purple-400`

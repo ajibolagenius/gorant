@@ -35,7 +35,7 @@ import {
     MessageCircle,
     Share,
     MoreHorizontal
-} from "phosphor-react";
+} from "@phosphor-icons/react";
 import { toast } from "sonner";
 
 export default function BookmarksClient() {

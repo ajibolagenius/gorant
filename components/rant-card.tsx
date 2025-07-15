@@ -29,11 +29,13 @@ import {
     DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { SentimentAnalysisService } from "@/services/sentiment-analysis"
-import { Star as PhosphorStar } from "phosphor-react"
+import { Star as PhosphorStar } from "@phosphor-icons/react"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import React from "react"
 import { motion } from "framer-motion"
 import { audioService } from "@/services/audio-service"
+import { trackEvent } from "@/lib/self-analytics"
+import { getAnonymousId } from "@/lib/utils"
 
 interface RantCardProps {
     rant: Rant
@@ -113,8 +115,20 @@ export const RantCard = React.memo(function RantCard({
     }
 
     const handleLike = (id: string) => {
+        trackEvent("rant_liked", {
+            rantId: id,
+            anonId: getAnonymousId(),
+        })
         audioService.playActionSound('like')
         onLike(id)
+    }
+
+    const handleBookmark = (id: string) => {
+        trackEvent("rant_bookmarked", {
+            rantId: id,
+            anonId: getAnonymousId(),
+        })
+        onBookmark(id)
     }
 
     const getSentimentDisplay = () => {
@@ -237,7 +251,8 @@ export const RantCard = React.memo(function RantCard({
                         </div>
                     </div>
 
-                    <p className="text-gray-800 dark:text-gray-200 mb-4 leading-relaxed">{rant.content}</p>
+                    {/* Rant Content */}
+                    <div className="prose prose-sm dark:prose-invert max-w-none mb-4" dangerouslySetInnerHTML={{ __html: rant.content }} />
 
                     {/* Tags */}
                     {rant.tags && rant.tags.length > 0 && (
@@ -289,7 +304,7 @@ export const RantCard = React.memo(function RantCard({
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => onBookmark(rant.id)}
+                                    onClick={() => handleBookmark(rant.id)}
                                     className={`${isBookmarked
                                         ? "text-yellow-600 hover:text-yellow-700 dark:text-yellow-400"
                                         : "text-gray-600 hover:text-yellow-600 dark:text-gray-400"

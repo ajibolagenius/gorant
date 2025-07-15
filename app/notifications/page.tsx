@@ -1,3 +1,5 @@
+'use client'
+
 import NotificationList from "@/components/notification-list"
 import { Bell } from "lucide-react"
 import { Separator } from "@/components/ui/separator"

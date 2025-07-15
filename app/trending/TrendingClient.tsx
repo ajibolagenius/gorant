@@ -26,7 +26,7 @@ import {
     MagnifyingGlass,
     Funnel,
     SortAscending
-} from "phosphor-react"
+} from "@phosphor-icons/react"
 import Link from "next/link"
 import { RantCard } from "@/components/rant-card"
 import type { Rant } from "@/components/enhanced-rant-card"

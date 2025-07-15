@@ -1,5 +1,5 @@
 import React from "react"
-import { SpinnerGap } from "phosphor-react"
+import { SpinnerGap } from "@phosphor-icons/react"
 
 /**
  * A minimal badge indicating a feature is coming soon.

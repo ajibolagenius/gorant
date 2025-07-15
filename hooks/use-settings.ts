@@ -21,6 +21,9 @@ export interface ContentFilterSettings {
     minimumModerationScore: number
 }
 
+export type FeedLayout = "compact" | "comfortable"
+export type FeedSort = "latest" | "trending" | "most_liked"
+
 export function useSettings() {
     const [notifications, setNotifications] = useState<NotificationSettings>({
         likes: true,
@@ -39,6 +42,9 @@ export function useSettings() {
         hideReportedContent: true,
         minimumModerationScore: 0.7,
     })
+    const [feedLayout, setFeedLayout] = useState<FeedLayout>("comfortable")
+    const [defaultSort, setDefaultSort] = useState<FeedSort>("latest")
+    const [keyboardShortcuts, setKeyboardShortcuts] = useState<boolean>(true)
     const [loaded, setLoaded] = useState(false)
 
     // Load settings from localStorage on mount
@@ -49,6 +55,12 @@ export function useSettings() {
         if (savedNotifications) setNotifications(savedNotifications)
         if (savedPrivacy) setPrivacy(savedPrivacy)
         if (savedContentFilters) setContentFilters(savedContentFilters)
+        const savedFeedLayout = storageGet<FeedLayout>("settings_feedLayout")
+        const savedDefaultSort = storageGet<FeedSort>("settings_defaultSort")
+        const savedKeyboardShortcuts = storageGet<boolean>("settings_keyboardShortcuts")
+        if (savedFeedLayout) setFeedLayout(savedFeedLayout)
+        if (savedDefaultSort) setDefaultSort(savedDefaultSort)
+        if (typeof savedKeyboardShortcuts === "boolean") setKeyboardShortcuts(savedKeyboardShortcuts)
         setLoaded(true)
     }, [])
 
@@ -62,6 +74,15 @@ export function useSettings() {
     useEffect(() => {
         if (loaded) storageSet("settings_contentFilters", contentFilters)
     }, [contentFilters, loaded])
+    useEffect(() => {
+        if (loaded) storageSet("settings_feedLayout", feedLayout)
+    }, [feedLayout, loaded])
+    useEffect(() => {
+        if (loaded) storageSet("settings_defaultSort", defaultSort)
+    }, [defaultSort, loaded])
+    useEffect(() => {
+        if (loaded) storageSet("settings_keyboardShortcuts", keyboardShortcuts)
+    }, [keyboardShortcuts, loaded])
 
     const updateNotification = (key: keyof NotificationSettings, value: boolean) => {
         setNotifications((prev) => ({ ...prev, [key]: value }))
@@ -84,5 +105,11 @@ export function useSettings() {
         updatePrivacy,
         updateContentFilter,
         loaded,
+        feedLayout,
+        setFeedLayout,
+        defaultSort,
+        setDefaultSort,
+        keyboardShortcuts,
+        setKeyboardShortcuts,
     }
 }

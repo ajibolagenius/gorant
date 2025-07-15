@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Lightning, Trophy, Medal, Crown, TrendUp, Users, Heart, House, MagnifyingGlass, Funnel, SortAscending } from "phosphor-react"
+import { Lightning, Trophy, Medal, Crown, TrendUp, Users, Heart, House, MagnifyingGlass, Funnel, SortAscending } from "@phosphor-icons/react"
 import Link from "next/link"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"

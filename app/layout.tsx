@@ -60,11 +60,7 @@ export default function RootLayout({
     return (
         <html lang="en">
             <head>
-                <Script
-                    src="https://scripts.simpleanalyticscdn.com/latest.js"
-                    strategy="afterInteractive"
-                    data-collect-dnt="true"
-                />
+                {/*  */}
             </head>
             <body className={inter.className}>
                 <TooltipProvider>

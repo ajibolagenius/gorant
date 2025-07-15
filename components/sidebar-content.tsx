@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { GameificationPanel } from "@/components/gamification-panel"
-import { Trophy, Users } from "phosphor-react"
+import { Trophy, Users } from "@phosphor-icons/react"
 import React, { useState } from "react"
 import { ComingSoonPill } from "@/components/ui/coming-soon-pill"
 import Link from "next/link"
@@ -27,7 +27,7 @@ export function SidebarContent({ userPoints, userLevel, nextLevelPoints, followe
             <GameificationPanel userPoints={userPoints} userLevel={userLevel} nextLevelPoints={nextLevelPoints} />
 
             {/* Quick Stats */}
-            <Card className="shadow-sm border-0 bg-card/60 dark:bg-card/60 backdrop-blur">
+            <Card className="shadow-sm border-0 bg-card/60 dark:bg-card/60 backdrop-blur rounded-none">
                 <CardHeader>
                     <h3 className="font-semibold text-card-foreground">Community Stats</h3>
                 </CardHeader>
@@ -53,7 +53,7 @@ export function SidebarContent({ userPoints, userLevel, nextLevelPoints, followe
 
             {/* Followed Tags */}
             {followedTags.size > 0 && (
-                <Card className="shadow-sm border-0 bg-card/60 dark:bg-card/60 backdrop-blur">
+                <Card className="shadow-sm border-0 bg-card/60 dark:bg-card/60 backdrop-blur rounded-none">
                     <CardHeader>
                         <h3 className="font-semibold text-card-foreground">Following</h3>
                     </CardHeader>
@@ -63,7 +63,7 @@ export function SidebarContent({ userPoints, userLevel, nextLevelPoints, followe
                                 <Badge
                                     key={tag}
                                     variant="secondary"
-                                    className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 cursor-pointer hover:bg-purple-200 dark:hover:bg-purple-900/50"
+                                    className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 cursor-pointer hover:bg-purple-200 dark:hover:bg-purple-900/50 rounded-none"
                                     onClick={() => followTag(tag)}
                                 >
                                     #{tag} ✓
@@ -75,7 +75,7 @@ export function SidebarContent({ userPoints, userLevel, nextLevelPoints, followe
             )}
 
             {/* Weekly Challenge */}
-            <Card className="shadow-sm border-0 bg-orange-100 dark:bg-orange-900/30">
+            <Card className="shadow-sm border-0 bg-orange-100 dark:bg-orange-900/30 rounded-none">
                 <CardHeader>
                     <div className="flex items-center space-x-2">
                         <Trophy weight="duotone" className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
@@ -90,7 +90,7 @@ export function SidebarContent({ userPoints, userLevel, nextLevelPoints, followe
                     <Button
                         asChild
                         size="sm"
-                        className="bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-700 dark:hover:bg-yellow-600 text-white"
+                        className="bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-700 dark:hover:bg-yellow-600 text-white rounded-none"
                     >
                         <Link href="/challenges">Join Challenge</Link>
                     </Button>
@@ -98,7 +98,7 @@ export function SidebarContent({ userPoints, userLevel, nextLevelPoints, followe
             </Card>
 
             {/* Support Resources */}
-            <Card className="shadow-sm border-0 bg-card/60 dark:bg-card/60 backdrop-blur">
+            <Card className="shadow-sm border-0 bg-card/60 dark:bg-card/60 backdrop-blur rounded-none">
                 <CardHeader>
                     <h3 className="font-semibold text-card-foreground">Need Support?</h3>
                 </CardHeader>
@@ -107,12 +107,12 @@ export function SidebarContent({ userPoints, userLevel, nextLevelPoints, followe
                         Remember, you're not alone. Help is always available.
                     </p>
                     <div className="flex items-center mb-2">
-                        <Button variant="outline" className="w-full" onClick={() => setShowHotlineModal(true)}>
+                        <Button variant="outline" className="w-full rounded-none" onClick={() => setShowHotlineModal(true)}>
                             Crisis Helplines
                         </Button>
                     </div>
                     <div className="flex items-center">
-                        <Button variant="outline" className="w-full" onClick={() => setShowSupportModal(true)}>
+                        <Button variant="outline" className="w-full rounded-none" onClick={() => setShowSupportModal(true)}>
                             Support Groups
                         </Button>
                     </div>

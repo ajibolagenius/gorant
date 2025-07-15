@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { Star, Lightning, Trophy } from "phosphor-react"
+import { Star, Lightning, Trophy } from "@phosphor-icons/react"
 
 interface GameificationPanelProps {
     userPoints: number

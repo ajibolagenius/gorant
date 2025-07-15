@@ -9,6 +9,10 @@ import { Badge } from "@/components/ui/badge"
 import { Send, X } from "lucide-react"
 import { audioService } from "@/services/audio-service"
 import { useNotifications, notificationHelpers } from "@/hooks/use-notifications"
+import dynamic from "next/dynamic"
+import "react-quill/dist/quill.snow.css"
+import { trackEvent } from "@/lib/self-analytics"
+import { getAnonymousId } from "@/lib/utils"
 
 interface Mood {
     icon: React.ElementType
@@ -23,6 +27,8 @@ interface PostRantModalProps {
     moods: Mood[]
     onSubmit: (content: string, mood: string, tags: string[]) => void
 }
+
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false })
 
 export function PostRantModal({ isOpen, onClose, moods, onSubmit }: PostRantModalProps) {
     const [content, setContent] = useState("")
@@ -53,6 +59,12 @@ export function PostRantModal({ isOpen, onClose, moods, onSubmit }: PostRantModa
         if (!content.trim() || !selectedMood || cooldown > 0) return
         audioService.playMoodSound(selectedMood)
         audioService.playActionSound('post')
+        trackEvent("rant_posted", {
+            mood: selectedMood,
+            tags,
+            contentLength: content.replace(/<[^>]+>/g, '').length,
+            anonId: getAnonymousId(),
+        })
         onSubmit(content.trim(), selectedMood, tags)
         // Set cooldown
         localStorage.setItem("lastRantPost", Date.now().toString())
@@ -90,26 +102,33 @@ export function PostRantModal({ isOpen, onClose, moods, onSubmit }: PostRantModa
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[600px] w-full max-w-full max-h-[90vh] overflow-y-auto p-4 sm:p-8">
                 <DialogHeader>
                     <DialogTitle className="text-xl font-semibold">Share Your Thoughts</DialogTitle>
                 </DialogHeader>
 
-                <div className="space-y-6">
+                <div className="space-y-6 text-base sm:text-base text-sm">
                     {/* Content Input */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             What's on your mind?
                         </label>
-                        <Textarea
-                            placeholder="Let it all out... Your thoughts are safe here."
+                        <ReactQuill
                             value={content}
-                            onChange={(e) => setContent(e.target.value)}
-                            className="min-h-[120px] resize-none border-gray-200 dark:border-gray-600 focus:border-purple-400 dark:bg-gray-700 dark:text-white"
-                            maxLength={1000}
+                            onChange={setContent}
+                            modules={{
+                                toolbar: [
+                                    ["bold", "italic", "underline", "strike"],
+                                    [{ list: "ordered" }, { list: "bullet" }],
+                                    ["clean"]
+                                ]
+                            }}
+                            theme="snow"
+                            className="bg-white dark:bg-gray-700 dark:text-white rounded border border-gray-200 dark:border-gray-600 min-h-[120px] text-sm sm:text-base"
+                            style={{ minHeight: 120 }}
                         />
                         <div className="flex justify-between items-center mt-2">
-                            <span className="text-sm text-gray-500 dark:text-gray-400">{content.length}/1000 characters</span>
+                            <span className="text-sm text-gray-500 dark:text-gray-400">{content.replace(/<[^>]+>/g, '').length}/1000 characters</span>
                             <span className="text-xs text-gray-400 dark:text-gray-500">Anonymous • Safe • Private</span>
                         </div>
                     </div>

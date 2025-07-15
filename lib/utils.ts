@@ -8,12 +8,13 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function getAnonymousId(): string {
-    let anonymousId = storageGet<string>("anonymous_id")
-    if (!anonymousId) {
-        anonymousId = `anon_${Math.random().toString(36).substr(2, 9)}`
-        storageSet("anonymous_id", anonymousId)
+    if (typeof window === "undefined") return "";
+    let id = localStorage.getItem("anon_id");
+    if (!id) {
+        id = Math.random().toString(36).substring(2, 15);
+        localStorage.setItem("anon_id", id);
     }
-    return anonymousId
+    return id;
 }
 
 /**
