@@ -460,7 +460,7 @@ const EnhancedRantCardComponent = ({
                     </div>
                 </div>
                 {/* User ID row below action buttons */}
-                <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap justify-between min-w-0 mt-2 w-full">
+                <div className="flex flex-1 items-center gap-4 min-w-0 justify-between mt-2 w-full text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
                     {/* Left: Reputation */}
                     <div>
                         {rant.reputation_impact && (

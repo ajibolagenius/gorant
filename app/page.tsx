@@ -212,7 +212,7 @@ const FILTER_OPTIONS = [
     { icon: Cloud, label: "Latest", value: "latest" },
     { icon: SmileySticker, label: "Popular", value: "popular" },
     { icon: SmileySticker, label: "Most Liked", value: "most_liked" },
-    { icon: Award, label: <span className="inline-flex items-center gap-1">Recommended <span className="ml-1 px-1 py-0.5 text-xs bg-green-500 text-white rounded font-mono">Personalized</span></span>, value: "recommended" },
+    { icon: Award, label: "Recommended", value: "recommended" },
 ]
 
 // ErrorBoundary component
@@ -825,7 +825,7 @@ export default function RantApp() {
                             )}
 
                             {/* Enhanced Search with Suggestions */}
-                            <Card className="shadow-lg border-2 border-purple-200 dark:border-purple-700 bg-white/60 dark:bg-gray-800/60 backdrop-blur rounded-none">
+                            <Card className="shadow-lg bg-white/60 dark:bg-gray-800/60 backdrop-blur rounded-none">
                                 <CardContent className="pt-6">
                                     <div className="flex flex-col sm:flex-row gap-4 flex-wrap">
                                         {/* Search */}
@@ -836,11 +836,11 @@ export default function RantApp() {
                                                 placeholder="Search rants, tags, or users... (min 2 characters)"
                                                 value={searchQuery}
                                                 onChange={(e) => handleSearchChange(e.target.value)}
-                                                className="w-full pl-10 border-2 border-purple-200 dark:border-purple-700 focus:border-purple-500 dark:focus:border-purple-400 dark:bg-gray-700 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 rounded-none shadow-sm"
+                                                className="w-full pl-10 focus:border-purple-500 dark:focus:border-purple-400 dark:bg-gray-700 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 rounded-none shadow-sm"
                                             />
                                             {/* Search Suggestions */}
                                             {searchSuggestions.length > 0 && (
-                                                <div className="bg-white dark:bg-gray-800 border-2 border-purple-200 dark:border-purple-700 rounded-none mt-1 shadow-lg z-10 absolute w-full left-0">
+                                                <div className="bg-white dark:bg-gray-800 rounded-none mt-1 shadow-lg z-10 absolute w-full left-0">
                                                     {searchSuggestions.map((suggestion, index) => (
                                                         <button
                                                             key={index}
@@ -862,7 +862,7 @@ export default function RantApp() {
                                             <Button
                                                 variant="outline"
                                                 onClick={() => setShowFilters(!showFilters)}
-                                                className="flex-1 flex items-center space-x-2 border-2 border-purple-200 dark:border-purple-700 dark:text-gray-300 dark:hover:bg-gray-700 relative rounded-none"
+                                                className="flex-1 flex items-center space-x-2 dark:text-gray-300 dark:hover:bg-gray-700 relative rounded-none"
                                             >
                                                 <Filter className="w-4 h-4 text-purple-500" />
                                                 <span>Filters</span>
@@ -883,7 +883,7 @@ export default function RantApp() {
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    className="flex-1 text-purple-600 dark:text-purple-300 hover:text-purple-800 border-2 border-purple-200 dark:border-purple-700 rounded-none"
+                                                    className="flex-1 text-purple-600 dark:text-purple-300 hover:text-purple-800 rounded-none"
                                                     onClick={() => {
                                                         setMoodFilter("");
                                                         setSortFilter("latest");
@@ -900,7 +900,7 @@ export default function RantApp() {
 
                                     {/* Expandable Filters */}
                                     {showFilters && (
-                                        <div className="mt-4 pt-4 border-t border-purple-200 dark:border-purple-700">
+                                        <div className="mt-4 pt-4">
                                             <FilterPanel
                                                 moods={MOODS}
                                                 moodFilter={moodFilter}
@@ -976,7 +976,6 @@ export default function RantApp() {
                                                 showReport={true}
                                                 showShare={true}
                                                 recommended={sortFilter === "recommended"}
-                                                isSelected={index === selectedRantIndex}
                                             />
                                             {index === filteredRants.length - 1 && (
                                                 <div className="w-full text-center text-gray-400 dark:text-gray-500 py-6 text-base font-mono">
@@ -1016,11 +1015,10 @@ export default function RantApp() {
                                                 showReport={true}
                                                 showShare={true}
                                                 recommended={sortFilter === "recommended"}
-                                                isSelected={index === selectedRantIndex}
                                             />
                                             {index === filteredRants.length - 1 && (
                                                 <div className="w-full text-center text-gray-400 dark:text-gray-500 py-6 text-base font-mono">
-                                                    You’ve reached the end of the feed!
+                                                    You’ve reached the end of the feed! 🎬
                                                 </div>
                                             )}
                                         </React.Fragment>
