@@ -12,7 +12,8 @@
 # 🚧 Phase 2: Enhanced UX
 - [x] WYSIWYG editor, keyboard shortcuts
 - [x] Animations, user preferences
-- [ ] Self Analytics integration, advanced filtering
+- [ ] Self Analytics integration, Heatmaps & User Flow, Retention and Growth
+, admin dashboard, advanced filtering
 - [ ] Anonymous feature suggestion form on roadmap page
 
 ---
@@ -38,8 +39,17 @@
 - [ ] AI suggestions, sentiment analysis
 - [ ] Multi-language, video support, drawing support
 - [ ] PWA and mobile app
-- [ ] Monetization and donations
 - [ ] Custom usernames
+
+---
+
+# 💰 Phase 6: Monetization
+- [ ] Native or Contextual Ads (Google AdSense, Manual Ads or Partners)
+- [ ] Donations & Crowdfunding
+- [ ] Affiliate marketing market
+- [ ] Sponsorships, partnerships, collaborations
+- [ ] Merchandise
+- [ ] Subscriptions (e.g. premium features)
 
 ---
 
