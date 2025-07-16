@@ -1,51 +1,42 @@
-# Technology Stack
+---
+inclusion: always
+---
 
-## Framework & Runtime
-- **Next.js 14** with App Router
-- **React 18** with TypeScript
-- **Node.js** runtime environment
+# Technology Stack & Development Guidelines
 
-## UI & Styling
-- **Tailwind CSS** for styling with custom design system
-- **shadcn/ui** component library built on Radix UI primitives
-- **Phosphor Icons** (duotone style preferred)
-- **Framer Motion** for animations
-- **GSAP** for advanced animations
-- **Lenis** for smooth scrolling
+## Core Stack
+- **Next.js 14** App Router with **React 18** and **TypeScript**
+- **Tailwind CSS** + **shadcn/ui** components (Radix UI primitives)
+- **Zustand** for state, **Supabase** for backend, **Local Storage** for persistence
+- **Phosphor Icons** (duotone preferred), **Framer Motion** + **GSAP** for animations
 
-## State Management & Data
-- **Zustand** for global state management
-- **React Hook Form** with Zod validation
-- **Supabase** for backend (database, auth, real-time)
-- **Local Storage** for client-side persistence
+## Required Libraries & Usage
+- **CVA** for component variants, **clsx** + **tailwind-merge** for conditional styling
+- **React Hook Form** + **Zod** for forms, **react-window** for virtualization
+- **canvas-confetti** for celebrations, **howler** for audio feedback
+- **date-fns** for dates, **Lenis** for smooth scrolling
 
-## Key Libraries
-- **class-variance-authority (CVA)** for component variants
-- **clsx** + **tailwind-merge** for conditional styling
-- **date-fns** for date manipulation
-- **react-window** for virtualization
-- **canvas-confetti** for celebrations
-- **howler** for audio feedback
+## Code Style Rules
+- Use **TypeScript** strictly - no `any` types
+- **PascalCase** for components, **kebab-case** for UI files, **camelCase** for utilities
+- Prefer custom hooks over prop drilling
+- Separate client/server components clearly
+- Use compound component patterns for complex UI
 
-## Development Tools
-- **TypeScript** for type safety
-- **ESLint** for code quality (build errors ignored in config)
-- **PostCSS** + **Autoprefixer** for CSS processing
+## Performance Requirements
+- Implement virtualization for lists >50 items
+- Lazy load non-critical components
+- Debounce search/filtering (300ms minimum)
+- Use React.memo for expensive renders
 
-## Common Commands
+## Build Configuration Notes
+- Images unoptimized (`unoptimized: true`)
+- TypeScript/ESLint errors ignored during builds
+- Tailwind scans: `app/`, `components/`, root files
+
+## Development Commands
 ```bash
-# Development
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run start        # Start production server
-npm run lint         # Run ESLint
-
-# Package management
-npm install          # Install dependencies
-npm update           # Update dependencies
+npm run dev    # Development server
+npm run build  # Production build
+npm run lint   # Code quality check
 ```
-
-## Build Configuration
-- Images are unoptimized (`unoptimized: true`)
-- TypeScript and ESLint errors ignored during builds
-- Tailwind configured for all JS/TS/JSX/TSX files in app/, components/, and root
