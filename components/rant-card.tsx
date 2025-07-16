@@ -141,7 +141,7 @@ export const RantCard = React.memo(function RantCard({
             <Badge
                 variant="outline"
                 className={`${label === "positive"
-                    ? "text-green-600 border-green-300 bg-green-50 dark:bg-green-900/20"
+                    ? "text-green-800 border-green-400 bg-green-100 dark:bg-green-900/20"
                     : label === "negative"
                         ? "text-red-600 border-red-300 bg-red-50 dark:bg-red-900/20"
                         : "text-gray-600 border-gray-300 bg-gray-50 dark:bg-gray-700"

@@ -391,7 +391,7 @@ export default function SettingsPage() {
                                         href="https://stats.uptimerobot.com/MfSyiPnv5E/800934564"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="flex items-center justify-center w-full h-full text-green-600"
+                                        className="flex items-center justify-center w-full h-full text-green-800"
                                     >
                                         <span className="relative flex h-3 w-3 mr-2">
                                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-600 opacity-75"></span>

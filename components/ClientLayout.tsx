@@ -87,7 +87,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                                 <Link href="/terms-of-service" className="hover:text-purple-600 dark:hover:text-purple-400">Terms</Link>
                                 <Link href="/guidelines" className="hover:text-purple-600 dark:hover:text-purple-400">Guidelines</Link>
                                 <Link href="/roadmap" className="hover:text-purple-600 dark:hover:text-purple-400">Roadmap</Link>
-                                <a href="https://stats.uptimerobot.com/MfSyiPnv5E/800934564" target="_blank" rel="noopener noreferrer" className="hover:text-purple-600 dark:hover:text-purple-400 text-green-600 flex items-center">
+                                <a href="https://stats.uptimerobot.com/MfSyiPnv5E/800934564" target="_blank" rel="noopener noreferrer" className="hover:text-purple-600 dark:hover:text-purple-400 text-green-800 flex items-center">
                                     <span className="relative flex h-3 w-3 mr-2">
                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-600 opacity-75"></span>
                                         <span className="relative inline-flex rounded-full h-3 w-3 bg-green-600"></span>

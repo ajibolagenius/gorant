@@ -46,7 +46,7 @@ export function SidebarContent({ userPoints, userLevel, nextLevelPoints, followe
                     </div>
                     <div className="flex justify-between">
                         <span className="text-muted-foreground">Comments Today</span>
-                        <span className="font-semibold text-green-600 dark:text-green-400">156</span>
+                        <span className="font-semibold text-green-800 dark:text-green-400">156</span>
                     </div>
                 </CardContent>
             </Card>

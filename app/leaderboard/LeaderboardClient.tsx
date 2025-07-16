@@ -131,7 +131,7 @@ export default function LeaderboardClient({ leaderboardCategories, leaderboardDa
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-0 sm:mb-6">
                     <div className="flex items-center gap-3">
                         <div className="rounded-none bg-green-100 dark:bg-green-900/30 p-3">
-                            <Lightning weight="duotone" className="w-7 h-7 text-green-600 dark:text-green-300" />
+                            <Lightning weight="duotone" className="w-7 h-7 text-green-800 dark:text-green-300" />
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold font-heading text-gray-800 dark:text-white flex items-center gap-2">
@@ -394,7 +394,7 @@ export default function LeaderboardClient({ leaderboardCategories, leaderboardDa
                         <Card className="shadow-sm border-0 rounded-none bg-green-100 dark:bg-green-900/30">
                             <CardHeader>
                                 <div className="flex items-center space-x-2">
-                                    <Users weight="duotone" className="w-5 h-5 text-green-600 dark:text-green-400" />
+                                    <Users weight="duotone" className="w-5 h-5 text-green-800 dark:text-green-400" />
                                     <h3 className="font-semibold text-gray-800 dark:text-white">Monthly Competition</h3>
                                 </div>
                             </CardHeader>
@@ -403,7 +403,7 @@ export default function LeaderboardClient({ leaderboardCategories, leaderboardDa
                                     Top 10 users this month win special badges and recognition!
                                 </p>
                                 <div className="text-center">
-                                    <div className="text-lg font-bold text-green-600 dark:text-green-400">12 days left</div>
+                                    <div className="text-lg font-bold text-green-800 dark:text-green-400">12 days left</div>
                                     <div className="text-xs text-gray-600 dark:text-gray-300">in this month's competition</div>
                                 </div>
                             </CardContent>
