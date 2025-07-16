@@ -95,7 +95,11 @@ const MasonryGridComponent = ({ children, columns = 3, gap = 16, className }: Ma
             {children.map((child, index) => (
                 <div
                     key={index}
-                    ref={(el) => (itemRefs.current[index] = el)}
+                    ref={(el: HTMLDivElement | null) => {
+                        if (el) {
+                            itemRefs.current[index] = el;
+                        }
+                    }}
                     className="absolute transition-all duration-300 ease-in-out"
                     style={{
                         top: itemPositions[index]?.top || 0,

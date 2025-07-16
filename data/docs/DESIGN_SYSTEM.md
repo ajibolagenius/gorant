@@ -122,6 +122,7 @@ A comprehensive guide to the visual and interaction standards for the Rant platf
 
 - **Library:** [Phosphor Icons](https://phosphoricons.com/?weight=duotone) and [Lucide Icons](https://lucide.dev/)
 - **Style:** Duotone for moods and actions, consistent with mood color
+- **Migration:** Deprecated Phosphor icons are being updated to newer versions (e.g., `MessageCircle` → `ChatCircle`, `MoreHorizontal` → `DotsThree`)
 - **Usage:**
   - All navigation, sidebar, and action icons use `weight="duotone"`
   - Mood icons are always duotone and colored according to their mood (e.g., blue for sad, yellow for happy, etc.)

@@ -37,7 +37,7 @@ export class PersonalizationService {
 
         // Tag matching
         if (rant.tags) {
-            const tagMatches = rant.tags.filter((tag) => followedTags.includes(tag)).length
+            const tagMatches = rant.tags.filter((tag: string) => followedTags.includes(tag)).length
             score += tagMatches * 0.4
         }
 

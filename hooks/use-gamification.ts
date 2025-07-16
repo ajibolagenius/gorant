@@ -183,12 +183,16 @@ export function useGameification() {
             try {
                 // Play achievement sound
                 await audioService.playActionSound('achievement')
-                toast.success(`🏆 Achievement unlocked: ${unlockedAchievement.name}!`)
+                if (unlockedAchievement) {
+                    toast.success(`🏆 Achievement unlocked: ${(unlockedAchievement as any).name}!`)
+                }
                 addPoints(20, "achievement")
             } catch (error) {
                 console.warn('Failed to play achievement sound:', error)
                 // Still show the toast even if audio fails
-                toast.success(`🏆 Achievement unlocked: ${unlockedAchievement.name}!`)
+                if (unlockedAchievement) {
+                    toast.success(`🏆 Achievement unlocked: ${(unlockedAchievement as any).name}!`)
+                }
                 addPoints(20, "achievement")
             }
         }

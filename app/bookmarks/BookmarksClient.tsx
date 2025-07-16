@@ -32,9 +32,9 @@ import {
     Star,
     Clock,
     Heart as HeartIcon,
-    MessageCircle,
+    ChatCircle,
     Share,
-    MoreHorizontal
+    DotsThree
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
@@ -54,7 +54,7 @@ export default function BookmarksClient() {
             try {
                 const savedRants = storageGet<Rant[]>("all_rants", []);
                 const savedBookmarks = storageGet<string[]>("bookmarked_rants", []);
-                setRants(savedRants);
+                setRants(savedRants ?? []);
                 setBookmarkedRants(new Set(savedBookmarks));
             } catch (error) {
                 console.error("Error loading bookmarks:", error);
@@ -345,7 +345,6 @@ export default function BookmarksClient() {
                                             isBookmarked={true}
                                             isUserBlocked={false}
                                             followedTags={new Set()}
-                                            getMoodEmoji={() => ""}
                                             getMoodColor={getMoodColor}
                                             formatTimeAgo={formatTimeAgo}
                                             moods={MOODS}
@@ -372,7 +371,6 @@ export default function BookmarksClient() {
                                     isBookmarked={true}
                                     isUserBlocked={false}
                                     followedTags={new Set()}
-                                    getMoodEmoji={() => ""}
                                     getMoodColor={getMoodColor}
                                     formatTimeAgo={formatTimeAgo}
                                     moods={MOODS}

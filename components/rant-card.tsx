@@ -185,7 +185,7 @@ export const RantCard = React.memo(function RantCard({
                                             <TrendingUp className="w-3 h-3" />
                                         </Badge>
                                     </TooltipTrigger>
-                                    <TooltipContent side="top" sideOffset={2} delayDuration={0}>Trending</TooltipContent>
+                                    <TooltipContent side="top" sideOffset={2}>Trending</TooltipContent>
                                 </Tooltip>
                             )}
                             {/* Negative sentiment badge */}
@@ -200,7 +200,7 @@ export const RantCard = React.memo(function RantCard({
                                             {SentimentAnalysisService.getSentimentEmoji(rant.sentiment_score)}
                                         </Badge>
                                     </TooltipTrigger>
-                                    <TooltipContent side="top" sideOffset={2} delayDuration={0}>Negative</TooltipContent>
+                                    <TooltipContent side="top" sideOffset={2}>Negative</TooltipContent>
                                 </Tooltip>
                             )}
                             {/* Verified badge */}
@@ -215,7 +215,7 @@ export const RantCard = React.memo(function RantCard({
                                             <Shield className="w-3 h-3" />
                                         </Badge>
                                     </TooltipTrigger>
-                                    <TooltipContent side="top" sideOffset={2} delayDuration={0}>Verified</TooltipContent>
+                                    <TooltipContent side="top" sideOffset={2}>Verified</TooltipContent>
                                 </Tooltip>
                             )}
                             {/* If tooltips still do not show, ensure TooltipProvider wraps your app in layout.tsx */}

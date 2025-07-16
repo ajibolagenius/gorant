@@ -116,7 +116,7 @@ class AudioService {
     }
 
     // Play action sound
-    async playActionSound(action: 'like' | 'post' | 'achievement') {
+    async playActionSound(action: 'like' | 'post' | 'achievement' | 'bookmark' | 'tag' | 'comment') {
         if (!this.config.enabled) return
 
         // Ensure audio context is initialized
@@ -125,7 +125,10 @@ class AudioService {
         const frequencies: { [key: string]: number } = {
             like: 523.25,     // C5
             post: 659.25,     // E5
-            achievement: 783.99 // G5
+            achievement: 783.99, // G5
+            bookmark: 440,   // A4
+            tag: 392,   // G4
+            comment: 349.23    // F4
         }
 
         const frequency = frequencies[action] || 440

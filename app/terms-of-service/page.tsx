@@ -26,7 +26,7 @@ export default function TermsOfServicePage() {
                 </nav>
                 <div className="mb-8">
                     <h1 className="font-grotesk text-4xl font-extrabold mb-2 flex items-center gap-3 tracking-tight text-purple-700 dark:text-purple-400">
-                        <FileText className="w-9 h-9" variant="duotone" /> Terms of Service
+                        <FileText className="w-9 h-9" /> Terms of Service
                     </h1>
                     <p className="font-manrope text-lg text-gray-600 dark:text-gray-300 font-medium leading-relaxed">Please read our terms carefully. By using this platform, you agree to the following rules and responsibilities.</p>
                 </div>
@@ -34,7 +34,7 @@ export default function TermsOfServicePage() {
                 <section className="mb-6">
                     <div className="rounded-none bg-green-50 dark:bg-green-950/40 shadow-sm border-0 p-6">
                         <h2 className="font-grotesk text-2xl font-bold mb-2 flex items-center gap-2 text-green-700 dark:text-green-300">
-                            <CheckCircle2 className="w-7 h-7" variant="duotone" /> Acceptance of Terms
+                            <CheckCircle2 className="w-7 h-7" /> Acceptance of Terms
                         </h2>
                         <p className="font-manrope leading-relaxed text-gray-700 dark:text-gray-200">By using this platform, you agree to abide by these Terms of Service and all applicable laws and regulations. If you do not agree, please do not use the app.</p>
                     </div>
@@ -42,7 +42,7 @@ export default function TermsOfServicePage() {
                 <section className="mb-6">
                     <div className="rounded-none bg-blue-50 dark:bg-blue-950/40 shadow-sm border-0 p-6">
                         <h2 className="font-grotesk text-2xl font-bold mb-2 flex items-center gap-2 text-blue-700 dark:text-blue-300">
-                            <User className="w-7 h-7" variant="duotone" /> User Responsibilities
+                            <User className="w-7 h-7" /> User Responsibilities
                         </h2>
                         <p className="font-manrope leading-relaxed text-gray-700 dark:text-gray-200">You are responsible for the content you post. Do not post illegal, harmful, or abusive content. Respect the privacy and dignity of others.</p>
                     </div>
@@ -50,7 +50,7 @@ export default function TermsOfServicePage() {
                 <section className="mb-6">
                     <div className="rounded-none bg-purple-50 dark:bg-purple-950/40 shadow-sm border-0 p-6">
                         <h2 className="font-grotesk text-2xl font-bold mb-2 flex items-center gap-2 text-purple-700 dark:text-purple-300">
-                            <ListChecks className="w-7 h-7" variant="duotone" /> Content Guidelines
+                            <ListChecks className="w-7 h-7" /> Content Guidelines
                         </h2>
                         <p className="font-manrope leading-relaxed text-gray-700 dark:text-gray-200">All posts must comply with our community guidelines. We reserve the right to remove content that violates these rules or is reported as inappropriate.</p>
                     </div>
@@ -58,7 +58,7 @@ export default function TermsOfServicePage() {
                 <section className="mb-6">
                     <div className="rounded-none bg-gray-50 dark:bg-gray-900/60 shadow-sm border-0 p-6">
                         <h2 className="font-grotesk text-2xl font-bold mb-2 flex items-center gap-2 text-gray-700 dark:text-gray-200">
-                            <Lock className="w-7 h-7" variant="duotone" /> Privacy & Data Handling
+                            <Lock className="w-7 h-7" /> Privacy & Data Handling
                         </h2>
                         <p className="font-manrope leading-relaxed text-gray-700 dark:text-gray-200">We are committed to protecting your privacy. Please review our Privacy Policy for details on how your data is handled, stored, and protected.</p>
                     </div>
@@ -66,7 +66,7 @@ export default function TermsOfServicePage() {
                 <section className="mb-6">
                     <div className="rounded-none bg-red-50 dark:bg-red-950/40 shadow-sm border-0 p-6">
                         <h2 className="font-grotesk text-2xl font-bold mb-2 flex items-center gap-2 text-red-700 dark:text-red-300">
-                            <AlertTriangle className="w-7 h-7" variant="duotone" /> Disclaimer
+                            <AlertTriangle className="w-7 h-7" /> Disclaimer
                         </h2>
                         <div className="font-manrope leading-relaxed text-gray-700 dark:text-gray-200">
                             <p>This platform is provided as-is, without warranties of any kind. We are not liable for any damages arising from your use of the app.</p>
@@ -80,7 +80,7 @@ export default function TermsOfServicePage() {
                 <section className="mb-6">
                     <div className="rounded-none bg-yellow-50 dark:bg-yellow-950/40 shadow-sm border-0 p-6">
                         <h2 className="font-grotesk text-2xl font-bold mb-2 flex items-center gap-2 text-yellow-700 dark:text-yellow-300">
-                            <History className="w-7 h-7" variant="duotone" /> Changes to Terms
+                            <History className="w-7 h-7" /> Changes to Terms
                         </h2>
                         <p className="font-manrope leading-relaxed text-gray-700 dark:text-gray-200">We may update these Terms of Service from time to time. Continued use of the app constitutes acceptance of any changes.</p>
                     </div>
