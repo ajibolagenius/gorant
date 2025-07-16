@@ -295,6 +295,7 @@ export default function RoadmapPage() {
                                             aria-valuemin={0}
                                             aria-valuemax={100}
                                             role="progressbar"
+                                            aria-label={`${phase.emoji} ${phase.title} progress`}
                                         />
                                     </div>
                                     <span className="text-xs font-mono font-medium text-muted-foreground min-w-[40px] text-right" style={{ fontFamily: 'JetBrains Mono, monospace' }}>{percent}%</span>
