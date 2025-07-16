@@ -247,7 +247,10 @@ export default function RoadmapPage() {
                     <button
                         key={phase.title}
                         onClick={() => scrollToPhase(phase.title)}
-                        className={`px-3 py-1 rounded-none font-bold whitespace-nowrap transition-colors text-sm font-heading tracking-tight ${activePhase === phase.title ? "bg-primary text-primary-foreground shadow" : "bg-muted text-muted-foreground hover:bg-accent"}`}
+                        className={`px-3 py-1 rounded-none font-bold whitespace-nowrap transition-colors text-sm font-heading tracking-tight ${activePhase === phase.title
+                                ? "bg-primary text-primary-foreground shadow"
+                                : "bg-muted text-foreground hover:bg-accent"
+                            }`}
                         style={{ fontFamily: 'Space Grotesk, sans-serif' }}
                     >
                         <span className="mr-1">{phase.emoji}</span>{phase.title}
@@ -317,7 +320,7 @@ export default function RoadmapPage() {
                                                 className="flex items-center gap-2 text-base font-body tracking-normal" style={{ fontFamily: 'Manrope, sans-serif' }}
                                             >
                                                 {/* Status Icon */}
-                                                {item.checked ? <CheckCircle className="inline w-4 h-4 text-green-500 mr-1" /> : <Clock className="inline w-4 h-4 text-gray-400 mr-1" />}
+                                                {item.checked ? <CheckCircle className="inline w-4 h-4 text-green-800 mr-1" /> : <Clock className="inline w-4 h-4 text-gray-400 mr-1" />}
                                                 {/* Feature Icon with Tooltip */}
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
