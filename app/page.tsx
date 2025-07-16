@@ -1063,26 +1063,6 @@ export default function RantApp() {
                     </SheetContent>
                 </Sheet>
 
-                {/* Bottom Navigation Bar for Mobile */}
-                <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/90 dark:bg-gray-900/90 border-t border-gray-200 dark:border-gray-700 flex justify-around items-center h-16 md:hidden backdrop-blur shadow-lg">
-                    <Link href="/trending" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/trending" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
-                        <SmileySticker weight="duotone" className="w-6 h-6 mb-1" />
-                        <span className="text-xs">Trending</span>
-                    </Link>
-                    <Link href="/challenges" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/challenges" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
-                        <SmileySticker weight="duotone" className="w-6 h-6 mb-1" />
-                        <span className="text-xs">Challenges</span>
-                    </Link>
-                    <Link href="/leaderboard" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/leaderboard" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
-                        <SmileySticker weight="duotone" className="w-6 h-6 mb-1" />
-                        <span className="text-xs">Leaderboard</span>
-                    </Link>
-                    <Link href="/bookmarks" className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === "/bookmarks" ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"}`}>
-                        <SmileySticker weight="duotone" className="w-6 h-6 mb-1" />
-                        <span className="text-xs">Bookmarks</span>
-                    </Link>
-                </nav>
-
                 {/* Enhanced Post Rant Modal */}
                 <PostRantModal
                     isOpen={showPostModal}
@@ -1132,22 +1112,7 @@ export default function RantApp() {
                 />
 
                 {/* Footer */}
-                <footer className="fixed bottom-0 left-0 w-full z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-t border-gray-200 dark:border-gray-700 mt-12 md:block hidden">
-                    <div className="container mx-auto px-4 py-4 max-w-7xl">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-gray-500 dark:text-gray-400 text-sm items-center">
-                            {/* Column 1: Branding */}
-                            <div className="text-center md:text-left">
-                                <p>Your thoughts matter. Share them freely.</p>
-                            </div>
-                            {/* Column 2: Navigation Links */}
-                            <div className="flex flex-col md:flex-row justify-center items-center gap-2 md:gap-6">
-                                <Link href="/privacy" className="hover:text-purple-600 dark:hover:text-purple-400">Privacy</Link>
-                                <Link href="/terms-of-service" className="hover:text-purple-600 dark:hover:text-purple-400">Terms of Service</Link>
-                                <Link href="/guidelines" className="hover:text-purple-600 dark:hover:text-purple-400">Guidelines</Link>
-                            </div>
-                        </div>
-                    </div>
-                </footer>
+                {/* (REMOVED: footer content now in hamburger drawer for mobile) */}
                 {showShortcutsHelp && (
                     <Dialog open={showShortcutsHelp} onOpenChange={setShowShortcutsHelp}>
                         <DialogContent className="max-w-md">

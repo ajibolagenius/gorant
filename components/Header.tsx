@@ -1,5 +1,5 @@
 "use client"
-import { Star, TrendUp, Trophy, Lightning, Moon, Sun, Bell, Shield, House, Gear } from "@phosphor-icons/react"
+import { Star, TrendUp, Trophy, Lightning, Moon, Sun, Bell, Shield, House, Gear, List } from "@phosphor-icons/react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -15,11 +15,25 @@ interface HeaderProps {
 
 export default function Header({ userLevel, theme, toggleTheme, pathname }: HeaderProps) {
     const { unreadCount } = useNotifications();
+    // Hamburger state is now managed in ClientLayout, so trigger via custom event
+    const openMobileNav = () => {
+        const event = new CustomEvent("open-mobile-nav")
+        window.dispatchEvent(event)
+    }
     return (
         <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-200 dark:border-gray-700">
             <div className="container mx-auto px-4 py-4 max-w-7xl">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
+                        {/* Hamburger for mobile */}
+                        <button
+                            className="md:hidden mr-2 p-2 text-purple-600 dark:text-purple-400 hover:text-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-400 rounded-none bg-transparent"
+                            style={{ borderRadius: 0 }}
+                            onClick={openMobileNav}
+                            aria-label="Open Navigation Menu"
+                        >
+                            <List weight="duotone" className="w-6 h-6" />
+                        </button>
                         <Link href="/">
                             <h1 className="text-2xl font-bold text-gray-800 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors">Rant 💭</h1>
                         </Link>

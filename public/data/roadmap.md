@@ -1,6 +1,6 @@
 
 # 🚦 Phase 1: Core MVP
-- [x] Anonymous posting, feed, likes/upvotes, bookmarks, trending rants
+- [x] Anonymous feed, likes/upvotes, bookmarks
 - [x] Responsive UI/UX (dark mode), onboarding
 - [x] Leaderboard, challenges
 - [x] Simple notifications (UI only), manual moderation, basic analytics
@@ -12,8 +12,7 @@
 # 🚧 Phase 2: Enhanced UX
 - [x] WYSIWYG editor, keyboard shortcuts
 - [x] Animations, user preferences
-- [ ] Turn the bottom nav to hambugger sidebar for mobile screen
-- [ ] Show footer for mobile screen
+- [x] Hambugger navigation for mobile screen
 - [ ] Self Analytics integration, Heatmaps & User Flow, Retention and Growth
 , admin dashboard, advanced filtering
 - [ ] Anonymous feature suggestion form on roadmap page
