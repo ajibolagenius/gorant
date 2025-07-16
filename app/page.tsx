@@ -1042,7 +1042,7 @@ export default function RantApp() {
 
                 {/* Floating Action Button for Mobile Sidebar */}
                 <button
-                    className="fixed bottom-6 right-6 z-50 p-4 rounded-none bg-purple-600 text-white shadow-lg md:hidden hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-400 mb-20"
+                    className="fixed bottom-8 right-6 z-40 bg-primary text-primary-foreground rounded-none shadow-lg p-3 hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all md:hidden"
                     onClick={() => setSidebarOpen(true)}
                     aria-label="Open Sidebar"
                 >

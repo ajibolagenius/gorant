@@ -123,37 +123,39 @@ function HamburgerDrawer() {
     // Only show Sheet, not FAB
     return (
         <Sheet open={open} onOpenChange={setOpen}>
-            <SheetContent side="left" className="w-72 max-w-full p-0 md:hidden rounded-none" style={{ borderRadius: 0 }}>
-                <nav className="flex flex-col gap-2 p-6">
-                    <span className="text-xs uppercase font-bold text-muted-foreground mb-2 tracking-widest select-none">Navigation</span>
-                    <Link href="/" className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <House weight="duotone" className="w-5 h-5" />Feed</Link>
-                    <Link href="/trending" className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/trending" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <TrendUp weight="duotone" className="w-5 h-5" />Trending</Link>
-                    <Link href="/challenges" className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/challenges" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <Trophy weight="duotone" className="w-5 h-5" />Challenges</Link>
-                    <Link href="/leaderboard" className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/leaderboard" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <Lightning weight="duotone" className="w-5 h-5" />Leaderboard</Link>
-                    <Link href="/bookmarks" className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/bookmarks" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <Star weight="duotone" className="w-5 h-5" />Bookmarks</Link>
-                    <div className="border-t border-gray-200 dark:border-gray-700 my-4" />
-                    <span className="text-xs uppercase font-bold text-muted-foreground mb-2 tracking-widest select-none">More</span>
-                    <Link href="/privacy" className="flex items-center gap-3 hover:text-purple-600 dark:hover:text-purple-400 px-3 py-2 rounded-none font-medium text-base"><Shield weight="duotone" className="w-5 h-5" />Privacy</Link>
-                    <Link href="/terms-of-service" className="flex items-center gap-3 hover:text-purple-600 dark:hover:text-purple-400 px-3 py-2 rounded-none font-medium text-base"><FileText className="w-5 h-5" />Terms</Link>
-                    <Link href="/guidelines" className="flex items-center gap-3 hover:text-purple-600 dark:hover:text-purple-400 px-3 py-2 rounded-none font-medium text-base"><Users weight="duotone" className="w-5 h-5" />Guidelines</Link>
-                    <Link href="/roadmap" className="flex items-center gap-3 hover:text-purple-600 dark:hover:text-purple-400 px-3 py-2 rounded-none font-medium text-base"><Rocket weight="duotone" className="w-5 h-5" />Roadmap</Link>
-                    <a href="https://stats.uptimerobot.com/MfSyiPnv5E/800934564" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:text-purple-600 dark:hover:text-purple-400 text-green-800 px-3 py-2 rounded-none font-medium text-base">
-                        <Globe weight="duotone" className="w-5 h-5" />Status
-                    </a>
-                    <div className="border-t border-gray-200 dark:border-gray-700 my-4" />
-                    <span className="text-xs uppercase font-bold text-muted-foreground mb-2 tracking-widest select-none">Need Support?</span>
-                    <div className="bg-card/60 dark:bg-card/60 p-4 rounded-none shadow-sm border-0 mb-2">
-                        <p className="text-sm text-muted-foreground mb-3">Remember, you're not alone. Help is always available.</p>
-                        <div className="flex flex-col gap-2">
-                            <Button variant="outline" className="w-full rounded-none" onClick={() => setShowHotlineModal(true)}>
-                                Crisis Helplines
-                            </Button>
-                            <Button variant="outline" className="w-full rounded-none" onClick={() => setShowSupportModal(true)}>
-                                Support Groups
-                            </Button>
+            <SheetContent side="left" className="w-72 max-w-full p-0 md:hidden rounded-none h-full" style={{ borderRadius: 0 }}>
+                <div className="h-full overflow-y-auto">
+                    <nav className="flex flex-col gap-2 p-6">
+                        <span className="text-xs uppercase font-bold text-muted-foreground mb-2 tracking-widest select-none">Navigation</span>
+                        <Link href="/" className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <House weight="duotone" className="w-5 h-5" />Feed</Link>
+                        <Link href="/trending" className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/trending" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <TrendUp weight="duotone" className="w-5 h-5" />Trending</Link>
+                        <Link href="/challenges" className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/challenges" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <Trophy weight="duotone" className="w-5 h-5" />Challenges</Link>
+                        <Link href="/leaderboard" className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/leaderboard" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <Lightning weight="duotone" className="w-5 h-5" />Leaderboard</Link>
+                        <Link href="/bookmarks" className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/bookmarks" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <Star weight="duotone" className="w-5 h-5" />Bookmarks</Link>
+                        <div className="border-t border-gray-200 dark:border-gray-700 my-4" />
+                        <span className="text-xs uppercase font-bold text-muted-foreground mb-2 tracking-widest select-none">More</span>
+                        <Link href="/privacy" className="flex items-center gap-3 hover:text-purple-600 dark:hover:text-purple-400 px-3 py-2 rounded-none font-medium text-base"><Shield weight="duotone" className="w-5 h-5" />Privacy</Link>
+                        <Link href="/terms-of-service" className="flex items-center gap-3 hover:text-purple-600 dark:hover:text-purple-400 px-3 py-2 rounded-none font-medium text-base"><FileText className="w-5 h-5" />Terms</Link>
+                        <Link href="/guidelines" className="flex items-center gap-3 hover:text-purple-600 dark:hover:text-purple-400 px-3 py-2 rounded-none font-medium text-base"><Users weight="duotone" className="w-5 h-5" />Guidelines</Link>
+                        <Link href="/roadmap" className="flex items-center gap-3 hover:text-purple-600 dark:hover:text-purple-400 px-3 py-2 rounded-none font-medium text-base"><Rocket weight="duotone" className="w-5 h-5" />Roadmap</Link>
+                        <a href="https://stats.uptimerobot.com/MfSyiPnv5E/800934564" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:text-purple-600 dark:hover:text-purple-400 text-green-800 px-3 py-2 rounded-none font-medium text-base">
+                            <Globe weight="duotone" className="w-5 h-5" />Status
+                        </a>
+                        <div className="border-t border-gray-200 dark:border-gray-700 my-4" />
+                        <span className="text-xs uppercase font-bold text-muted-foreground mb-2 tracking-widest select-none">Need Support?</span>
+                        <div className="bg-card/60 dark:bg-card/60 p-4 rounded-none shadow-sm border-0 mb-2">
+                            <p className="text-sm text-muted-foreground mb-3">Remember, you're not alone. Help is always available.</p>
+                            <div className="flex flex-col gap-2">
+                                <Button variant="outline" className="w-full rounded-none" onClick={() => setShowHotlineModal(true)}>
+                                    Crisis Helplines
+                                </Button>
+                                <Button variant="outline" className="w-full rounded-none" onClick={() => setShowSupportModal(true)}>
+                                    Support Groups
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-                </nav>
+                    </nav>
+                </div>
                 {/* Crisis Helplines Modal */}
                 <Dialog open={showHotlineModal} onOpenChange={setShowHotlineModal}>
                     <DialogContent className="max-w-md">
