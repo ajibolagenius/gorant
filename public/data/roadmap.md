@@ -15,7 +15,7 @@
 - [x] Hambugger navigation for mobile screen
 - [ ] Self Analytics integration, Heatmaps & User Flow, Retention and Growth
 , admin dashboard, advanced filtering
-- [ ] Anonymous feature suggestion form on roadmap page
+- [x] Anonymous feature suggestion form on roadmap page
 
 ---
 

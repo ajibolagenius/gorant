@@ -2,9 +2,10 @@
 
 import React, { useEffect, useRef, useState } from "react"
 import {
-    CheckCircle, Clock, XCircle, User, Bell, Shield, Flag, Users, Star, Heart, Lightning, Trophy, BookOpen, ListChecks, Rocket, Globe, ChatCircleDots, UserCircle, ChartBar, Gear, Bug, Eye, Pencil, PlusCircle, ArrowRight, ArrowDown, ArrowUp, ThumbsUp, ThumbsDown
+    CheckCircle, Clock, XCircle, User, Bell, Shield, Flag, Users, Star, Heart, Lightning, Trophy, BookOpen, ListChecks, Rocket, Globe, ChatCircleDots, UserCircle, ChartBar, Gear, Bug, Eye, Pencil, PlusCircle, ArrowRight, ArrowDown, ArrowUp, ThumbsUp, ThumbsDown, Tag as TagIcon, Flag as FlagIcon
 } from "@phosphor-icons/react"
 import { Loader, MessageCircle, Dot, User as LucideUser, Search, List as LucideList, Shield as LucideShield, BarChart, Settings as LucideSettings, Users as LucideUsers, Book as LucideBook, Star as LucideStar, Heart as LucideHeart, Bell as LucideBell, Globe as LucideGlobe, Rocket as LucideRocket, Bug as LucideBug, Eye as LucideEye, Pencil as LucidePencil, Plus as LucidePlus, ArrowRight as LucideArrowRight, ArrowDown as LucideArrowDown, ArrowUp as LucideArrowUp, Check, X, ChevronRight, View, File, Pen, LayoutDashboard, PanelLeft, Calendar, Heading, Clipboard, Moon, Sun, Trash, LogOut, Home, Menu, ChevronDown, ChevronLeft, ChevronUp, Send, SeparatorHorizontal, Link, Copy, ExternalLink, ArrowLeft, ArrowLeftCircle, ArrowRightCircle, ArrowUpCircle as LucideArrowUpCircle, ArrowDownCircle as LucideArrowDownCircle } from "lucide-react"
+import { MagnifyingGlass, Funnel, SortAscending } from "@phosphor-icons/react"
 import { motion } from "framer-motion"
 import gsap from "gsap"
 import { Badge } from "@/components/ui/badge"
@@ -14,7 +15,10 @@ import { ArrowUpCircle } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { supabase } from "@/lib/supabaseClient";
-import { Dialog } from "@/components/ui/dialog" // If you have a dialog component, otherwise use a simple modal below
+import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog"
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+import { CaretDown } from "@phosphor-icons/react";
 
 // Map feature keywords to Phosphor icons
 const featureIcons: Record<string, React.ReactNode> = {
@@ -163,7 +167,14 @@ function getOrCreateAnonymousId() {
 export default function RoadmapPage() {
     const markdown = useRoadmapMarkdown()
     const parsed = parseRoadmapMarkdown(markdown)
-    const [search, setSearch] = useState("")
+    const [title, setTitle] = useState("");
+    const [description, setDescription] = useState("");
+    const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [filterCategory, setFilterCategory] = useState("");
+    const [filterPriority, setFilterPriority] = useState("");
+    const [filterStatus, setFilterStatus] = useState("");
+    const [sortBy, setSortBy] = useState("newest");
+    const [search, setSearch] = useState("");
     const [activePhase, setActivePhase] = useState<string>("")
     const phaseRefs = useRef<Record<string, HTMLDivElement | null>>({})
     const [showTopBtn, setShowTopBtn] = useState(false)
@@ -175,92 +186,77 @@ export default function RoadmapPage() {
     const [suggestionText, setSuggestionText] = useState("")
     const [submitting, setSubmitting] = useState(false)
     const [submitMsg, setSubmitMsg] = useState<string | null>(null)
-    // Voting state
-    const [userVotes, setUserVotes] = useState<Record<string, 'up' | 'down' | null>>({})
-    const [voting, setVoting] = useState<Record<string, boolean>>({})
+    // Commented out voting UI and logic for now. To restore, uncomment the relevant sections below.
+    // --- VOTING LOGIC START ---
+    // const [userVotes, setUserVotes] = useState<Record<string, 'up' | 'down' | null>>({})
+    // const [voting, setVoting] = useState<Record<string, boolean>>({})
+    // const fetchUserVotes = async (suggestionIds: string[]) => { /* ... */ }
+    // const fetchSuggestionsAndVotes = async () => { /* ... */ }
+    // useEffect(() => { fetchSuggestionsAndVotes() }, [])
+    // const handleVote = async (suggestionId: string, voteType: 'up' | 'down') => { /* ... */ }
+    // --- VOTING LOGIC END ---
+
+    // 1. Add state for slide-out form and new fields
+    const [showForm, setShowForm] = useState(false);
+    const [category, setCategory] = useState("Feature");
+    const [priority, setPriority] = useState("Not important");
+    // Suggestion form error state
+    const [formError, setFormError] = useState("");
+
     // Fetch suggestions (refactored to a function for refresh)
     const fetchSuggestions = () => {
         setLoadingSuggestions(true)
         supabase
             .from("suggestions")
-            .select("id, content, votes_up, votes_down, status, created_at")
+            .select("id, title, description, votes_up, votes_down, status, created_at, category, priority")
             .order("created_at", { ascending: false })
             .then(({ data, error }) => {
                 setSuggestions(data || [])
                 setLoadingSuggestions(false)
             })
     }
-    // Fetch user votes for visible suggestions
-    const fetchUserVotes = async (suggestionIds: string[]) => {
-        const anonymous_id = getOrCreateAnonymousId()
-        if (suggestionIds.length === 0) return setUserVotes({})
-        const { data, error } = await supabase
-            .from("suggestion_votes")
-            .select("suggestion_id, vote_type")
-            .in("suggestion_id", suggestionIds)
-            .eq("anonymous_id", anonymous_id)
-        if (data) {
-            const votes: Record<string, 'up' | 'down' | null> = {}
-            data.forEach((v: any) => { votes[v.suggestion_id] = v.vote_type })
-            setUserVotes(votes)
-        } else {
-            setUserVotes({})
-        }
-    }
-    // Fetch suggestions and user votes together
-    const fetchSuggestionsAndVotes = async () => {
-        setLoadingSuggestions(true)
-        const { data, error } = await supabase
-            .from("suggestions")
-            .select("id, content, votes_up, votes_down, status, created_at")
-            .order("created_at", { ascending: false })
-        setSuggestions(data || [])
-        setLoadingSuggestions(false)
-        if (data) {
-            fetchUserVotes(data.map((s: any) => s.id))
-        }
-    }
-    useEffect(() => {
-        fetchSuggestionsAndVotes()
-    }, [])
-    // Handle submit
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!suggestionText.trim()) return
-        setSubmitting(true)
-        setSubmitMsg(null)
-        const anonymous_id = getOrCreateAnonymousId()
-        const { error } = await supabase.from("suggestions").insert({ content: suggestionText.trim(), anonymous_id })
-        if (error) {
-            setSubmitMsg("Failed to submit suggestion. Please try again.")
-        } else {
-            setSubmitMsg("Thank you for your suggestion!")
-            setSuggestionText("")
-            setShowModal(false)
-            fetchSuggestionsAndVotes()
-        }
-        setSubmitting(false)
-    }
-    // Voting handler (improved)
-    const handleVote = async (suggestionId: string, voteType: 'up' | 'down') => {
-        const anonymous_id = getOrCreateAnonymousId()
-        const currentVote = userVotes[suggestionId]
-        if (currentVote === voteType || voting[suggestionId]) return // Prevent double voting
-        setVoting(v => ({ ...v, [suggestionId]: true }))
-        // Upsert vote
-        await supabase.from("suggestion_votes").upsert({
-            suggestion_id: suggestionId,
-            anonymous_id,
-            vote_type: voteType,
-        }, { onConflict: "suggestion_id,anonymous_id" })
-        // Update suggestion vote counts via RPC
-        await supabase.rpc('update_suggestion_votes', { suggestion_id: suggestionId, vote_type: voteType, prev_vote: currentVote })
-        // Optimistically update UI
-        setUserVotes(v => ({ ...v, [suggestionId]: voteType }))
-        fetchSuggestionsAndVotes()
-        setVoting(v => ({ ...v, [suggestionId]: false }))
-    }
 
+    // Ensure suggestions are loaded on mount
+    useEffect(() => {
+        fetchSuggestions();
+    }, []);
+    // 2. Update handleSubmit to include category and priority
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setFormError("");
+        const titleWordCount = title.trim().split(/\s+/).length;
+        const descriptionWordCount = description.replace(/<[^>]+>/g, '').trim().split(/\s+/).length;
+        if (!title.trim() || titleWordCount < 5) {
+            setFormError("Title must be at least 5 words.");
+            return;
+        }
+        if (!description.trim() || descriptionWordCount < 15) {
+            setFormError("Description must be at least 15 words.");
+            return;
+        }
+        setSubmitting(true);
+        setSubmitMsg(null);
+        const anonymous_id = getOrCreateAnonymousId();
+        const { error } = await supabase.from("suggestions").insert({
+            title: title.trim(),
+            description,
+            anonymous_id,
+            category,
+            priority
+        });
+        if (error) {
+            setSubmitMsg("Failed to submit suggestion. Please try again.");
+        } else {
+            setSubmitMsg("Thank you for your suggestion!");
+            setTitle("");
+            setDescription("");
+            setCategory("Feature");
+            setPriority("Not important");
+            setShowForm(false);
+            fetchSuggestions();
+        }
+        setSubmitting(false);
+    };
     // Filtered phases/items based on search
     const filteredPhases = parsed.phases
         .map(phase => {
@@ -314,6 +310,28 @@ export default function RoadmapPage() {
         }
     }
 
+    // Filtering, sorting, and searching logic
+    let filteredSuggestions = suggestions;
+    if (sortBy.startsWith('category:')) {
+        const cat = sortBy.split(':')[1];
+        filteredSuggestions = suggestions.filter(s => s.category === cat);
+    } else if (sortBy.startsWith('priorityLevel:')) {
+        const pri = sortBy.split(':')[1];
+        filteredSuggestions = suggestions.filter(s => s.priority === pri);
+    } else if (sortBy.startsWith('status:')) {
+        const stat = sortBy.split(':')[1];
+        filteredSuggestions = suggestions.filter(s => s.status === stat);
+    }
+    if (sortBy === "newest") filteredSuggestions.sort((a, b) => b.created_at.localeCompare(a.created_at));
+    if (sortBy === "oldest") filteredSuggestions.sort((a, b) => a.created_at.localeCompare(b.created_at));
+    if (sortBy === "priority") filteredSuggestions.sort((a, b) => a.priority.localeCompare(b.priority));
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const SUGGESTIONS_PER_PAGE = 10;
+    // Pagination logic
+    const totalPages = Math.ceil(filteredSuggestions.length / SUGGESTIONS_PER_PAGE);
+    const paginatedSuggestions = filteredSuggestions.slice((currentPage - 1) * SUGGESTIONS_PER_PAGE, currentPage * SUGGESTIONS_PER_PAGE);
+
     return (
         <div className="container mx-auto max-w-6xl py-10 px-4 relative flex flex-col md:flex-row gap-8">
             {/* Main Content */}
@@ -352,17 +370,19 @@ export default function RoadmapPage() {
                     ))}
                 </nav>
                 {/* Search Bar */}
-                <div className="flex items-center gap-2 mb-6 sticky top-[56px] z-20 bg-background/80 backdrop-blur px-2 py-2 rounded-xl shadow-sm">
-                    <Search className="w-5 h-5 text-muted-foreground" />
+                <div className="flex items-center gap-2 mb-6 sticky top-[56px] z-20 bg-background/80 backdrop-blur px-2 py-2 rounded-none shadow-sm border-b border-muted">
+                    <MagnifyingGlass className="w-5 h-5 text-muted-foreground ml-2" />
                     <input
                         type="text"
                         value={search}
                         onChange={e => setSearch(e.target.value)}
-                        placeholder="Search roadmap..."
-                        className="w-full bg-transparent outline-none border-0 text-base placeholder:text-muted-foreground"
-                        aria-label="Search roadmap"
+                        placeholder="Search roadmap and suggestions..."
+                        className="w-full bg-transparent outline-none border-0 text-base placeholder:text-muted-foreground font-mono px-2 py-2 focus:ring-2 focus:ring-purple-400 rounded-none"
+                        style={{ fontFamily: 'JetBrains Mono, monospace', borderRadius: 0 }}
+                        aria-label="Search roadmap and suggestions"
                     />
                 </div>
+                {/* No filter/sort controls on the main screen */}
                 <h1 className="text-2xl md:text-3xl font-bold mb-6 flex items-center gap-2 font-heading tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                     <Rocket className="w-7 h-7 text-fuchsia-500" /> Product Roadmap
                 </h1>
@@ -476,7 +496,7 @@ export default function RoadmapPage() {
                 </motion.button>
             </div>
             {/* Sidebar */}
-            <aside className="w-full md:w-80 flex-shrink-0 z-30">
+            <aside className="w-full md:w-[380px] flex-shrink-0 z-30">
                 <div
                     className="bg-card/80 dark:bg-card/80 backdrop-blur shadow-sm border-0 p-6 mb-6"
                     style={{
@@ -490,10 +510,11 @@ export default function RoadmapPage() {
                     <h2 className="text-lg font-bold mb-4 font-heading tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                         <Star className="w-5 h-5 text-yellow-500" /> Community Suggestions
                     </h2>
+                    {/* Suggest a Feature button remains at the top */}
                     <button
                         className="w-full inline-flex items-center gap-2 bg-purple-600 text-white hover:bg-purple-700 font-bold text-sm font-heading px-4 py-2 shadow transition-colors focus-visible:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 mb-4 rounded-none min-h-[44px]"
                         aria-label="Suggest a feature"
-                        onClick={() => { setShowModal(true); setSubmitMsg(null); }}
+                        onClick={() => { setShowForm(true); setSubmitMsg(null); }}
                         style={{ fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '0.01em' }}
                     >
                         <PlusCircle className="w-5 h-5" />
@@ -502,96 +523,171 @@ export default function RoadmapPage() {
                         </span>
                     </button>
                     {/* Suggestion Modal */}
-                    {showModal && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-                            <div className="bg-card p-6 shadow-lg w-full max-w-md relative border-0 rounded-none" style={{ borderRadius: 0 }}>
-                                <button
-                                    className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-400"
-                                    onClick={() => setShowModal(false)}
-                                    aria-label="Close"
-                                    style={{ minWidth: 44, minHeight: 44 }}
-                                >
-                                    <XCircle className="w-6 h-6" />
-                                </button>
-                                <h3 className="text-lg font-bold mb-2 font-heading" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>Suggest a Feature</h3>
-                                <form onSubmit={handleSubmit}>
-                                    <textarea
-                                        className="w-full border border-input bg-background px-3 py-2 focus:border-purple-400 mb-3 min-h-[80px] font-body text-base rounded-none resize-y max-h-40"
-                                        maxLength={500}
-                                        value={suggestionText}
-                                        onChange={e => setSuggestionText(e.target.value)}
-                                        placeholder="What would you like to see?"
-                                        required
-                                        aria-label="Feature suggestion"
-                                        autoFocus
-                                        style={{ fontFamily: 'Manrope, sans-serif', borderRadius: 0, maxHeight: '160px' }}
-                                    />
-                                    <div className="flex items-center justify-between mb-2 text-xs text-muted-foreground font-mono" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                                        <span>{suggestionText.length}/500</span>
-                                        {submitMsg && <span className="text-green-600">{submitMsg}</span>}
-                                    </div>
-                                    <button
-                                        type="submit"
-                                        className="w-full bg-purple-600 text-white hover:bg-purple-700 font-bold py-2 rounded-none min-h-[44px] focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2"
-                                        disabled={submitting || !suggestionText.trim()}
-                                        style={{ fontFamily: 'Space Grotesk, sans-serif', borderRadius: 0 }}
-                                    >
-                                        {submitting ? "Submitting..." : "Submit Suggestion"}
-                                    </button>
-                                </form>
+                    <Dialog open={showForm} onOpenChange={setShowForm}>
+                        <DialogContent className="w-screen h-screen max-w-full max-h-full p-0 rounded-none flex items-center justify-center bg-background">
+                            <div className="w-full h-full flex flex-col items-center justify-center">
+                                <div className="w-full max-w-2xl mx-auto bg-card/90 border border-muted p-8 shadow-xl rounded-none relative flex flex-col" style={{ minHeight: '70vh', maxHeight: '90vh' }}>
+                                    <h3 className="text-lg font-bold mb-4 font-heading tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                                        <PlusCircle className="w-5 h-5 mr-1 inline" /> Suggest a Feature
+                                    </h3>
+                                    <form onSubmit={handleSubmit} className="space-y-4 flex flex-col flex-1">
+                                        <input
+                                            type="text"
+                                            value={title}
+                                            onChange={e => setTitle(e.target.value)}
+                                            placeholder="Title (at least 5 words)"
+                                            className="w-full border border-input bg-background px-3 py-2 focus:border-purple-400 text-sm font-heading rounded-none mb-1"
+                                            style={{ fontFamily: 'Space Grotesk, sans-serif', borderRadius: 0 }}
+                                            required
+                                        />
+                                        <div className="flex flex-col flex-1">
+                                            <ReactQuill
+                                                value={description}
+                                                onChange={setDescription}
+                                                placeholder="Describe your suggestion (at least 15 words)"
+                                                className="bg-background rounded-none mb-1 flex-1"
+                                                style={{ fontFamily: 'Manrope, sans-serif', borderRadius: 0, minHeight: 320, maxHeight: 480, height: 400 }}
+                                                theme="snow"
+                                            />
+                                            <div className="text-xs text-muted-foreground font-mono mt-1 mb-2" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                                                {description.replace(/<[^>]+>/g, '').length}/500
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 items-center">
+                                            <label className="text-xs font-bold font-mono">Category:</label>
+                                            <select value={category} onChange={e => setCategory(e.target.value)} className="border px-2 py-1 rounded-none text-xs font-mono">
+                                                <option value="Feature">Feature</option>
+                                                <option value="Bug">Bug</option>
+                                                <option value="Improvement">Improvement</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                            <label className="text-xs font-bold font-mono ml-2">Priority:</label>
+                                            <select value={priority} onChange={e => setPriority(e.target.value)} className="border px-2 py-1 rounded-none text-xs font-mono">
+                                                <option value="Not important">Not important</option>
+                                                <option value="Nice to have">Nice to have</option>
+                                                <option value="Important">Important</option>
+                                                <option value="Critical">Critical</option>
+                                            </select>
+                                        </div>
+                                        <div className="flex items-center justify-between mb-1 text-xs text-muted-foreground font-mono" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                                            {formError && <span className="text-red-600">{formError}</span>}
+                                            {submitMsg && <span className="text-green-600">{submitMsg}</span>}
+                                        </div>
+                                        <button
+                                            type="submit"
+                                            className="w-full flex items-center justify-center gap-2 bg-purple-600 text-white hover:bg-purple-700 text-sm font-bold py-2 rounded-none min-h-[40px] focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2"
+                                            disabled={submitting || !title.trim() || !description.trim()}
+                                            style={{ fontFamily: 'Space Grotesk, sans-serif', borderRadius: 0 }}
+                                        >
+                                            <Pencil weight="duotone" className="w-4 h-4 mr-1" />
+                                            {submitting ? "Submitting..." : "Submit Suggestion"}
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        </DialogContent>
+                    </Dialog>
+                    {/* Sort dropdown moved below the suggest button */}
+                    <div className="flex items-center gap-1 mb-4">
+                        <span className="text-xs font-mono">Sort:</span>
+                        <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="border px-2 py-1 rounded-none text-xs font-mono bg-background">
+                            <option value="newest">Newest</option>
+                            <option value="oldest">Oldest</option>
+                            <option value="priority">Priority</option>
+                            <option disabled>──────────</option>
+                            <option value="category:Feature">Category: Feature</option>
+                            <option value="category:Bug">Category: Bug</option>
+                            <option value="category:Improvement">Category: Improvement</option>
+                            <option value="category:Other">Category: Other</option>
+                            <option disabled>──────────</option>
+                            <option value="priorityLevel:Not important">Priority: Not important</option>
+                            <option value="priorityLevel:Nice to have">Priority: Nice to have</option>
+                            <option value="priorityLevel:Important">Priority: Important</option>
+                            <option value="priorityLevel:Critical">Priority: Critical</option>
+                            <option disabled>──────────</option>
+                            <option value="status:pending">Status: Pending</option>
+                            <option value="status:accepted">Status: Accepted</option>
+                            <option value="status:reviewed">Status: Reviewed</option>
+                            <option value="status:rejected">Status: Rejected</option>
+                        </select>
+                    </div>
                     {loadingSuggestions ? (
                         <div className="text-muted-foreground text-sm font-body" style={{ fontFamily: 'Manrope, sans-serif' }}>Loading suggestions...</div>
                     ) : suggestions.length === 0 ? (
                         <div className="text-muted-foreground text-sm font-body" style={{ fontFamily: 'Manrope, sans-serif' }}>No suggestions yet. Be the first to suggest a feature!</div>
                     ) : (
                         <ul className="space-y-4">
-                            {suggestions.map(s => (
-                                <li key={s.id} className="bg-muted/60 p-3 flex flex-col gap-1 border border-muted font-body text-base font-medium text-foreground rounded-none" style={{ fontFamily: 'Manrope, sans-serif', borderRadius: 0 }}>
-                                    <div className="flex flex-col gap-1">
-                                        <div className="flex items-center gap-2">
-                                            <span>{s.content}</span>
-                                            {s.status && (
-                                                <span
-                                                    className={`inline-block px-2 py-0.5 font-mono text-xs font-bold rounded-none ml-2
-                                                        ${s.status === 'pending' ? 'bg-yellow-200 text-yellow-800' :
-                                                            s.status === 'accepted' ? 'bg-green-200 text-green-800' :
-                                                                s.status === 'reviewed' ? 'bg-gray-200 text-gray-700' :
-                                                                    s.status === 'rejected' ? 'bg-red-200 text-red-700' :
-                                                                        'bg-muted text-muted-foreground'}`}
-                                                    style={{ fontFamily: 'JetBrains Mono, monospace', borderRadius: 0 }}
-                                                >
-                                                    {s.status.charAt(0).toUpperCase() + s.status.slice(1)}
-                                                </span>
-                                            )}
-                                        </div>
+                            {paginatedSuggestions.map((s, idx) => (
+                                <li key={s.id} className="relative bg-card/80 border border-muted p-5 flex flex-col gap-3 font-body text-sm font-medium text-foreground rounded-none" style={{ fontFamily: 'Manrope, sans-serif', borderRadius: 0 }}>
+                                    {/* Simple bullet instead of numbering */}
+                                    <span className="absolute left-0 top-7 flex items-center justify-center w-4 h-4 bg-primary text-white font-bold font-mono text-xs rounded-full shadow-sm" style={{ borderRadius: '50%' }}>
+                                        •
+                                    </span>
+                                    {/* Title row */}
+                                    <div className="flex items-center gap-2 cursor-pointer select-none pl-7" onClick={() => setExpandedId(expandedId === s.id ? null : s.id)}>
+                                        <span className="font-heading text-base font-bold" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>{s.title}</span>
+                                        <CaretDown weight="duotone" className={`w-4 h-4 transition-transform ${expandedId === s.id ? 'rotate-180' : ''}`} />
                                     </div>
-                                    <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1 font-mono" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                                        <button
-                                            className={`flex items-center focus:outline-none focus:ring-2 focus:ring-purple-400 ${userVotes[s.id] === 'up' ? 'text-green-700' : 'text-green-600 opacity-60 hover:opacity-100'} transition`}
-                                            aria-label="Upvote suggestion"
-                                            onClick={() => handleVote(s.id, 'up')}
-                                            disabled={userVotes[s.id] === 'up' || voting[s.id]}
-                                            style={{ minWidth: 32, minHeight: 32 }}
-                                        >
-                                            <ThumbsUp weight="duotone" className="w-4 h-4 mr-1" />{s.votes_up ?? 0}
-                                        </button>
-                                        <button
-                                            className={`flex items-center focus:outline-none focus:ring-2 focus:ring-purple-400 ${userVotes[s.id] === 'down' ? 'text-red-700' : 'text-red-500 opacity-60 hover:opacity-100'} transition`}
-                                            aria-label="Downvote suggestion"
-                                            onClick={() => handleVote(s.id, 'down')}
-                                            disabled={userVotes[s.id] === 'down' || voting[s.id]}
-                                            style={{ minWidth: 32, minHeight: 32 }}
-                                        >
-                                            <ThumbsDown weight="duotone" className="w-4 h-4 mr-1" />{s.votes_down ?? 0}
-                                        </button>
-                                        <span className="ml-auto">{new Date(s.created_at).toLocaleDateString()}</span>
+                                    {/* Inline tags */}
+                                    <div className="flex flex-wrap gap-2 pl-7">
+                                        {s.status && (
+                                            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 font-mono text-xs font-medium rounded-none
+                                                ${s.status === 'pending' ? 'bg-warning text-yellow-900' :
+                                                    s.status === 'accepted' ? 'bg-success text-green-900' :
+                                                        s.status === 'reviewed' ? 'bg-muted text-gray-700' :
+                                                            s.status === 'rejected' ? 'bg-accent text-red-900' :
+                                                                'bg-muted text-muted-foreground'}`}
+                                                style={{ fontFamily: 'JetBrains Mono, monospace', borderRadius: 0 }}
+                                            >
+                                                {s.status === 'pending' && <Clock weight="duotone" className="w-3 h-3 mr-0.5" />}
+                                                {s.status === 'accepted' && <CheckCircle weight="duotone" className="w-3 h-3 mr-0.5" />}
+                                                {s.status === 'reviewed' && <Eye weight="duotone" className="w-3 h-3 mr-0.5" />}
+                                                {s.status === 'rejected' && <XCircle weight="duotone" className="w-3 h-3 mr-0.5" />}
+                                                {s.status.charAt(0).toUpperCase() + s.status.slice(1)}
+                                            </span>
+                                        )}
+                                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 font-mono text-xs font-medium rounded-none bg-blue-100 text-blue-800">
+                                            <TagIcon weight="duotone" className="w-3 h-3 mr-0.5" />{s.category}
+                                        </span>
+                                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 font-mono text-xs font-medium rounded-none bg-purple-100 text-purple-800">
+                                            <FlagIcon weight="duotone" className="w-3 h-3 mr-0.5" />{s.priority}
+                                        </span>
                                     </div>
+                                    {/* Description (expandable) */}
+                                    {expandedId === s.id && (
+                                        <div className="animate-slide-down mt-2 prose prose-sm max-w-none pl-7" style={{ fontFamily: 'Manrope, sans-serif', maxHeight: 380, overflowY: 'auto' }} dangerouslySetInnerHTML={{ __html: s.description }} />
+                                    )}
                                 </li>
                             ))}
                         </ul>
+                    )}
+                    {/* Pagination controls */}
+                    {totalPages > 1 && (
+                        <div className="flex justify-center items-center gap-2 mt-4">
+                            <button
+                                className="px-2 py-1 text-xs font-mono bg-muted text-foreground rounded-none border border-muted disabled:opacity-50"
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                            >
+                                Previous
+                            </button>
+                            {Array.from({ length: totalPages }, (_, i) => (
+                                <button
+                                    key={i}
+                                    className={`px-2 py-1 text-xs font-mono rounded-none border ${currentPage === i + 1 ? 'bg-primary text-white border-primary' : 'bg-muted text-foreground border-muted'}`}
+                                    onClick={() => setCurrentPage(i + 1)}
+                                >
+                                    {i + 1}
+                                </button>
+                            ))}
+                            <button
+                                className="px-2 py-1 text-xs font-mono bg-muted text-foreground rounded-none border border-muted disabled:opacity-50"
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                            >
+                                Next
+                            </button>
+                        </div>
                     )}
                 </div>
             </aside>
