@@ -16,7 +16,8 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { supabase } from "@/lib/supabaseClient";
 import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog"
-import ReactQuill from 'react-quill';
+import dynamic from 'next/dynamic';
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 import 'react-quill/dist/quill.snow.css';
 import { CaretDown } from "@phosphor-icons/react";
 
