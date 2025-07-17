@@ -279,35 +279,45 @@ export default function RoadmapPage() {
     }
 
     useEffect(() => {
-        const onScroll = () => setShowTopBtn(window.scrollY > 300)
-        window.addEventListener("scroll", onScroll)
-        return () => window.removeEventListener("scroll", onScroll)
+        if (typeof window !== "undefined") {
+            const onScroll = () => setShowTopBtn(window.scrollY > 300)
+            window.addEventListener("scroll", onScroll)
+            return () => window.removeEventListener("scroll", onScroll)
+        }
     }, [])
-    const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" })
+    const scrollToTop = () => {
+        if (typeof window !== "undefined") {
+            window.scrollTo({ top: 0, behavior: "smooth" })
+        }
+    }
 
     useEffect(() => {
-        const handleScroll = () => {
-            const scrollY = window.scrollY
-            let current = ""
-            for (const phase of parsed.phases) {
-                const ref = phaseRefs.current[phase.title]
-                if (ref) {
-                    const top = ref.getBoundingClientRect().top + window.scrollY - 120
-                    if (scrollY >= top) current = phase.title
+        if (typeof window !== "undefined") {
+            const handleScroll = () => {
+                const scrollY = window.scrollY
+                let current = ""
+                for (const phase of parsed.phases) {
+                    const ref = phaseRefs.current[phase.title]
+                    if (ref) {
+                        const top = ref.getBoundingClientRect().top + window.scrollY - 120
+                        if (scrollY >= top) current = phase.title
+                    }
                 }
+                setActivePhase(current)
             }
-            setActivePhase(current)
+            window.addEventListener("scroll", handleScroll)
+            return () => window.removeEventListener("scroll", handleScroll)
         }
-        window.addEventListener("scroll", handleScroll)
-        return () => window.removeEventListener("scroll", handleScroll)
     }, [parsed.phases])
     const scrollToPhase = (title: string) => {
-        const ref = phaseRefs.current[title]
-        if (ref) {
-            window.scrollTo({
-                top: ref.getBoundingClientRect().top + window.scrollY - 100,
-                behavior: "smooth"
-            })
+        if (typeof window !== "undefined") {
+            const ref = phaseRefs.current[title]
+            if (ref) {
+                window.scrollTo({
+                    top: ref.getBoundingClientRect().top + window.scrollY - 100,
+                    behavior: "smooth"
+                })
+            }
         }
     }
 
