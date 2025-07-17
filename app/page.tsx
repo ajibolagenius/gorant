@@ -728,7 +728,10 @@ export default function RantApp() {
                             <div className="flex items-center justify-between rounded-none bg-purple-100/80 dark:bg-purple-900/40 backdrop-blur px-6 py-4 mb-2 shadow border-0">
                                 <div className="flex items-center gap-3">
                                     <SmileySticker className="w-8 h-8 text-purple-600 dark:text-purple-300" weight="duotone" />
-                                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight font-heading">Feed</h1>
+                                    <h1 className="text-3xl md:text-4xl font-bold mb-2 font-heading tracking-tight flex items-center gap-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                                        {/* Main header content, e.g., logo/title */}
+                                        Gorant
+                                    </h1>
                                     <Badge className="ml-2 bg-green-500 text-white font-mono text-xs px-2 py-1 rounded-none">Live</Badge>
                                     <span className="text-xs text-muted-foreground ml-4">Press <kbd className="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">?</kbd> for shortcuts</span>
                                 </div>

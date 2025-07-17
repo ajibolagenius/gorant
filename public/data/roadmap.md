@@ -54,7 +54,7 @@
 
 ---
 
-# 🟡 MVP Gaps & Priorities
+<!-- # 🟡 MVP Gaps & Priorities -->
 
 | Feature                    | Priority | Status/Action                                 |
 |----------------------------|----------|-----------------------------------------------|

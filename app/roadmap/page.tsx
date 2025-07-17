@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react"
 import {
-    CheckCircle, Clock, XCircle, User, Bell, Shield, Flag, Users, Star, Heart, Lightning, Trophy, BookOpen, ListChecks, Rocket, Globe, ChatCircleDots, UserCircle, ChartBar, Gear, Bug, Eye, Pencil, PlusCircle, ArrowRight, ArrowDown, ArrowUp
+    CheckCircle, Clock, XCircle, User, Bell, Shield, Flag, Users, Star, Heart, Lightning, Trophy, BookOpen, ListChecks, Rocket, Globe, ChatCircleDots, UserCircle, ChartBar, Gear, Bug, Eye, Pencil, PlusCircle, ArrowRight, ArrowDown, ArrowUp, ThumbsUp, ThumbsDown
 } from "@phosphor-icons/react"
 import { Loader, MessageCircle, Dot, User as LucideUser, Search, List as LucideList, Shield as LucideShield, BarChart, Settings as LucideSettings, Users as LucideUsers, Book as LucideBook, Star as LucideStar, Heart as LucideHeart, Bell as LucideBell, Globe as LucideGlobe, Rocket as LucideRocket, Bug as LucideBug, Eye as LucideEye, Pencil as LucidePencil, Plus as LucidePlus, ArrowRight as LucideArrowRight, ArrowDown as LucideArrowDown, ArrowUp as LucideArrowUp, Check, X, ChevronRight, View, File, Pen, LayoutDashboard, PanelLeft, Calendar, Heading, Clipboard, Moon, Sun, Trash, LogOut, Home, Menu, ChevronDown, ChevronLeft, ChevronUp, Send, SeparatorHorizontal, Link, Copy, ExternalLink, ArrowLeft, ArrowLeftCircle, ArrowRightCircle, ArrowUpCircle as LucideArrowUpCircle, ArrowDownCircle as LucideArrowDownCircle } from "lucide-react"
 import { motion } from "framer-motion"
@@ -13,6 +13,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { ArrowUpCircle } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
+import { supabase } from "@/lib/supabaseClient";
+import { Dialog } from "@/components/ui/dialog" // If you have a dialog component, otherwise use a simple modal below
 
 // Map feature keywords to Phosphor icons
 const featureIcons: Record<string, React.ReactNode> = {
@@ -145,6 +147,19 @@ function parseRoadmapMarkdown(markdown: string) {
     return { phases, gaps, checklist: checklistItems }
 }
 
+// Utility to get or create a persistent anonymous_id
+function getOrCreateAnonymousId() {
+    if (typeof window === "undefined") return "mock-anon-id";
+    let id = localStorage.getItem("anonymous_id");
+    if (!id) {
+        id = (typeof crypto !== "undefined" && crypto.randomUUID)
+            ? crypto.randomUUID()
+            : Math.random().toString(36).substring(2, 15) + Date.now();
+        localStorage.setItem("anonymous_id", id);
+    }
+    return id;
+}
+
 export default function RoadmapPage() {
     const markdown = useRoadmapMarkdown()
     const parsed = parseRoadmapMarkdown(markdown)
@@ -152,6 +167,99 @@ export default function RoadmapPage() {
     const [activePhase, setActivePhase] = useState<string>("")
     const phaseRefs = useRef<Record<string, HTMLDivElement | null>>({})
     const [showTopBtn, setShowTopBtn] = useState(false)
+    // Sidebar state
+    const [suggestions, setSuggestions] = useState<any[]>([])
+    const [loadingSuggestions, setLoadingSuggestions] = useState(true)
+    // Modal state
+    const [showModal, setShowModal] = useState(false)
+    const [suggestionText, setSuggestionText] = useState("")
+    const [submitting, setSubmitting] = useState(false)
+    const [submitMsg, setSubmitMsg] = useState<string | null>(null)
+    // Voting state
+    const [userVotes, setUserVotes] = useState<Record<string, 'up' | 'down' | null>>({})
+    const [voting, setVoting] = useState<Record<string, boolean>>({})
+    // Fetch suggestions (refactored to a function for refresh)
+    const fetchSuggestions = () => {
+        setLoadingSuggestions(true)
+        supabase
+            .from("suggestions")
+            .select("id, content, votes_up, votes_down, status, created_at")
+            .order("created_at", { ascending: false })
+            .then(({ data, error }) => {
+                setSuggestions(data || [])
+                setLoadingSuggestions(false)
+            })
+    }
+    // Fetch user votes for visible suggestions
+    const fetchUserVotes = async (suggestionIds: string[]) => {
+        const anonymous_id = getOrCreateAnonymousId()
+        if (suggestionIds.length === 0) return setUserVotes({})
+        const { data, error } = await supabase
+            .from("suggestion_votes")
+            .select("suggestion_id, vote_type")
+            .in("suggestion_id", suggestionIds)
+            .eq("anonymous_id", anonymous_id)
+        if (data) {
+            const votes: Record<string, 'up' | 'down' | null> = {}
+            data.forEach((v: any) => { votes[v.suggestion_id] = v.vote_type })
+            setUserVotes(votes)
+        } else {
+            setUserVotes({})
+        }
+    }
+    // Fetch suggestions and user votes together
+    const fetchSuggestionsAndVotes = async () => {
+        setLoadingSuggestions(true)
+        const { data, error } = await supabase
+            .from("suggestions")
+            .select("id, content, votes_up, votes_down, status, created_at")
+            .order("created_at", { ascending: false })
+        setSuggestions(data || [])
+        setLoadingSuggestions(false)
+        if (data) {
+            fetchUserVotes(data.map((s: any) => s.id))
+        }
+    }
+    useEffect(() => {
+        fetchSuggestionsAndVotes()
+    }, [])
+    // Handle submit
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!suggestionText.trim()) return
+        setSubmitting(true)
+        setSubmitMsg(null)
+        const anonymous_id = getOrCreateAnonymousId()
+        const { error } = await supabase.from("suggestions").insert({ content: suggestionText.trim(), anonymous_id })
+        if (error) {
+            setSubmitMsg("Failed to submit suggestion. Please try again.")
+        } else {
+            setSubmitMsg("Thank you for your suggestion!")
+            setSuggestionText("")
+            setShowModal(false)
+            fetchSuggestionsAndVotes()
+        }
+        setSubmitting(false)
+    }
+    // Voting handler (improved)
+    const handleVote = async (suggestionId: string, voteType: 'up' | 'down') => {
+        const anonymous_id = getOrCreateAnonymousId()
+        const currentVote = userVotes[suggestionId]
+        if (currentVote === voteType || voting[suggestionId]) return // Prevent double voting
+        setVoting(v => ({ ...v, [suggestionId]: true }))
+        // Upsert vote
+        await supabase.from("suggestion_votes").upsert({
+            suggestion_id: suggestionId,
+            anonymous_id,
+            vote_type: voteType,
+        }, { onConflict: "suggestion_id,anonymous_id" })
+        // Update suggestion vote counts via RPC
+        await supabase.rpc('update_suggestion_votes', { suggestion_id: suggestionId, vote_type: voteType, prev_vote: currentVote })
+        // Optimistically update UI
+        setUserVotes(v => ({ ...v, [suggestionId]: voteType }))
+        fetchSuggestionsAndVotes()
+        setVoting(v => ({ ...v, [suggestionId]: false }))
+    }
 
     // Filtered phases/items based on search
     const filteredPhases = parsed.phases
@@ -207,179 +315,286 @@ export default function RoadmapPage() {
     }
 
     return (
-        <div className="container mx-auto max-w-3xl py-10 px-4 relative overflow-hidden">
-            {/* Animated Background */}
-            <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0">
-                <svg width="100%" height="100%" viewBox="0 0 600 600" fill="none" xmlns="http://www.w3.org/2000/svg" className="absolute left-0 top-0 w-full h-full opacity-30 dark:opacity-20">
-                    <defs>
-                        <radialGradient id="roadmap-bg1" cx="50%" cy="50%" r="50%" fx="50%" fy="50%" gradientTransform="rotate(45)">
-                            <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.5" />
-                            <stop offset="100%" stopColor="#f0abfc" stopOpacity="0" />
-                        </radialGradient>
-                        <radialGradient id="roadmap-bg2" cx="50%" cy="50%" r="50%" fx="50%" fy="50%" gradientTransform="rotate(-30)">
-                            <stop offset="0%" stopColor="#f472b6" stopOpacity="0.4" />
-                            <stop offset="100%" stopColor="#f0abfc" stopOpacity="0" />
-                        </radialGradient>
-                    </defs>
-                    <circle cx="150" cy="120" r="180" fill="url(#roadmap-bg1)" />
-                    <circle cx="500" cy="400" r="200" fill="url(#roadmap-bg2)" />
-                </svg>
-            </div>
-            {/* Suggest a Feature Button */}
-            <div className="flex justify-end mb-4">
-                <a
-                    href=""
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    aria-label="Suggest a feature"
-                    style={{ fontFamily: 'Manrope, sans-serif', letterSpacing: '0.01em' }}
-                >
-                    <PlusCircle className="w-5 h-5" />
-                    <span className="font-heading" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                        Suggest a Feature
-                    </span>
-                </a>
-            </div>
-            {/* Sticky Nav Bar */}
-            <nav className="sticky top-0 z-30 bg-background/80 backdrop-blur border-b border-border mb-6 flex overflow-x-auto gap-2 py-2 px-1 rounded-b-none shadow-sm">
-                {parsed.phases.map(phase => (
-                    <button
-                        key={phase.title}
-                        onClick={() => scrollToPhase(phase.title)}
-                        className={`px-3 py-1 rounded-none font-bold whitespace-nowrap transition-colors text-sm font-heading tracking-tight ${activePhase === phase.title
+        <div className="container mx-auto max-w-6xl py-10 px-4 relative flex flex-col md:flex-row gap-8">
+            {/* Main Content */}
+            <div className="flex-1 min-w-0">
+                {/* Animated Background */}
+                <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0">
+                    <svg width="100%" height="100%" viewBox="0 0 600 600" fill="none" xmlns="http://www.w3.org/2000/svg" className="absolute left-0 top-0 w-full h-full opacity-30 dark:opacity-20">
+                        <defs>
+                            <radialGradient id="roadmap-bg1" cx="50%" cy="50%" r="50%" fx="50%" fy="50%" gradientTransform="rotate(45)">
+                                <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.5" />
+                                <stop offset="100%" stopColor="#f0abfc" stopOpacity="0" />
+                            </radialGradient>
+                            <radialGradient id="roadmap-bg2" cx="50%" cy="50%" r="50%" fx="50%" fy="50%" gradientTransform="rotate(-30)">
+                                <stop offset="0%" stopColor="#f472b6" stopOpacity="0.4" />
+                                <stop offset="100%" stopColor="#f0abfc" stopOpacity="0" />
+                            </radialGradient>
+                        </defs>
+                        <circle cx="150" cy="120" r="180" fill="url(#roadmap-bg1)" />
+                        <circle cx="500" cy="400" r="200" fill="url(#roadmap-bg2)" />
+                    </svg>
+                </div>
+                {/* Sticky Nav Bar, Search, Roadmap, etc. */}
+                <nav className="sticky top-0 z-30 bg-background/80 backdrop-blur border-b border-border mb-6 flex overflow-x-auto gap-2 py-2 px-1 rounded-b-none shadow-sm">
+                    {parsed.phases.map(phase => (
+                        <button
+                            key={phase.title}
+                            onClick={() => scrollToPhase(phase.title)}
+                            className={`px-3 py-1 rounded-none font-bold whitespace-nowrap transition-colors text-sm font-heading tracking-tight ${activePhase === phase.title
                                 ? "bg-primary text-primary-foreground shadow"
                                 : "bg-muted text-foreground hover:bg-accent"
-                            }`}
-                        style={{ fontFamily: 'Space Grotesk, sans-serif' }}
-                    >
-                        <span className="mr-1">{phase.emoji}</span>{phase.title}
-                    </button>
-                ))}
-            </nav>
-            {/* Search Bar */}
-            <div className="flex items-center gap-2 mb-6 sticky top-[56px] z-20 bg-background/80 backdrop-blur px-2 py-2 rounded-xl shadow-sm">
-                <Search className="w-5 h-5 text-muted-foreground" />
-                <input
-                    type="text"
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    placeholder="Search roadmap..."
-                    className="w-full bg-transparent outline-none border-0 text-base placeholder:text-muted-foreground"
-                    aria-label="Search roadmap"
-                />
-            </div>
-            <h1 className="text-2xl md:text-3xl font-bold mb-6 flex items-center gap-2 font-heading tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                <Rocket className="w-7 h-7 text-fuchsia-500" /> Product Roadmap
-            </h1>
-            <div className="bg-card/80 dark:bg-card/80 backdrop-blur rounded-none shadow-sm border-0 p-6">
-                <div className="prose max-w-none">
-                    {filteredPhases.map(phase => {
-                        if (!phase) return null
-                        const total = phase.items.length
-                        const completed = phase.items.filter(i => i.checked).length
-                        const percent = total > 0 ? Math.round((completed / total) * 100) : 0
-                        return (
-                            <div
-                                key={phase.title}
-                                ref={el => { phaseRefs.current[phase.title] = el; }}
-                                className="mb-8"
-                            >
-                                <div className="flex items-center gap-2 mb-2">
-                                    <span className="text-lg font-bold font-heading tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>{phase.emoji} {highlight(phase.title)}</span>
-                                </div>
-                                {/* Progress Bar */}
-                                <div className="flex items-center gap-3 mb-2">
-                                    <div className="w-full h-3 bg-muted rounded-none overflow-hidden">
-                                        <div
-                                            className="h-3 bg-primary transition-all duration-500 rounded-none"
-                                            style={{ width: `${percent}%` }}
-                                            aria-valuenow={percent}
-                                            aria-valuemin={0}
-                                            aria-valuemax={100}
-                                            role="progressbar"
-                                            aria-label={`${phase.emoji} ${phase.title} progress`}
-                                        />
-                                    </div>
-                                    <span className="text-xs font-mono font-medium text-muted-foreground min-w-[40px] text-right" style={{ fontFamily: 'JetBrains Mono, monospace' }}>{percent}%</span>
-                                </div>
-                                {/* Animated Checklist */}
-                                <ul className="ml-2 mb-4 space-y-1">
-                                    {phase.items.map((item, idx) => {
-                                        const text = item.text.toLowerCase()
-                                        const featureIcon = Object.entries(featureIcons).find(([k]) => text.includes(k))?.[1]
-                                        const lucideIcon = featureIcon ? null : Object.entries(lucideIcons).find(([k]) => text.includes(k))?.[1]
-                                        const fallbackIcon = (!featureIcon && !lucideIcon) ? <Dot className="inline w-4 h-4 text-gray-400 mr-2" /> : null
-                                        const iconLabel = featureIcon ? Object.keys(featureIcons).find(k => text.includes(k)) : lucideIcon ? Object.keys(lucideIcons).find(k => text.includes(k)) : "feature"
-                                        return (
-                                            <motion.li
-                                                key={item.text}
-                                                initial={{ opacity: 0, y: 20 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: idx * 0.07, duration: 0.4, type: "spring" }}
-                                                className="flex items-center gap-2 text-base font-body tracking-normal" style={{ fontFamily: 'Manrope, sans-serif' }}
-                                            >
-                                                {/* Status Icon */}
-                                                {item.checked ? <CheckCircle className="inline w-4 h-4 text-green-800 mr-1" /> : <Clock className="inline w-4 h-4 text-gray-400 mr-1" />}
-                                                {/* Feature Icon with Tooltip */}
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <span>
-                                                            {featureIcon}
-                                                            {lucideIcon}
-                                                            {fallbackIcon}
-                                                        </span>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent side="top">{iconLabel}</TooltipContent>
-                                                </Tooltip>
-                                                <span>{highlight(item.text)}</span>
-                                            </motion.li>
-                                        )
-                                    })}
-                                </ul>
-                            </div>
-                        )
-                    })}
-                    {/* Gaps Table */}
-                    <h2 className="text-xl font-bold mt-10 mb-2 font-heading tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>MVP Gaps & Priorities</h2>
-                    <div className="overflow-x-auto rounded-none">
-                        <table className="min-w-full text-sm font-mono border-collapse" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                            <thead>
-                                <tr className="bg-muted text-gray-700 dark:text-gray-300">
-                                    <th className="px-3 py-2 text-left font-bold">Feature</th>
-                                    <th className="px-3 py-2 text-left font-bold">Priority</th>
-                                    <th className="px-3 py-2 text-left font-bold">Status/Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {parsed.gaps.map((gap: any) => (
-                                    <tr key={gap.feature} className="border-b border-muted last:border-0">
-                                        <td className="px-3 py-2">{gap.feature}</td>
-                                        <td className="px-3 py-2">
-                                            <span className={`inline-block px-2 py-0.5 rounded-none font-mono text-xs font-bold ${gap.priority === 'High' ? 'bg-yellow-200 text-yellow-800' : gap.priority === 'Medium' ? 'bg-blue-100 text-blue-800' : 'bg-gray-200 text-gray-700'}`}>{gap.priority}</span>
-                                        </td>
-                                        <td className="px-3 py-2">{gap.status}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                    {/*  */}
+                                }`}
+                            style={{ fontFamily: 'Space Grotesk, sans-serif' }}
+                        >
+                            <span className="mr-1">{phase.emoji}</span>{phase.title}
+                        </button>
+                    ))}
+                </nav>
+                {/* Search Bar */}
+                <div className="flex items-center gap-2 mb-6 sticky top-[56px] z-20 bg-background/80 backdrop-blur px-2 py-2 rounded-xl shadow-sm">
+                    <Search className="w-5 h-5 text-muted-foreground" />
+                    <input
+                        type="text"
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        placeholder="Search roadmap..."
+                        className="w-full bg-transparent outline-none border-0 text-base placeholder:text-muted-foreground"
+                        aria-label="Search roadmap"
+                    />
                 </div>
+                <h1 className="text-2xl md:text-3xl font-bold mb-6 flex items-center gap-2 font-heading tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                    <Rocket className="w-7 h-7 text-fuchsia-500" /> Product Roadmap
+                </h1>
+                <div className="bg-card/80 dark:bg-card/80 backdrop-blur rounded-none shadow-sm border-0 p-6">
+                    <div className="prose max-w-none">
+                        {filteredPhases.map(phase => {
+                            if (!phase) return null
+                            const total = phase.items.length
+                            const completed = phase.items.filter(i => i.checked).length
+                            const percent = total > 0 ? Math.round((completed / total) * 100) : 0
+                            return (
+                                <div
+                                    key={phase.title}
+                                    ref={el => { phaseRefs.current[phase.title] = el; }}
+                                    className="mb-8"
+                                >
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="text-lg font-bold font-heading tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>{phase.emoji} {highlight(phase.title)}</span>
+                                    </div>
+                                    {/* Progress Bar */}
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className="w-full h-3 bg-muted rounded-none overflow-hidden">
+                                            <div
+                                                className="h-3 bg-primary transition-all duration-500 rounded-none"
+                                                style={{ width: `${percent}%` }}
+                                                aria-valuenow={percent}
+                                                aria-valuemin={0}
+                                                aria-valuemax={100}
+                                                role="progressbar"
+                                                aria-label={`${phase.emoji} ${phase.title} progress`}
+                                            />
+                                        </div>
+                                        <span className="text-xs font-mono font-medium text-muted-foreground min-w-[40px] text-right" style={{ fontFamily: 'JetBrains Mono, monospace' }}>{percent}%</span>
+                                    </div>
+                                    {/* Animated Checklist */}
+                                    <ul className="ml-2 mb-4 space-y-1">
+                                        {phase.items.map((item, idx) => {
+                                            const text = item.text.toLowerCase()
+                                            const featureIcon = Object.entries(featureIcons).find(([k]) => text.includes(k))?.[1]
+                                            const lucideIcon = featureIcon ? null : Object.entries(lucideIcons).find(([k]) => text.includes(k))?.[1]
+                                            const fallbackIcon = (!featureIcon && !lucideIcon) ? <Dot className="inline w-4 h-4 text-gray-400 mr-2" /> : null
+                                            const iconLabel = featureIcon ? Object.keys(featureIcons).find(k => text.includes(k)) : lucideIcon ? Object.keys(lucideIcons).find(k => text.includes(k)) : "feature"
+                                            return (
+                                                <motion.li
+                                                    key={item.text}
+                                                    initial={{ opacity: 0, y: 20 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ delay: idx * 0.07, duration: 0.4, type: "spring" }}
+                                                    className="flex items-center gap-2 text-base font-body tracking-normal" style={{ fontFamily: 'Manrope, sans-serif' }}
+                                                >
+                                                    {/* Status Icon */}
+                                                    {item.checked ? <CheckCircle className="inline w-4 h-4 text-green-800 mr-1" /> : <Clock className="inline w-4 h-4 text-gray-400 mr-1" />}
+                                                    {/* Feature Icon with Tooltip */}
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <span>
+                                                                {featureIcon}
+                                                                {lucideIcon}
+                                                                {fallbackIcon}
+                                                            </span>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent side="top">{iconLabel}</TooltipContent>
+                                                    </Tooltip>
+                                                    <span>{highlight(item.text)}</span>
+                                                </motion.li>
+                                            )
+                                        })}
+                                    </ul>
+                                </div>
+                            )
+                        })}
+                        {/* Gaps Table */}
+                        <h2 className="text-xl font-bold mt-10 mb-2 font-heading tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>MVP Gaps & Priorities</h2>
+                        <div className="overflow-x-auto rounded-none">
+                            <table className="min-w-full text-sm font-mono border-collapse" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                                <thead>
+                                    <tr className="bg-muted text-gray-700 dark:text-gray-300">
+                                        <th className="px-3 py-2 text-left font-bold">Feature</th>
+                                        <th className="px-3 py-2 text-left font-bold">Priority</th>
+                                        <th className="px-3 py-2 text-left font-bold">Status/Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {parsed.gaps.map((gap: any) => (
+                                        <tr key={gap.feature} className="border-b border-muted last:border-0">
+                                            <td className="px-3 py-2">{gap.feature}</td>
+                                            <td className="px-3 py-2">
+                                                <span className={`inline-block px-2 py-0.5 rounded-none font-mono text-xs font-bold ${gap.priority === 'High' ? 'bg-yellow-200 text-yellow-800' : gap.priority === 'Medium' ? 'bg-blue-100 text-blue-800' : 'bg-gray-200 text-gray-700'}`}>{gap.priority}</span>
+                                            </td>
+                                            <td className="px-3 py-2">{gap.status}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        {/*  */}
+                    </div>
+                </div>
+                {/* Floating Back to Top Button */}
+                <motion.button
+                    type="button"
+                    aria-label="Back to top"
+                    onClick={scrollToTop}
+                    initial={{ opacity: 0, y: 40 }}
+                    animate={showTopBtn ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+                    transition={{ duration: 0.3 }}
+                    className="fixed right-4 bottom-10 z-40 bg-black text-white hover:bg-gray-900 dark:bg-purple-600 dark:hover:bg-purple-700 rounded-none shadow-sm w-11 h-11 min-w-[44px] min-h-[44px] p-0 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 transition-all"
+                    style={{ pointerEvents: showTopBtn ? 'auto' : 'none', borderRadius: 0 }}
+                >
+                    <ArrowUpCircle className="w-6 h-6" />
+                </motion.button>
             </div>
-            {/* Floating Back to Top Button */}
-            <motion.button
-                type="button"
-                aria-label="Back to top"
-                onClick={scrollToTop}
-                initial={{ opacity: 0, y: 40 }}
-                animate={showTopBtn ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
-                transition={{ duration: 0.3 }}
-                className="fixed bottom-24 right-6 z-40 bg-primary text-primary-foreground rounded-none shadow-lg p-3 hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all"
-                style={{ pointerEvents: showTopBtn ? 'auto' : 'none' }}
-            >
-                <ArrowUpCircle className="w-7 h-7" />
-            </motion.button>
+            {/* Sidebar */}
+            <aside className="w-full md:w-80 flex-shrink-0 z-30">
+                <div
+                    className="bg-card/80 dark:bg-card/80 backdrop-blur shadow-sm border-0 p-6 mb-6"
+                    style={{
+                        position: 'sticky',
+                        top: '4rem',
+                        zIndex: 30,
+                        maxHeight: 'calc(100vh - 2rem)',
+                        overflowY: 'auto',
+                    }}
+                >
+                    <h2 className="text-lg font-bold mb-4 font-heading tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                        <Star className="w-5 h-5 text-yellow-500" /> Community Suggestions
+                    </h2>
+                    <button
+                        className="w-full inline-flex items-center gap-2 bg-purple-600 text-white hover:bg-purple-700 font-bold text-sm font-heading px-4 py-2 shadow transition-colors focus-visible:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 mb-4 rounded-none min-h-[44px]"
+                        aria-label="Suggest a feature"
+                        onClick={() => { setShowModal(true); setSubmitMsg(null); }}
+                        style={{ fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '0.01em' }}
+                    >
+                        <PlusCircle className="w-5 h-5" />
+                        <span className="font-heading" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                            Suggest a Feature
+                        </span>
+                    </button>
+                    {/* Suggestion Modal */}
+                    {showModal && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                            <div className="bg-card p-6 shadow-lg w-full max-w-md relative border-0 rounded-none" style={{ borderRadius: 0 }}>
+                                <button
+                                    className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                                    onClick={() => setShowModal(false)}
+                                    aria-label="Close"
+                                    style={{ minWidth: 44, minHeight: 44 }}
+                                >
+                                    <XCircle className="w-6 h-6" />
+                                </button>
+                                <h3 className="text-lg font-bold mb-2 font-heading" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>Suggest a Feature</h3>
+                                <form onSubmit={handleSubmit}>
+                                    <textarea
+                                        className="w-full border border-input bg-background px-3 py-2 focus:border-purple-400 mb-3 min-h-[80px] font-body text-base rounded-none resize-y max-h-40"
+                                        maxLength={500}
+                                        value={suggestionText}
+                                        onChange={e => setSuggestionText(e.target.value)}
+                                        placeholder="What would you like to see?"
+                                        required
+                                        aria-label="Feature suggestion"
+                                        autoFocus
+                                        style={{ fontFamily: 'Manrope, sans-serif', borderRadius: 0, maxHeight: '160px' }}
+                                    />
+                                    <div className="flex items-center justify-between mb-2 text-xs text-muted-foreground font-mono" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                                        <span>{suggestionText.length}/500</span>
+                                        {submitMsg && <span className="text-green-600">{submitMsg}</span>}
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        className="w-full bg-purple-600 text-white hover:bg-purple-700 font-bold py-2 rounded-none min-h-[44px] focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2"
+                                        disabled={submitting || !suggestionText.trim()}
+                                        style={{ fontFamily: 'Space Grotesk, sans-serif', borderRadius: 0 }}
+                                    >
+                                        {submitting ? "Submitting..." : "Submit Suggestion"}
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+                    {loadingSuggestions ? (
+                        <div className="text-muted-foreground text-sm font-body" style={{ fontFamily: 'Manrope, sans-serif' }}>Loading suggestions...</div>
+                    ) : suggestions.length === 0 ? (
+                        <div className="text-muted-foreground text-sm font-body" style={{ fontFamily: 'Manrope, sans-serif' }}>No suggestions yet. Be the first to suggest a feature!</div>
+                    ) : (
+                        <ul className="space-y-4">
+                            {suggestions.map(s => (
+                                <li key={s.id} className="bg-muted/60 p-3 flex flex-col gap-1 border border-muted font-body text-base font-medium text-foreground rounded-none" style={{ fontFamily: 'Manrope, sans-serif', borderRadius: 0 }}>
+                                    <div className="flex flex-col gap-1">
+                                        <div className="flex items-center gap-2">
+                                            <span>{s.content}</span>
+                                            {s.status && (
+                                                <span
+                                                    className={`inline-block px-2 py-0.5 font-mono text-xs font-bold rounded-none ml-2
+                                                        ${s.status === 'pending' ? 'bg-yellow-200 text-yellow-800' :
+                                                            s.status === 'accepted' ? 'bg-green-200 text-green-800' :
+                                                                s.status === 'reviewed' ? 'bg-gray-200 text-gray-700' :
+                                                                    s.status === 'rejected' ? 'bg-red-200 text-red-700' :
+                                                                        'bg-muted text-muted-foreground'}`}
+                                                    style={{ fontFamily: 'JetBrains Mono, monospace', borderRadius: 0 }}
+                                                >
+                                                    {s.status.charAt(0).toUpperCase() + s.status.slice(1)}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1 font-mono" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                                        <button
+                                            className={`flex items-center focus:outline-none focus:ring-2 focus:ring-purple-400 ${userVotes[s.id] === 'up' ? 'text-green-700' : 'text-green-600 opacity-60 hover:opacity-100'} transition`}
+                                            aria-label="Upvote suggestion"
+                                            onClick={() => handleVote(s.id, 'up')}
+                                            disabled={userVotes[s.id] === 'up' || voting[s.id]}
+                                            style={{ minWidth: 32, minHeight: 32 }}
+                                        >
+                                            <ThumbsUp weight="duotone" className="w-4 h-4 mr-1" />{s.votes_up ?? 0}
+                                        </button>
+                                        <button
+                                            className={`flex items-center focus:outline-none focus:ring-2 focus:ring-purple-400 ${userVotes[s.id] === 'down' ? 'text-red-700' : 'text-red-500 opacity-60 hover:opacity-100'} transition`}
+                                            aria-label="Downvote suggestion"
+                                            onClick={() => handleVote(s.id, 'down')}
+                                            disabled={userVotes[s.id] === 'down' || voting[s.id]}
+                                            style={{ minWidth: 32, minHeight: 32 }}
+                                        >
+                                            <ThumbsDown weight="duotone" className="w-4 h-4 mr-1" />{s.votes_down ?? 0}
+                                        </button>
+                                        <span className="ml-auto">{new Date(s.created_at).toLocaleDateString()}</span>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+            </aside>
         </div>
     )
 }

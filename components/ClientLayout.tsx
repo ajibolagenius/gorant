@@ -6,7 +6,7 @@ import { useTheme } from "@/hooks/use-theme"
 import { usePathname } from "next/navigation"
 import Header from "./Header"
 import Link from "next/link"
-import { TrendUp, Trophy, Lightning, Star, House, Bell, Shield, Users, Rocket, Globe } from "@phosphor-icons/react"
+import { TrendUp, Trophy, Lightning, Star, House, Bell, Shield, Users, Rocket, Globe, Info } from "@phosphor-icons/react"
 import { FileText } from "lucide-react"
 import { useNotifications } from "@/hooks/use-notifications"
 import { trackEvent } from "@/lib/self-analytics"
@@ -82,18 +82,15 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             {showFooter && (
                 <footer className="fixed bottom-0 left-0 w-full z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-t border-gray-200 dark:border-gray-700 mt-12 md:block hidden">
                     <div className="container mx-auto px-4 py-4 max-w-7xl">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-gray-500 dark:text-gray-400 text-sm items-center">
-                            {/* Column 1: Branding */}
-                            <div className="text-center md:text-left">
-                                <p>Your thoughts matter. Share them freely.</p>
-                            </div>
-                            {/* Column 2: Navigation Links */}
-                            <div className="flex flex-col md:flex-row justify-center items-center gap-2 md:gap-6">
-                                <Link href="/privacy" className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400"><Shield weight="duotone" className="w-4 h-4" />Privacy</Link>
-                                <Link href="/terms-of-service" className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400"><FileText className="w-4 h-4" />Terms</Link>
-                                <Link href="/guidelines" className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400"><Users weight="duotone" className="w-4 h-4" />Guidelines</Link>
-                                <Link href="/roadmap" className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400"><Rocket weight="duotone" className="w-4 h-4" />Roadmap</Link>
-                                <a href="https://stats.uptimerobot.com/MfSyiPnv5E/800934564" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400 text-green-800">
+                        <div className="flex flex-col items-center justify-center gap-4 text-gray-500 dark:text-gray-400 text-sm">
+                            {/* Centralized Navigation Links */}
+                            <div className="flex flex-wrap justify-center items-center gap-2 md:gap-6">
+                                <Link href="/about" className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400 font-medium"><Info weight="duotone" className="w-4 h-4" />About Us</Link>
+                                <Link href="/privacy" className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400 font-medium"><Shield weight="duotone" className="w-4 h-4" />Privacy</Link>
+                                <Link href="/terms-of-service" className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400 font-medium"><FileText className="w-4 h-4" />Terms</Link>
+                                <Link href="/guidelines" className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400 font-medium"><Users weight="duotone" className="w-4 h-4" />Guidelines</Link>
+                                <Link href="/roadmap" className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400 font-medium"><Rocket weight="duotone" className="w-4 h-4" />Roadmap</Link>
+                                <a href="https://stats.uptimerobot.com/MfSyiPnv5E/800934564" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400 text-green-800 font-medium">
                                     <Globe weight="duotone" className="w-4 h-4" />Status
                                 </a>
                             </div>
@@ -134,6 +131,7 @@ function HamburgerDrawer() {
                         <Link href="/bookmarks" className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/bookmarks" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <Star weight="duotone" className="w-5 h-5" />Bookmarks</Link>
                         <div className="border-t border-gray-200 dark:border-gray-700 my-4" />
                         <span className="text-xs uppercase font-bold text-muted-foreground mb-2 tracking-widest select-none">More</span>
+                        <Link href="/about" className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/about" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <Info weight="duotone" className="w-5 h-5" />About Us</Link>
                         <Link href="/privacy" className="flex items-center gap-3 hover:text-purple-600 dark:hover:text-purple-400 px-3 py-2 rounded-none font-medium text-base"><Shield weight="duotone" className="w-5 h-5" />Privacy</Link>
                         <Link href="/terms-of-service" className="flex items-center gap-3 hover:text-purple-600 dark:hover:text-purple-400 px-3 py-2 rounded-none font-medium text-base"><FileText className="w-5 h-5" />Terms</Link>
                         <Link href="/guidelines" className="flex items-center gap-3 hover:text-purple-600 dark:hover:text-purple-400 px-3 py-2 rounded-none font-medium text-base"><Users weight="duotone" className="w-5 h-5" />Guidelines</Link>
