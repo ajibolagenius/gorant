@@ -18,10 +18,10 @@ In a world where social media often promotes filtered perfection, Rant provides 
 ---
 |                                    |  |
 |--------------------------------------------|-------------|
-| **🧠 Mental Health Crisis:**               | Rising rates of anxiety, depression, and social isolation mean people need safe outlets for emotional expression. |
-| **📸 Social Media Pressure:**              | Traditional platforms create pressure to maintain a perfect image, preventing authentic sharing. |
-| **🙊 Stigma Around Mental Health:**        | Many feel ashamed to discuss struggles, leading to bottled-up emotions and isolation. |
-| **🔒 Lack of Anonymous Support:**          | Existing platforms often require personal identification, preventing truly open expression. |
+| **Mental Health Crisis:**               | Rising rates of anxiety, depression, and social isolation mean people need safe outlets for emotional expression. |
+| **Social Media Pressure:**              | Traditional platforms create pressure to maintain a perfect image, preventing authentic sharing. |
+| **Stigma Around Mental Health:**        | Many feel ashamed to discuss struggles, leading to bottled-up emotions and isolation. |
+| **Lack of Anonymous Support:**          | Existing platforms often require personal identification, preventing truly open expression. |
 ---
 
 ‎
@@ -41,22 +41,22 @@ In a world where social media often promotes filtered perfection, Rant provides 
 
 ## ✨ **Key Features**
 ---
-- **🔒 Complete Anonymity:**
+- **Complete Anonymity:**
   No usernames, no profiles, just pure expression.
 
-- **💬 Supportive Community:**
+- **Supportive Community:**
   Connect with others who understand your experiences through empathetic responses and shared stories.
 
-- **🛡️ Safe Environment:**
+- **Safe Environment:**
   Moderated spaces with community guidelines that prioritize respect and support.
 
-- **📱 Accessible Design:**
+- **Accessible Design:**
   Clean, intuitive interface that works seamlessly across all devices.
 
-- **🎯 Categorized Sharing:**
+- **Categorized Sharing:**
   Organize thoughts by topics, moods, or themes.
 
-- **🤝 Peer Support:**
+- **Peer Support:**
   Give and receive support from people who truly understand.
 ---
 
@@ -66,16 +66,16 @@ In a world where social media often promotes filtered perfection, Rant provides 
 
 ## 👥 **Who We Serve**
 ---
-- **🎓 Students & Young Adults:**
+- **Students & Young Adults:**
   Navigating academic pressure, career uncertainty, and social challenges.
 
-- **💼 Working Professionals:**
+- **Working Professionals:**
   Dealing with workplace stress, burnout, and work-life balance.
 
-- **👨‍👩‍👧‍👦 Parents & Caregivers:**
+- **Parents & Caregivers:**
   Managing the challenges of raising children while maintaining personal well-being.
 
-- **🌍 Anyone Seeking Connection:**
+- **Anyone Seeking Connection:**
   Individuals looking for genuine human connection and understanding.
 ---
 
@@ -98,19 +98,19 @@ Rant bridges this gap by combining the accessibility of social media with the sa
 
 ## 🛠️ **Technology & Approach**
 ---
-- **🔐 Privacy-First Architecture:**
+- **Privacy-First Architecture:**
   Built with anonymity and data protection as core principles.
 
-- **⚡ Real-Time Interaction:**
+- **Real-Time Interaction:**
   Instant sharing and response capabilities for immediate support.
 
-- **📱 Cross-Platform Compatibility:**
+- **Cross-Platform Compatibility:**
   Accessible on web, mobile, and tablet devices.
 
-- **🌐 Scalable Infrastructure:**
+- **Scalable Infrastructure:**
   Designed to grow with our community while maintaining performance.
 
-- **🤖 Content Moderation:**
+- **Content Moderation:**
   AI-assisted and human-moderated content review for safety.
 ---
 

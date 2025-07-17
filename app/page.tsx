@@ -730,7 +730,7 @@ export default function RantApp() {
                                     <SmileySticker className="w-8 h-8 text-purple-600 dark:text-purple-300" weight="duotone" />
                                     <h1 className="text-3xl md:text-4xl font-bold mb-2 font-heading tracking-tight flex items-center gap-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                                         {/* Main header content, e.g., logo/title */}
-                                        Gorant
+                                        ant
                                     </h1>
                                     <Badge className="ml-2 bg-green-500 text-white font-mono text-xs px-2 py-1 rounded-none">Live</Badge>
                                     <span className="text-xs text-muted-foreground ml-4">Press <kbd className="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">?</kbd> for shortcuts</span>
