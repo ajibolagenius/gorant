@@ -107,7 +107,7 @@ export function PostRantModal({ isOpen, onClose, moods, onSubmit }: PostRantModa
                     <DialogTitle className="text-xl font-semibold">Share Your Thoughts</DialogTitle>
                 </DialogHeader>
 
-                <div className="space-y-6 text-base sm:text-base text-sm">
+                <div className="space-y-6 text-sm">
                     {/* Content Input */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
