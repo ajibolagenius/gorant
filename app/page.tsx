@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { createClient } from "@supabase/supabase-js"
+import { supabase } from "@/lib/supabaseClient"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -47,12 +47,6 @@ import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts"
 import { useAnalytics } from "@/hooks/use-analytics"
 
 import { audioService } from "@/services/audio-service"
-
-// Initialize Supabase client with fallback for development
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://your-project.supabase.co"
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "your-anon-key"
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 const MOODS = [
     { icon: SmileySad, emoji: "", label: "Sad", value: "sad", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300" },
@@ -108,105 +102,8 @@ const mockComments: { [key: string]: Comment[] } = {
     ],
 }
 
-// Ensure all mockRants and Rant objects have all required properties
-const mockRants: Rant[] = [
-    {
-        id: "1",
-        content: "Just had the worst day at work. Everything that could go wrong did go wrong. Need to vent somewhere! Sometimes I feel like the universe is conspiring against me. My computer crashed, I spilled coffee on important documents, and my boss was in the worst mood ever.",
-        mood: "angry",
-        created_at: new Date().toISOString(),
-        likes_count: 15,
-        comments_count: 2,
-        anonymous_id: "anon_001",
-        tags: ["work", "stress", "bad-day"],
-        is_trending: true,
-        sentiment_score: -0.7,
-        moderation_status: "approved",
-        reputation_impact: 2,
-        reported: false,
-        moderation_score: 1,
-    },
-    {
-        id: "2",
-        content: "Finally got that promotion I've been working towards for months! So grateful and excited for what's next. Hard work really does pay off! I can't believe it's finally happening. Time to celebrate! 🎉",
-        mood: "excited",
-        created_at: new Date(Date.now() - 3600000).toISOString(),
-        likes_count: 32,
-        comments_count: 2,
-        anonymous_id: "anon_002",
-        tags: ["success", "career", "promotion"],
-        is_trending: true,
-        sentiment_score: 0.9,
-        moderation_status: "approved",
-        reputation_impact: 5,
-        reported: false,
-        moderation_score: 1,
-    },
-    {
-        id: "3",
-        content: "Feeling really anxious about the presentation tomorrow. Public speaking has always been my weakness. My heart is already racing just thinking about it. Any tips for dealing with presentation anxiety?",
-        mood: "anxious",
-        created_at: new Date(Date.now() - 7200000).toISOString(),
-        likes_count: 8,
-        comments_count: 0,
-        anonymous_id: "anon_003",
-        tags: ["anxiety", "presentation", "help"],
-        is_trending: false,
-        sentiment_score: -0.5,
-        moderation_status: "approved",
-        reputation_impact: 1,
-        reported: false,
-        moderation_score: 1,
-    },
-    {
-        id: "4",
-        content: "My dog passed away today. 15 years of unconditional love. I'm going to miss him so much. He was my best friend through everything - college, breakups, job changes. The house feels so empty without him.",
-        mood: "sad",
-        created_at: new Date(Date.now() - 10800000).toISOString(),
-        likes_count: 45,
-        comments_count: 0,
-        anonymous_id: "anon_004",
-        tags: ["loss", "pets", "grief"],
-        is_trending: false,
-        sentiment_score: -0.8,
-        moderation_status: "approved",
-        reputation_impact: 3,
-        reported: false,
-        moderation_score: 1,
-    },
-    {
-        id: "5",
-        content: "Sometimes I wonder what the point of it all is. Life feels so confusing and overwhelming lately. Everything seems to be moving so fast and I can't keep up.",
-        mood: "confused",
-        created_at: new Date(Date.now() - 14400000).toISOString(),
-        likes_count: 12,
-        comments_count: 0,
-        anonymous_id: "anon_005",
-        tags: ["existential", "overwhelmed", "life"],
-        is_trending: false,
-        sentiment_score: -0.3,
-        moderation_status: "approved",
-        reputation_impact: 1,
-        reported: false,
-        moderation_score: 1,
-    },
-    {
-        id: "6",
-        content: "Met someone amazing today. It's rare to feel such a strong connection right away. Maybe this is the start of something special.",
-        mood: "love",
-        created_at: new Date(Date.now() - 18000000).toISOString(),
-        likes_count: 28,
-        comments_count: 0,
-        anonymous_id: "anon_006",
-        tags: ["connection", "relationships", "happiness"],
-        is_trending: false,
-        sentiment_score: 0.8,
-        moderation_status: "approved",
-        reputation_impact: 4,
-        reported: false,
-        moderation_score: 1,
-    },
-]
+// Demo fallback: mockRants is only used if Supabase is not configured (local/dev only)
+// const mockRants: Rant[] = [ ... ]
 
 const FILTER_OPTIONS = [
     { icon: Cloud, label: "Latest", value: "latest" },
@@ -243,7 +140,8 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 }
 
 export default function RantApp() {
-    const [rants, setRants] = useState<Rant[]>(mockRants)
+    // Remove mockRants as initial state for rants
+    const [rants, setRants] = useState<Rant[]>([])
     // Remove filteredRants state, use hook instead
     const [comments, setComments] = useState<{ [key: string]: Comment[] }>(mockComments)
     const [searchQuery, setSearchQuery] = useState("")
@@ -424,40 +322,32 @@ export default function RantApp() {
         }
     }
 
-    // Fetch rants with personalization
+    // Update fetchRants to only use mockRants if Supabase is not configured
     const fetchRants = async () => {
         try {
             if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-                console.warn("Supabase not configured - using mock data")
-                let data = [...mockRants]
-                if (sortFilter === "recommended") {
-                    data = PersonalizationService.getRecommendedRants(data, getAnonymousId(), Array.from(followedTags))
-                }
-                data = data.filter((rant) => !blockedUsers.has(rant.anonymous_id))
-                data = data.map(normalizeRant)
-                setRants(data)
-                // Set rant of the day
-                if (data.length > 0) {
-                    setRantOfTheDay(data.reduce((prev, current) => (prev.likes_count > current.likes_count ? prev : current)))
-                }
+                // Demo mode: use mock data
+                // Only use mockRants in local/dev fallback
+                // setRants(mockRants.map(normalizeRant))
+                setRants([]) // Empty array for production safety
                 setLoading(false)
                 return
             }
-
-            // Supabase implementation would go here
+            // Always use Supabase in production
             const { data, error } = await supabase
                 .from("rants")
-                .select("id, content, mood, created_at, likes_count, comments_count, anonymous_id, tags, is_trending, sentiment_score, moderation_status, reputation_impact, reported, moderation_score")
+                .select("id, content, mood, likes_count, comments_count, anonymous_id, created_at")
                 .order("created_at", { ascending: false })
-
+            // console.log("Supabase rants data:", data)
             if (error) throw error
-
             const safeData = (data || []).map(normalizeRant)
+            // console.log("Normalized rants:", safeData)
             setRants(safeData)
+            setLoading(false)
         } catch (error) {
             console.error("Error fetching rants:", error)
-            toast.error("Failed to load rants - using demo data")
-            setRants(mockRants.map(normalizeRant))
+            toast.error("Failed to load rants from server.")
+            setRants([])
             setLoading(false)
         }
     }

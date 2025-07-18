@@ -3,7 +3,7 @@
  * Provides functions for interacting with analytics data in the database
  */
 
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from './supabaseClient'
 
 // Types for analytics data
 export interface AnalyticsEvent {
@@ -60,17 +60,6 @@ export interface ContentPerformanceMetric {
     actionType: string
     actionCount: number
     uniqueSessions: number
-}
-
-// Initialize Supabase client (you'll need to configure this with your actual credentials)
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-
-let supabase: ReturnType<typeof createClient> | null = null
-
-// Initialize Supabase client only if credentials are available
-if (supabaseUrl && supabaseKey) {
-    supabase = createClient(supabaseUrl, supabaseKey)
 }
 
 /**
