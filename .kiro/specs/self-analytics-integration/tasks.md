@@ -35,7 +35,7 @@
   - Implement mood-based analytics and tag performance tracking
   - _Requirements: 1.1, 1.2, 3.1, 3.2_
 
-- [ ] 6. Create analytics dashboard layout and basic components
+- [x] 6. Create analytics dashboard layout and basic components
   - Create `app/admin/analytics/page.tsx` with dashboard layout
   - Implement basic metrics display components (pageviews, sessions, top pages)
   - Add date range picker and filtering controls
@@ -43,7 +43,7 @@
   - _Requirements: 2.1, 2.2, 2.5_
 
 - [ ] 7. Implement data visualization with charts and metrics
-  - Add chart components using a charting library (Chart.js or Recharts)
+  - Add chart components using a charting library (Chart.js, HighCharts.com or Recharts)
   - Create time series charts for pageviews and user activity
   - Implement content performance charts showing rant engagement by mood
   - Add top pages and user actions visualization with tables and bar charts
