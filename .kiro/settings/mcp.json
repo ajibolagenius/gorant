@@ -10,7 +10,12 @@
       ],
       "env": {
         "SUPABASE_ACCESS_TOKEN": "sbp_2ba81528601fe5017fa97fd223790c65eb708ac4"
-      }
+      },
+      "disabled": false,
+      "autoApprove": [
+        "list_tables",
+        "execute_sql"
+      ]
     }
   }
 }
