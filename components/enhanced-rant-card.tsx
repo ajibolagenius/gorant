@@ -35,7 +35,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import React from "react"
 import { audioService } from "@/services/audio-service"
 import { useNotifications, notificationHelpers } from "@/hooks/use-notifications"
-import { trackEvent } from "@/lib/self-analytics"
+import { useAnalytics } from "@/hooks/use-analytics"
 import { getAnonymousId } from "@/lib/utils"
 
 export interface Comment {
@@ -93,7 +93,7 @@ interface EnhancedRantCardProps {
     feedLayout?: "compact" | "comfortable"
 }
 
-const EnhancedRantCardComponent = ({
+const EnhancedRantCardComponent = React.forwardRef<HTMLDivElement, EnhancedRantCardProps>(({
     rant,
     onLike,
     onBookmark,
@@ -119,7 +119,7 @@ const EnhancedRantCardComponent = ({
     showShare = true,
     recommended = false,
     feedLayout = "comfortable",
-}: EnhancedRantCardProps) => {
+}, ref) => {
     const [showComments, setShowComments] = useState(false)
     const [newComment, setNewComment] = useState("")
     const [isPostingComment, setIsPostingComment] = useState(false)
@@ -130,6 +130,7 @@ const EnhancedRantCardComponent = ({
     const [showRepTooltip, setShowRepTooltip] = useState(false)
     const [commentCooldown, setCommentCooldown] = useState(0)
     const { addNotification } = useNotifications()
+    const { trackUserAction } = useAnalytics()
 
     // Cooldown logic for comments
     useEffect(() => {
@@ -194,17 +195,32 @@ const EnhancedRantCardComponent = ({
     }
 
     const handleFollowTag = (tag: string) => {
+        // Track tag interaction analytics
+        trackUserAction("tag_clicked", {
+            tag,
+            rantId: rant.id,
+            rantMood: rant.mood,
+            tagPosition: rant.tags?.indexOf(tag) || 0,
+            totalTagsInRant: rant.tags?.length || 0
+        })
+
         audioService.playActionSound('tag')
         onFollowTag(tag)
     }
 
     const handleCommentSubmit = async () => {
         if (!newComment.trim() || isPostingComment || commentCooldown > 0) return
-        trackEvent("comment_posted", {
+
+        // Track comment analytics
+        await trackUserAction("comment_posted", {
             rantId: rant.id,
-            contentLength: newComment.length,
-            anonId: getAnonymousId(),
+            rantMood: rant.mood,
+            rantTags: rant.tags,
+            commentLength: newComment.trim().length,
+            rantAge: Math.floor((Date.now() - new Date(rant.created_at).getTime()) / (1000 * 60 * 60)),
+            existingCommentsCount: localComments.length
         })
+
         setIsPostingComment(true)
         try {
             const comment = await onCommentPost(rant.id, newComment.trim())
@@ -227,6 +243,17 @@ const EnhancedRantCardComponent = ({
 
     const handleCommentLike = (commentId: string) => {
         if (likedComments.has(commentId)) return
+
+        const comment = localComments.find(c => c.id === commentId)
+
+        // Track comment like analytics
+        trackUserAction("like_comment", {
+            commentId,
+            rantId: rant.id,
+            rantMood: rant.mood,
+            commentAge: comment ? Math.floor((Date.now() - new Date(comment.created_at).getTime()) / (1000 * 60)) : null,
+            previousLikesCount: comment?.likes_count || 0
+        })
 
         setLikedComments((prev) => new Set([...prev, commentId]))
         setLocalComments((prev) =>
@@ -270,7 +297,11 @@ const EnhancedRantCardComponent = ({
     const MoodIcon = getMoodIcon(rant.mood)
 
     return (
-        <Card className={`shadow-lg bg-card/90 dark:bg-card/90 backdrop-blur-sm group relative rounded-none ${feedLayout === "compact" ? "p-1 text-sm" : "p-3 text-base"}`}>
+        <Card
+            ref={ref}
+            data-rant-id={rant.id}
+            className={`shadow-lg bg-card/90 dark:bg-card/90 backdrop-blur-sm group relative rounded-none ${feedLayout === "compact" ? "p-1 text-sm" : "p-3 text-base"}`}
+        >
             <CardContent className={feedLayout === "compact" ? "pt-2 pb-2" : "pt-3 pb-3"}>
                 <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-2 flex-wrap gap-2">
@@ -573,6 +604,8 @@ const EnhancedRantCardComponent = ({
             </CardContent>
         </Card>
     )
-}
+})
+
+EnhancedRantCardComponent.displayName = "EnhancedRantCard"
 
 export const EnhancedRantCard = React.memo(EnhancedRantCardComponent)

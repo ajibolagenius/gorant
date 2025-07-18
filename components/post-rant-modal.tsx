@@ -11,7 +11,7 @@ import { audioService } from "@/services/audio-service"
 import { useNotifications, notificationHelpers } from "@/hooks/use-notifications"
 import dynamic from "next/dynamic"
 import "react-quill/dist/quill.snow.css"
-import { trackEvent } from "@/lib/self-analytics"
+import { useAnalytics } from "@/hooks/use-analytics"
 import { getAnonymousId } from "@/lib/utils"
 
 interface Mood {
@@ -37,6 +37,7 @@ export function PostRantModal({ isOpen, onClose, moods, onSubmit }: PostRantModa
     const [tagInput, setTagInput] = useState("")
     const [cooldown, setCooldown] = useState(0)
     const { addNotification } = useNotifications()
+    const { trackUserAction } = useAnalytics()
 
     // Cooldown logic
     useEffect(() => {
@@ -57,18 +58,34 @@ export function PostRantModal({ isOpen, onClose, moods, onSubmit }: PostRantModa
 
     const handleSubmit = () => {
         if (!content.trim() || !selectedMood || cooldown > 0) return
-        audioService.playMoodSound(selectedMood)
-        audioService.playActionSound('post')
-        trackEvent("rant_posted", {
+
+        const plainTextContent = content.replace(/<[^>]+>/g, '')
+
+        // Track comprehensive rant posting analytics
+        trackUserAction("rant_posted", {
             mood: selectedMood,
             tags,
-            contentLength: content.replace(/<[^>]+>/g, '').length,
-            anonId: getAnonymousId(),
+            contentLength: plainTextContent.length,
+            wordCount: plainTextContent.split(/\s+/).length,
+            hasFormatting: content !== plainTextContent,
+            tagCount: tags.length,
+            sessionRantCount: parseInt(localStorage.getItem("sessionRantCount") || "0") + 1,
+            timeOfDay: new Date().getHours(),
+            dayOfWeek: new Date().getDay()
         })
+
+        audioService.playMoodSound(selectedMood)
+        audioService.playActionSound('post')
         onSubmit(content.trim(), selectedMood, tags)
+
         // Set cooldown
         localStorage.setItem("lastRantPost", Date.now().toString())
         setCooldown(10)
+
+        // Update session rant count
+        const sessionCount = parseInt(localStorage.getItem("sessionRantCount") || "0") + 1
+        localStorage.setItem("sessionRantCount", sessionCount.toString())
+
         // Trigger achievement notifications (demo)
         const rantCount = parseInt(localStorage.getItem("rantCount") || "0") + 1
         localStorage.setItem("rantCount", rantCount.toString())
@@ -91,7 +108,18 @@ export function PostRantModal({ isOpen, onClose, moods, onSubmit }: PostRantModa
 
     const addTag = () => {
         if (tagInput.trim() && !tags.includes(tagInput.trim()) && tags.length < 5) {
-            setTags([...tags, tagInput.trim().toLowerCase()])
+            const newTag = tagInput.trim().toLowerCase()
+
+            // Track tag addition analytics
+            trackUserAction("tag_added", {
+                tag: newTag,
+                tagPosition: tags.length,
+                totalTags: tags.length + 1,
+                mood: selectedMood || null,
+                contentLength: content.replace(/<[^>]+>/g, '').length
+            })
+
+            setTags([...tags, newTag])
             setTagInput("")
         }
     }
@@ -144,7 +172,15 @@ export function PostRantModal({ isOpen, onClose, moods, onSubmit }: PostRantModa
                                     key={mood.value}
                                     variant={selectedMood === mood.value ? "default" : "outline"}
                                     size="sm"
-                                    onClick={() => setSelectedMood(mood.value)}
+                                    onClick={() => {
+                                        // Track mood selection analytics
+                                        trackUserAction("mood_selected", {
+                                            mood: mood.value,
+                                            previousMood: selectedMood || null,
+                                            contentLength: content.replace(/<[^>]+>/g, '').length
+                                        })
+                                        setSelectedMood(mood.value)
+                                    }}
                                     className={`${selectedMood === mood.value
                                         ? "bg-purple-600 hover:bg-purple-700 text-white"
                                         : "hover:bg-purple-50 dark:hover:bg-purple-900"

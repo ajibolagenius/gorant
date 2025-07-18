@@ -9,7 +9,7 @@ import Link from "next/link"
 import { TrendUp, Trophy, Lightning, Star, House, Bell, Shield, Users, Rocket, Globe, Info } from "@phosphor-icons/react"
 import { FileText } from "lucide-react"
 import { useNotifications } from "@/hooks/use-notifications"
-import { trackEvent } from "@/lib/self-analytics"
+import { useAnalytics } from "@/hooks/use-analytics"
 import { getAnonymousId } from "@/lib/utils"
 import { useState } from "react"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
@@ -24,17 +24,26 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     const pathname = usePathname()
     const showFooter = !pathname.startsWith("/settings")
     const { unreadCount } = useNotifications()
+    const { trackPageView, trackUserAction } = useAnalytics()
 
-    // Pageview analytics tracking
+    // Enhanced pageview analytics tracking
     useEffect(() => {
-        trackEvent("pageview", {
+        // Track pageview with enhanced context
+        trackPageView(pathname)
+
+        // Track additional page context
+        trackUserAction("page_context", {
             page: pathname,
-            anonId: getAnonymousId(),
             referrer: typeof document !== "undefined" ? document.referrer : null,
-            userAgent: typeof navigator !== "undefined" ? navigator.userAgent : null,
-            platform: typeof navigator !== "undefined" ? navigator.platform : null,
+            viewportWidth: typeof window !== "undefined" ? window.innerWidth : null,
+            viewportHeight: typeof window !== "undefined" ? window.innerHeight : null,
+            colorScheme: theme,
+            userLevel: userLevel,
+            timestamp: Date.now(),
+            timeOfDay: new Date().getHours(),
+            dayOfWeek: new Date().getDay()
         })
-    }, [pathname])
+    }, [pathname, theme, userLevel])
 
     // Lenis smooth scrolling integration
     useEffect(() => {
@@ -85,12 +94,12 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                         <div className="flex flex-col items-center justify-center gap-4 text-gray-500 dark:text-gray-400 text-sm">
                             {/* Centralized Navigation Links */}
                             <div className="flex flex-wrap justify-center items-center gap-2 md:gap-6">
-                                <Link href="/about" className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400 font-medium"><Info weight="duotone" className="w-4 h-4" />About Us</Link>
-                                <Link href="/privacy" className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400 font-medium"><Shield weight="duotone" className="w-4 h-4" />Privacy</Link>
-                                <Link href="/terms-of-service" className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400 font-medium"><FileText className="w-4 h-4" />Terms</Link>
-                                <Link href="/guidelines" className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400 font-medium"><Users weight="duotone" className="w-4 h-4" />Guidelines</Link>
-                                <Link href="/roadmap" className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400 font-medium"><Rocket weight="duotone" className="w-4 h-4" />Roadmap</Link>
-                                <a href="https://stats.uptimerobot.com/MfSyiPnv5E/800934564" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400 text-green-800 font-medium">
+                                <Link href="/about" onClick={() => trackUserAction("navigation_click", { destination: "about", source: "footer" })} className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400 font-medium"><Info weight="duotone" className="w-4 h-4" />About Us</Link>
+                                <Link href="/privacy" onClick={() => trackUserAction("navigation_click", { destination: "privacy", source: "footer" })} className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400 font-medium"><Shield weight="duotone" className="w-4 h-4" />Privacy</Link>
+                                <Link href="/terms-of-service" onClick={() => trackUserAction("navigation_click", { destination: "terms", source: "footer" })} className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400 font-medium"><FileText className="w-4 h-4" />Terms</Link>
+                                <Link href="/guidelines" onClick={() => trackUserAction("navigation_click", { destination: "guidelines", source: "footer" })} className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400 font-medium"><Users weight="duotone" className="w-4 h-4" />Guidelines</Link>
+                                <Link href="/roadmap" onClick={() => trackUserAction("navigation_click", { destination: "roadmap", source: "footer" })} className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400 font-medium"><Rocket weight="duotone" className="w-4 h-4" />Roadmap</Link>
+                                <a href="https://stats.uptimerobot.com/MfSyiPnv5E/800934564" target="_blank" rel="noopener noreferrer" onClick={() => trackUserAction("external_link_click", { destination: "status_page", source: "footer" })} className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400 text-green-800 font-medium">
                                     <Globe weight="duotone" className="w-4 h-4" />Status
                                 </a>
                             </div>
@@ -124,18 +133,18 @@ function HamburgerDrawer() {
                 <div className="h-full overflow-y-auto">
                     <nav className="flex flex-col gap-2 p-6">
                         <span className="text-xs uppercase font-bold text-muted-foreground mb-2 tracking-widest select-none">Navigation</span>
-                        <Link href="/" className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <House weight="duotone" className="w-5 h-5" />Feed</Link>
-                        <Link href="/trending" className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/trending" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <TrendUp weight="duotone" className="w-5 h-5" />Trending</Link>
-                        <Link href="/challenges" className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/challenges" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <Trophy weight="duotone" className="w-5 h-5" />Challenges</Link>
-                        <Link href="/leaderboard" className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/leaderboard" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <Lightning weight="duotone" className="w-5 h-5" />Leaderboard</Link>
-                        <Link href="/bookmarks" className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/bookmarks" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <Star weight="duotone" className="w-5 h-5" />Bookmarks</Link>
+                        <Link href="/" onClick={() => trackUserAction("navigation_click", { destination: "feed", source: "mobile_nav" })} className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <House weight="duotone" className="w-5 h-5" />Feed</Link>
+                        <Link href="/trending" onClick={() => trackUserAction("navigation_click", { destination: "trending", source: "mobile_nav" })} className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/trending" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <TrendUp weight="duotone" className="w-5 h-5" />Trending</Link>
+                        <Link href="/challenges" onClick={() => trackUserAction("navigation_click", { destination: "challenges", source: "mobile_nav" })} className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/challenges" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <Trophy weight="duotone" className="w-5 h-5" />Challenges</Link>
+                        <Link href="/leaderboard" onClick={() => trackUserAction("navigation_click", { destination: "leaderboard", source: "mobile_nav" })} className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/leaderboard" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <Lightning weight="duotone" className="w-5 h-5" />Leaderboard</Link>
+                        <Link href="/bookmarks" onClick={() => trackUserAction("navigation_click", { destination: "bookmarks", source: "mobile_nav" })} className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/bookmarks" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <Star weight="duotone" className="w-5 h-5" />Bookmarks</Link>
                         <div className="border-t border-gray-200 dark:border-gray-700 my-4" />
                         <span className="text-xs uppercase font-bold text-muted-foreground mb-2 tracking-widest select-none">More</span>
-                        <Link href="/about" className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/about" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <Info weight="duotone" className="w-5 h-5" />About Us</Link>
-                        <Link href="/privacy" className="flex items-center gap-3 hover:text-purple-600 dark:hover:text-purple-400 px-3 py-2 rounded-none font-medium text-base"><Shield weight="duotone" className="w-5 h-5" />Privacy</Link>
-                        <Link href="/terms-of-service" className="flex items-center gap-3 hover:text-purple-600 dark:hover:text-purple-400 px-3 py-2 rounded-none font-medium text-base"><FileText className="w-5 h-5" />Terms</Link>
-                        <Link href="/guidelines" className="flex items-center gap-3 hover:text-purple-600 dark:hover:text-purple-400 px-3 py-2 rounded-none font-medium text-base"><Users weight="duotone" className="w-5 h-5" />Guidelines</Link>
-                        <Link href="/roadmap" className="flex items-center gap-3 hover:text-purple-600 dark:hover:text-purple-400 px-3 py-2 rounded-none font-medium text-base"><Rocket weight="duotone" className="w-5 h-5" />Roadmap</Link>
+                        <Link href="/about" onClick={() => trackUserAction("navigation_click", { destination: "about", source: "mobile_nav" })} className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/about" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <Info weight="duotone" className="w-5 h-5" />About Us</Link>
+                        <Link href="/privacy" onClick={() => trackUserAction("navigation_click", { destination: "privacy", source: "mobile_nav" })} className="flex items-center gap-3 hover:text-purple-600 dark:hover:text-purple-400 px-3 py-2 rounded-none font-medium text-base"><Shield weight="duotone" className="w-5 h-5" />Privacy</Link>
+                        <Link href="/terms-of-service" onClick={() => trackUserAction("navigation_click", { destination: "terms", source: "mobile_nav" })} className="flex items-center gap-3 hover:text-purple-600 dark:hover:text-purple-400 px-3 py-2 rounded-none font-medium text-base"><FileText className="w-5 h-5" />Terms</Link>
+                        <Link href="/guidelines" onClick={() => trackUserAction("navigation_click", { destination: "guidelines", source: "mobile_nav" })} className="flex items-center gap-3 hover:text-purple-600 dark:hover:text-purple-400 px-3 py-2 rounded-none font-medium text-base"><Users weight="duotone" className="w-5 h-5" />Guidelines</Link>
+                        <Link href="/roadmap" onClick={() => trackUserAction("navigation_click", { destination: "roadmap", source: "mobile_nav" })} className="flex items-center gap-3 hover:text-purple-600 dark:hover:text-purple-400 px-3 py-2 rounded-none font-medium text-base"><Rocket weight="duotone" className="w-5 h-5" />Roadmap</Link>
                         <a href="https://stats.uptimerobot.com/MfSyiPnv5E/800934564" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:text-purple-600 dark:hover:text-purple-400 text-green-800 px-3 py-2 rounded-none font-medium text-base">
                             <Globe weight="duotone" className="w-5 h-5" />Status
                         </a>

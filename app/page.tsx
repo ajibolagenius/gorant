@@ -44,7 +44,7 @@ import { FixedSizeList as VirtualizedList, ListChildComponentProps } from "react
 import React from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts"
-
+import { useAnalytics } from "@/hooks/use-analytics"
 
 import { audioService } from "@/services/audio-service"
 
@@ -295,6 +295,7 @@ export default function RantApp() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const pathname = usePathname()
+    const { trackEvent, trackPageView, trackUserAction } = useAnalytics()
 
 
     // Initialize state from URL on mount
@@ -316,6 +317,25 @@ export default function RantApp() {
         const query = params.toString()
         router.replace(query ? `/?${query}` : "/", { scroll: false })
     }, [searchQuery, moodFilter, sortFilter])
+
+    // Track filter changes
+    useEffect(() => {
+        if (moodFilter) {
+            trackUserAction("filter_by_mood", {
+                mood: moodFilter,
+                resultsCount: rants.filter(r => r.mood === moodFilter).length
+            })
+        }
+    }, [moodFilter])
+
+    useEffect(() => {
+        if (sortFilter && sortFilter !== "latest") {
+            trackUserAction("change_sort", {
+                sortType: sortFilter,
+                previousSort: "latest" // Could track previous sort if needed
+            })
+        }
+    }, [sortFilter])
 
     // Load settings from localStorage on mount
     useEffect(() => {
@@ -373,7 +393,18 @@ export default function RantApp() {
     // Advanced search with suggestions
     const handleSearchChange = (query: string) => {
         setSearchQuery(query)
+
+        // Track search analytics
         if (query.length >= 2) {
+            trackUserAction("search", {
+                query: query.toLowerCase(),
+                queryLength: query.length,
+                resultsCount: rants.filter(r =>
+                    r.content.toLowerCase().includes(query.toLowerCase()) ||
+                    r.tags?.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
+                ).length
+            })
+
             const suggestions = [
                 ...new Set([
                     ...rants
@@ -466,10 +497,22 @@ export default function RantApp() {
         }
 
         try {
+            const rant = rants.find(r => r.id === rantId)
+
             setLikedRants((prev) => new Set([...prev, rantId]))
             setRants((prev) =>
                 prev.map((rant) => (rant.id === rantId ? { ...rant, likes_count: rant.likes_count + 1 } : rant)),
             )
+
+            // Track analytics for like action
+            await trackUserAction("like_rant", {
+                rantId,
+                rantMood: rant?.mood,
+                rantTags: rant?.tags,
+                rantAge: rant ? Math.floor((Date.now() - new Date(rant.created_at).getTime()) / (1000 * 60 * 60)) : null, // hours
+                previousLikesCount: rant?.likes_count || 0,
+                userTotalLikes: likedRants.size + 1
+            })
 
             // Add points for liking
             addPoints(1, "like")
@@ -493,12 +536,21 @@ export default function RantApp() {
 
     // Block user function
     const blockUser = (userId: string) => {
+        // Track block user analytics
+        trackUserAction("block_user", {
+            blockedUserId: userId,
+            userTotalBlocked: blockedUsers.size + 1,
+            triggerContext: "rant_card_menu"
+        })
+
         setBlockedUsers((prev) => new Set([...prev, userId]))
         toast.success("User blocked successfully")
     }
 
     // Follow tag function
     const followTag = (tag: string) => {
+        const isCurrentlyFollowed = followedTags.has(tag)
+
         setFollowedTags((prev) => {
             const newSet = new Set(prev)
             if (newSet.has(tag)) {
@@ -510,6 +562,13 @@ export default function RantApp() {
             }
             return newSet
         })
+
+        // Track analytics for tag follow/unfollow
+        trackUserAction(isCurrentlyFollowed ? "unfollow_tag" : "follow_tag", {
+            tag,
+            userTotalFollowedTags: isCurrentlyFollowed ? followedTags.size - 1 : followedTags.size + 1,
+            tagPopularity: rants.filter(r => r.tags?.includes(tag)).length
+        })
     }
 
     // Share rant function
@@ -519,6 +578,15 @@ export default function RantApp() {
             text: rant.content.substring(0, 100) + "...",
             url: `${window.location.origin}/rant/${rant.id}`,
         }
+
+        // Track analytics for share action
+        await trackUserAction("share_rant", {
+            rantId: rant.id,
+            rantMood: rant.mood,
+            rantTags: rant.tags,
+            shareMethod: navigator.share ? "native_share" : "clipboard",
+            rantAge: Math.floor((Date.now() - new Date(rant.created_at).getTime()) / (1000 * 60 * 60))
+        })
 
         if (navigator.share) {
             try {
@@ -537,6 +605,9 @@ export default function RantApp() {
 
     // Toggle bookmark
     const toggleBookmark = (rantId: string) => {
+        const rant = rants.find(r => r.id === rantId)
+        const isCurrentlyBookmarked = bookmarkedRants.has(rantId)
+
         setBookmarkedRants((prev) => {
             const newSet = new Set(prev)
             if (newSet.has(rantId)) {
@@ -549,12 +620,69 @@ export default function RantApp() {
             }
             return newSet
         })
+
+        // Track analytics for bookmark action
+        trackUserAction(isCurrentlyBookmarked ? "unbookmark_rant" : "bookmark_rant", {
+            rantId,
+            rantMood: rant?.mood,
+            rantTags: rant?.tags,
+            rantAge: rant ? Math.floor((Date.now() - new Date(rant.created_at).getTime()) / (1000 * 60 * 60)) : null,
+            userTotalBookmarks: isCurrentlyBookmarked ? bookmarkedRants.size - 1 : bookmarkedRants.size + 1
+        })
     }
 
     // Report rant
     const reportRant = (rantId: string, reason: string) => {
+        const rant = rants.find(r => r.id === rantId)
+
+        // Track report analytics
+        trackUserAction("report_rant", {
+            rantId,
+            reason,
+            rantMood: rant?.mood,
+            rantTags: rant?.tags,
+            rantAge: rant ? Math.floor((Date.now() - new Date(rant.created_at).getTime()) / (1000 * 60 * 60)) : null,
+            reporterTotalReports: parseInt(localStorage.getItem("totalReports") || "0") + 1
+        })
+
+        // Update local report count
+        const totalReports = parseInt(localStorage.getItem("totalReports") || "0") + 1
+        localStorage.setItem("totalReports", totalReports.toString())
+
         toast.success("Rant reported. Thank you for helping keep our community safe.")
     }
+
+    // Track content performance metrics
+    useEffect(() => {
+        if (rants.length > 0) {
+            // Track content performance analytics
+            const moodDistribution = rants.reduce((acc, rant) => {
+                acc[rant.mood] = (acc[rant.mood] || 0) + 1
+                return acc
+            }, {} as Record<string, number>)
+
+            const tagDistribution = rants.reduce((acc, rant) => {
+                rant.tags?.forEach(tag => {
+                    acc[tag] = (acc[tag] || 0) + 1
+                })
+                return acc
+            }, {} as Record<string, number>)
+
+            const engagementMetrics = {
+                totalRants: rants.length,
+                averageLikes: rants.reduce((sum, r) => sum + r.likes_count, 0) / rants.length,
+                averageComments: rants.reduce((sum, r) => sum + r.comments_count, 0) / rants.length,
+                trendingCount: rants.filter(r => r.is_trending).length,
+                moodDistribution,
+                topTags: Object.entries(tagDistribution)
+                    .sort(([, a], [, b]) => b - a)
+                    .slice(0, 10)
+                    .map(([tag, count]) => ({ tag, count }))
+            }
+
+            trackEvent("content_performance", engagementMetrics)
+        }
+    }, [rants])
 
     // Initial load
     useEffect(() => {
@@ -601,6 +729,98 @@ export default function RantApp() {
         }
     }, [keyboardShortcuts])
 
+    // Track session analytics
+    useEffect(() => {
+        const sessionStart = Date.now()
+        const sessionId = `session_${sessionStart}_${Math.random().toString(36).substr(2, 9)}`
+
+        // Track session start
+        trackEvent("session_start", {
+            sessionId,
+            userLevel,
+            theme,
+            fontSize,
+            screenReaderMode,
+            keyboardShortcuts,
+            defaultSort,
+            feedLayout
+        })
+
+        // Track session activity periodically
+        const activityInterval = setInterval(() => {
+            trackEvent("session_activity", {
+                sessionId,
+                timeSpent: Math.floor((Date.now() - sessionStart) / 1000),
+                rantsViewed: filteredRants.length,
+                currentPage: pathname,
+                scrollPosition: window.scrollY
+            })
+        }, 30000) // Every 30 seconds
+
+        // Track session end on page unload
+        const handleBeforeUnload = () => {
+            trackEvent("session_end", {
+                sessionId,
+                totalTimeSpent: Math.floor((Date.now() - sessionStart) / 1000),
+                rantsViewed: filteredRants.length,
+                actionsPerformed: {
+                    likes: likedRants.size,
+                    bookmarks: bookmarkedRants.size,
+                    followedTags: followedTags.size
+                }
+            })
+        }
+
+        window.addEventListener('beforeunload', handleBeforeUnload)
+
+        return () => {
+            clearInterval(activityInterval)
+            window.removeEventListener('beforeunload', handleBeforeUnload)
+            handleBeforeUnload() // Track session end on component unmount
+        }
+    }, []) // Empty dependency array to run only once
+
+    // Track rant visibility with Intersection Observer
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    const rantId = entry.target.getAttribute('data-rant-id')
+                    if (!rantId) return
+
+                    if (entry.isIntersecting && !visibleRants.has(rantId)) {
+                        setVisibleRants(prev => new Set([...prev, rantId]))
+
+                        const rant = rants.find(r => r.id === rantId)
+                        if (rant) {
+                            // Track rant view
+                            trackUserAction("rant_viewed", {
+                                rantId,
+                                rantMood: rant.mood,
+                                rantTags: rant.tags,
+                                rantAge: Math.floor((Date.now() - new Date(rant.created_at).getTime()) / (1000 * 60 * 60)),
+                                likesCount: rant.likes_count,
+                                commentsCount: rant.comments_count,
+                                viewportPosition: entry.boundingClientRect.top,
+                                scrollPosition: window.scrollY
+                            })
+                        }
+                    }
+                })
+            },
+            { threshold: 0.5 } // Trigger when 50% of the rant is visible
+        )
+
+        // Observe all rant elements
+        rantRefs.current.forEach((element) => {
+            observer.observe(element)
+        })
+
+        return () => {
+            observer.disconnect()
+        }
+    }, [filteredRants, rants, trackUserAction]) // Remove visibleRants from dependencies to avoid circular dependency
+
     const getMoodIcon = (mood: string) => {
         return MOODS.find((m) => m.value === mood)?.icon || SmileyMeh
     }
@@ -626,6 +846,10 @@ export default function RantApp() {
     const [selectedRantIndex, setSelectedRantIndex] = useState(0)
     const searchInputRef = useRef<HTMLInputElement>(null)
     const [showShortcutsHelp, setShowShortcutsHelp] = useState(false)
+
+    // Track rant visibility
+    const [visibleRants, setVisibleRants] = useState<Set<string>>(new Set())
+    const rantRefs = useRef<Map<string, HTMLElement>>(new Map())
 
     // Keyboard shortcut handlers
     useKeyboardShortcuts({
@@ -994,6 +1218,13 @@ export default function RantApp() {
                                     {filteredRants.map((rant, index) => (
                                         <React.Fragment key={rant.id}>
                                             <EnhancedRantCard
+                                                ref={(el) => {
+                                                    if (el) {
+                                                        rantRefs.current.set(rant.id, el)
+                                                    } else {
+                                                        rantRefs.current.delete(rant.id)
+                                                    }
+                                                }}
                                                 rant={rant}
                                                 onLike={likeRant}
                                                 onBookmark={toggleBookmark}

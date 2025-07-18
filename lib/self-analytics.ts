@@ -1,4 +1,5 @@
 import { AnalyticsDB, type AnalyticsEvent } from './analytics-db'
+import { AnalyticsAPI } from './analytics-api'
 
 export type { AnalyticsEvent }
 
@@ -128,17 +129,8 @@ class AnalyticsService {
                 return false
             }
 
-            const response = await fetch('/api/analytics', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ events }),
-            })
-
-            if (!response.ok) {
-                throw new Error(`Analytics API error: ${response.status}`)
-            }
-
-            return true
+            const result = await AnalyticsAPI.trackEvents(events)
+            return result.success && result.stored !== false
         } catch (err) {
             if (retryCount < this.config.maxRetries) {
                 // Exponential backoff
