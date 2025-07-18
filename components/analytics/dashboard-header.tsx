@@ -2,7 +2,7 @@
 
 import React, { memo } from 'react'
 import { Button } from "@/components/ui/button"
-import { ArrowClockwise } from "@phosphor-icons/react"
+import { ArrowClockwise } from "@phosphor-icons/react/dist/ssr"
 import { DateRangePicker } from "./date-range-picker"
 import { cn } from "@/lib/utils"
 

@@ -4,7 +4,8 @@ import React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ChartBar } from "@phosphor-icons/react"
+import { ChartBar } from "@phosphor-icons/react/dist/ssr"
+import { cn } from "@/lib/utils"
 
 interface TopPagesTableProps {
     data: Array<{
@@ -19,7 +20,7 @@ interface TopPagesTableProps {
 export function TopPagesTable({ data, loading, className }: TopPagesTableProps) {
     if (loading) {
         return (
-            <Card className={`bg-card/80 dark:bg-card/80 backdrop-blur shadow-sm border-0 ${className || ''}`}>
+            <Card className={cn("bg-card/80 dark:bg-card/80 backdrop-blur shadow-sm border-0", className)}>
                 <CardHeader>
                     <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
                         Top Pages
@@ -43,7 +44,7 @@ export function TopPagesTable({ data, loading, className }: TopPagesTableProps) 
     }
 
     return (
-        <Card className={`bg-card/80 dark:bg-card/80 backdrop-blur shadow-sm border-0 ${className || ''}`}>
+        <Card className={cn("bg-card/80 dark:bg-card/80 backdrop-blur shadow-sm border-0", className)}>
             <CardHeader>
                 <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
                     Top Pages

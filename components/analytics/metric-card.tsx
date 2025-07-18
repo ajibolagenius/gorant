@@ -3,7 +3,7 @@
 import React, { memo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { TrendUp } from "@phosphor-icons/react"
+import { TrendUp } from "@phosphor-icons/react/dist/ssr"
 import { cn } from "@/lib/utils"
 
 interface MetricCardProps {

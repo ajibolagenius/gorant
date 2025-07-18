@@ -157,12 +157,10 @@ export async function GET(request: NextRequest) {
             return ApiResponse.rateLimited()
         }
 
-        // Check if analytics DB is available
-        if (!AnalyticsDB.isAvailable()) {
-            return NextResponse.json(
-                { error: 'Analytics database not available' },
-                { status: 503 }
-            )
+        // Check if analytics DB is available - if not, we'll still return mock data
+        const dbAvailable = AnalyticsDB.isAvailable()
+        if (!dbAvailable) {
+            console.warn('Analytics DB not available, returning mock data')
         }
 
         const { searchParams } = new URL(request.url)

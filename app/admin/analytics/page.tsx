@@ -1,8 +1,9 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ChartBar, Eye, Users, Activity, TrendUp } from "@phosphor-icons/react"
+import { ChartBar, Eye, Users, Lightning, TrendUp } from "@phosphor-icons/react/dist/ssr"
 import { subDays } from "date-fns"
 import { useDashboardData } from "@/hooks/use-dashboard-data"
 import { DashboardHeader } from "@/components/analytics/dashboard-header"
@@ -21,12 +22,19 @@ export default function AnalyticsDashboard() {
     })
     const { data: dashboardData, loading, refreshing, error, refetch } = useDashboardData(dateRange)
 
-    const handleDateRangeChange = (range: DateRange) => {
+    const handleDateRangeChange = useCallback((range: DateRange) => {
         setDateRange(range)
-    }
+    }, [])
+
+    const metrics = useMemo(() => ({
+        totalPageViews: dashboardData?.metrics?.totalPageViews ?? 0,
+        uniqueSessions: dashboardData?.metrics?.uniqueSessions ?? 0,
+        totalEvents: dashboardData?.metrics?.totalEvents ?? 0,
+        avgSessionDuration: dashboardData?.metrics?.avgSessionDuration ?? "0m"
+    }), [dashboardData?.metrics])
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-background" role="main" aria-label="Analytics Dashboard">
             <DashboardHeader
                 dateRange={dateRange}
                 onDateRangeChange={handleDateRangeChange}
@@ -37,43 +45,56 @@ export default function AnalyticsDashboard() {
             <div className="container mx-auto px-4 py-6 max-w-7xl">
                 {error && (
                     <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                        <p className="text-red-800 dark:text-red-200 font-medium">Error loading analytics data</p>
-                        <p className="text-red-600 dark:text-red-300 text-sm mt-1">{error}</p>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-red-800 dark:text-red-200 font-medium">Error loading analytics data</p>
+                                <p className="text-red-600 dark:text-red-300 text-sm mt-1">{error}</p>
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={refetch}
+                                disabled={refreshing}
+                                className="text-red-700 dark:text-red-300 border-red-300 dark:border-red-700"
+                            >
+                                Try Again
+                            </Button>
+                        </div>
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" aria-label="Key Metrics">
                     <MetricCard
                         title="Total Page Views"
-                        value={dashboardData?.metrics?.totalPageViews ?? 0}
+                        value={metrics.totalPageViews}
                         description="Pages viewed in selected period"
                         icon={<Eye weight="duotone" className="h-4 w-4" />}
                         loading={loading}
                     />
                     <MetricCard
                         title="Unique Sessions"
-                        value={dashboardData?.metrics?.uniqueSessions ?? 0}
+                        value={metrics.uniqueSessions}
                         description="Individual user sessions"
                         icon={<Users weight="duotone" className="h-4 w-4" />}
                         loading={loading}
                     />
                     <MetricCard
                         title="Total Events"
-                        value={dashboardData?.metrics?.totalEvents ?? 0}
+                        value={metrics.totalEvents}
                         description="User interactions tracked"
-                        icon={<Activity weight="duotone" className="h-4 w-4" />}
+                        icon={<Lightning weight="duotone" className="h-4 w-4" />}
                         loading={loading}
                     />
                     <MetricCard
                         title="Avg Session Duration"
-                        value={dashboardData?.metrics?.avgSessionDuration ?? "0m"}
+                        value={metrics.avgSessionDuration}
                         description="Average time per session"
                         icon={<TrendUp weight="duotone" className="h-4 w-4" />}
                         loading={loading}
                     />
-                </div>
+                </section>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <section className="grid grid-cols-1 lg:grid-cols-2 gap-6" aria-label="Detailed Analytics">
                     <TopPagesTable
                         data={dashboardData?.topPages || []}
                         loading={loading}
@@ -96,7 +117,7 @@ export default function AnalyticsDashboard() {
                             </div>
                         </CardContent>
                     </Card>
-                </div>
+                </section>
             </div>
         </div>
     )
