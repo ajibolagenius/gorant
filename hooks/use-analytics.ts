@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useMemo } from 'react'
 import { useSettings } from './use-settings'
-import { analyticsService, AnalyticsEvent } from '@/lib/self-analytics'
+import { analyticsService } from '@/lib/self-analytics'
+import { AnalyticsValidator } from '@/lib/analytics-validation'
 
 export interface AnalyticsHook {
     trackEvent: (type: string, details?: Record<string, unknown>) => Promise<void>
@@ -34,51 +35,15 @@ export function useAnalytics(): AnalyticsHook {
     }, [])
 
     const validateEventType = useCallback((type: string): boolean => {
-        // Validate event type format
-        if (!type || typeof type !== 'string') {
-            if (process.env.NODE_ENV === 'development') {
-                console.warn('Analytics: Invalid event type provided')
-            }
-            return false
+        const result = AnalyticsValidator.validateEventType(type)
+        if (!result.isValid && process.env.NODE_ENV === 'development') {
+            console.warn(`Analytics: ${result.error}`)
         }
-
-        // Check for valid event type format (alphanumeric, underscore, hyphen)
-        const validFormat = /^[a-zA-Z0-9_-]+$/.test(type)
-        if (!validFormat) {
-            if (process.env.NODE_ENV === 'development') {
-                console.warn('Analytics: Event type must contain only alphanumeric characters, underscores, and hyphens')
-            }
-            return false
-        }
-
-        return true
+        return result.isValid
     }, [])
 
     const sanitizeDetails = useCallback((details: Record<string, unknown> = {}): Record<string, unknown> => {
-        const sanitized = { ...details }
-
-        // Remove functions and undefined values
-        Object.keys(sanitized).forEach(key => {
-            if (typeof sanitized[key] === 'function' || sanitized[key] === undefined) {
-                delete sanitized[key]
-            }
-        })
-
-        // Limit object depth to prevent circular references
-        const limitDepth = (obj: unknown, depth = 0): unknown => {
-            if (depth > 3) return '[Object too deep]'
-            if (obj === null || typeof obj !== 'object') return obj
-
-            const limited: Record<string, unknown> = Array.isArray(obj) ? {} : {}
-            for (const key in obj as Record<string, unknown>) {
-                if (Object.prototype.hasOwnProperty.call(obj, key)) {
-                    limited[key] = limitDepth((obj as Record<string, unknown>)[key], depth + 1)
-                }
-            }
-            return limited
-        }
-
-        return limitDepth(sanitized) as Record<string, unknown>
+        return AnalyticsValidator.sanitizeDetails(details)
     }, [])
 
     const trackEvent = useCallback(async (type: string, details: Record<string, unknown> = {}): Promise<void> => {
@@ -144,7 +109,7 @@ export function useAnalytics(): AnalyticsHook {
         }
     }, [privacy.shareAnalytics, validateEventType, sanitizeDetails])
 
-    const isEnabled = useCallback((): boolean => {
+    const isEnabled = useMemo((): boolean => {
         return privacy.shareAnalytics && analyticsService.isEnabled()
     }, [privacy.shareAnalytics])
 

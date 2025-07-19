@@ -42,16 +42,69 @@ export interface DashboardData {
         actionCount: number
         uniqueSessions: number
     }>
+    trendingTopics?: Array<{
+        topic: string
+        mentions: number
+        growth: number
+        sentiment: 'positive' | 'negative' | 'neutral'
+    }>
+    popularMoods?: Array<{
+        mood: string
+        count: number
+        percentage: number
+        trend: 'up' | 'down' | 'stable'
+        color: string
+    }>
+    userBehavior?: {
+        userFlow: Array<{
+            from: string
+            to: string
+            users: number
+            percentage: number
+            dropOffRate: number
+        }>
+        peakUsageTimes: Array<{
+            hour: number
+            day: string
+            users: number
+            events: number
+            label: string
+        }>
+        sessionPatterns: Array<{
+            pattern: string
+            count: number
+            avgDuration: string
+            bounceRate: number
+            description: string
+        }>
+        conversionFunnels: Array<{
+            step: string
+            users: number
+            conversionRate: number
+            dropOff: number
+        }>
+    }
+    moderationStats?: Array<{
+        action: string
+        count: number
+        contentType: string
+        reason: string
+    }>
 }
 
 export interface DashboardQueryParams {
     startDate?: string
     endDate?: string
     eventType?: string
+    eventTypes?: string[]
     page?: string
+    contentCategories?: string[]
+    moodTypes?: string[]
+    pageTypes?: string[]
+    sessionTypes?: string[]
     limit?: number
     intervalType?: 'hour' | 'day' | 'week'
-    endpoint?: 'metrics' | 'top-pages' | 'event-counts' | 'time-series' | 'content-performance'
+    endpoint?: 'metrics' | 'top-pages' | 'event-counts' | 'time-series' | 'content-performance' | 'trending-topics' | 'popular-moods' | 'user-behavior' | 'moderation-stats'
 }
 
 /**
@@ -208,6 +261,110 @@ export class AnalyticsAPI {
             startDate,
             endDate
         })
+    }
+
+    /**
+     * Get trending topics
+     */
+    static async getTrendingTopics(startDate?: string, endDate?: string) {
+        return this.getDashboardData({
+            endpoint: 'trending-topics',
+            startDate,
+            endDate
+        })
+    }
+
+    /**
+     * Get popular moods
+     */
+    static async getPopularMoods(startDate?: string, endDate?: string) {
+        return this.getDashboardData({
+            endpoint: 'popular-moods',
+            startDate,
+            endDate
+        })
+    }
+
+    /**
+     * Get user behavior data
+     */
+    static async getUserBehavior(startDate?: string, endDate?: string) {
+        return this.getDashboardData({
+            endpoint: 'user-behavior',
+            startDate,
+            endDate
+        })
+    }
+
+    /**
+     * Get moderation statistics
+     */
+    static async getModerationStats(startDate?: string, endDate?: string) {
+        return this.getDashboardData({
+            endpoint: 'moderation-stats',
+            startDate,
+            endDate
+        })
+    }
+
+    /**
+     * Get filtered dashboard data
+     */
+    static async getFilteredDashboardData(params: DashboardQueryParams) {
+        return this.getDashboardData(params)
+    }
+
+    /**
+     * Get comprehensive dashboard data with all analytics
+     */
+    static async getDashboardDataComplete(params?: {
+        startDate?: string
+        endDate?: string
+        includeTimeSeries?: boolean
+        includeContentPerformance?: boolean
+        includeEventCounts?: boolean
+        includeTrendingTopics?: boolean
+        includePopularMoods?: boolean
+        includeUserBehavior?: boolean
+        includeModerationStats?: boolean
+    }) {
+        try {
+            const searchParams = new URLSearchParams()
+
+            if (params?.startDate) searchParams.append('startDate', params.startDate)
+            if (params?.endDate) searchParams.append('endDate', params.endDate)
+
+            // Add flags for what data to include
+            if (params?.includeTimeSeries) searchParams.append('includeTimeSeries', 'true')
+            if (params?.includeContentPerformance) searchParams.append('includeContentPerformance', 'true')
+            if (params?.includeEventCounts) searchParams.append('includeEventCounts', 'true')
+            if (params?.includeTrendingTopics) searchParams.append('includeTrendingTopics', 'true')
+            if (params?.includePopularMoods) searchParams.append('includePopularMoods', 'true')
+            if (params?.includeUserBehavior) searchParams.append('includeUserBehavior', 'true')
+            if (params?.includeModerationStats) searchParams.append('includeModerationStats', 'true')
+
+            const url = searchParams.toString()
+                ? `${this.baseUrl}?${searchParams.toString()}`
+                : this.baseUrl
+
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+
+            if (!response.ok) {
+                console.error(`Dashboard API error: ${response.status}`)
+                return null
+            }
+
+            const result = await response.json()
+            return result.data
+        } catch (error) {
+            console.error('Dashboard API request failed:', error)
+            return null
+        }
     }
 
     /**

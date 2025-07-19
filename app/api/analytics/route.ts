@@ -25,9 +25,21 @@ const DashboardQuerySchema = z.object({
     startDate: z.string().datetime().optional().nullable(),
     endDate: z.string().datetime().optional().nullable(),
     eventType: z.string().optional().nullable(),
+    eventTypes: z.array(z.string()).optional().nullable(),
     page: z.string().optional().nullable(),
+    contentCategories: z.array(z.string()).optional().nullable(),
+    moodTypes: z.array(z.string()).optional().nullable(),
+    pageTypes: z.array(z.string()).optional().nullable(),
+    sessionTypes: z.array(z.string()).optional().nullable(),
     limit: z.number().int().min(1).max(1000).optional().nullable(),
-    intervalType: z.enum(['hour', 'day', 'week']).optional().nullable()
+    intervalType: z.enum(['hour', 'day', 'week']).optional().nullable(),
+    includeTimeSeries: z.boolean().optional().nullable(),
+    includeContentPerformance: z.boolean().optional().nullable(),
+    includeEventCounts: z.boolean().optional().nullable(),
+    includeTrendingTopics: z.boolean().optional().nullable(),
+    includePopularMoods: z.boolean().optional().nullable(),
+    includeUserBehavior: z.boolean().optional().nullable(),
+    includeModerationStats: z.boolean().optional().nullable()
 })
 
 /**
@@ -183,9 +195,21 @@ export async function GET(request: NextRequest) {
             startDate: searchParams.get('startDate') || null,
             endDate: searchParams.get('endDate') || null,
             eventType: searchParams.get('eventType') || null,
+            eventTypes: searchParams.get('eventTypes') ? searchParams.get('eventTypes')!.split(',') : null,
             page: searchParams.get('page') || null,
+            contentCategories: searchParams.get('contentCategories') ? searchParams.get('contentCategories')!.split(',') : null,
+            moodTypes: searchParams.get('moodTypes') ? searchParams.get('moodTypes')!.split(',') : null,
+            pageTypes: searchParams.get('pageTypes') ? searchParams.get('pageTypes')!.split(',') : null,
+            sessionTypes: searchParams.get('sessionTypes') ? searchParams.get('sessionTypes')!.split(',') : null,
             limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : null,
-            intervalType: searchParams.get('intervalType') as 'hour' | 'day' | 'week' | null
+            intervalType: searchParams.get('intervalType') as 'hour' | 'day' | 'week' | null,
+            includeTimeSeries: searchParams.get('includeTimeSeries') === 'true',
+            includeContentPerformance: searchParams.get('includeContentPerformance') === 'true',
+            includeEventCounts: searchParams.get('includeEventCounts') === 'true',
+            includeTrendingTopics: searchParams.get('includeTrendingTopics') === 'true',
+            includePopularMoods: searchParams.get('includePopularMoods') === 'true',
+            includeUserBehavior: searchParams.get('includeUserBehavior') === 'true',
+            includeModerationStats: searchParams.get('includeModerationStats') === 'true'
         }
 
         // Validate query parameters
@@ -197,20 +221,21 @@ export async function GET(request: NextRequest) {
             )
         }
 
-        const { startDate, endDate, limit, intervalType } = validation.data
+        const validatedParams = validation.data
 
         // Parse dates
-        const startDateObj = startDate ? new Date(startDate) : undefined
-        const endDateObj = endDate ? new Date(endDate) : undefined
+        const startDateObj = validatedParams.startDate ? new Date(validatedParams.startDate) : undefined
+        const endDateObj = validatedParams.endDate ? new Date(validatedParams.endDate) : undefined
 
         // Get analytics data based on query type
         const endpoint = searchParams.get('endpoint')
 
         return await handleAnalyticsEndpoint(endpoint, {
+            ...validatedParams,
             startDate: startDateObj,
             endDate: endDateObj,
-            limit: limit || 10,
-            intervalType: intervalType || 'day'
+            limit: validatedParams.limit || 10,
+            intervalType: validatedParams.intervalType || 'day'
         })
 
     } catch (error) {
@@ -232,6 +257,18 @@ async function handleAnalyticsEndpoint(
         endDate?: Date
         limit: number
         intervalType: 'hour' | 'day' | 'week'
+        eventTypes?: string[] | null
+        contentCategories?: string[] | null
+        moodTypes?: string[] | null
+        pageTypes?: string[] | null
+        sessionTypes?: string[] | null
+        includeTimeSeries?: boolean | null
+        includeContentPerformance?: boolean | null
+        includeEventCounts?: boolean | null
+        includeTrendingTopics?: boolean | null
+        includePopularMoods?: boolean | null
+        includeUserBehavior?: boolean | null
+        includeModerationStats?: boolean | null
     }
 ) {
     const { startDate, endDate, limit, intervalType } = params
@@ -257,31 +294,89 @@ async function handleAnalyticsEndpoint(
             const contentPerformance = await AnalyticsDB.getContentPerformance(startDate, endDate)
             return NextResponse.json({ data: contentPerformance })
 
-        default:
-            // Return comprehensive dashboard data
-            const [
-                dashboardMetrics,
-                dashboardTopPages,
-                dashboardEventCounts,
-                dashboardTimeSeries,
-                dashboardContentPerformance
-            ] = await Promise.all([
-                AnalyticsDB.getMetrics(startDate, endDate),
-                AnalyticsDB.getTopPages(10, startDate, endDate),
-                AnalyticsDB.getEventCountsByType(startDate, endDate),
-                AnalyticsDB.getTimeSeriesData(intervalType, startDate, endDate),
-                AnalyticsDB.getContentPerformance(startDate, endDate)
-            ])
+        case 'trending-topics':
+            const trendingTopics = await AnalyticsDB.getTrendingTopics(startDate, endDate)
+            return NextResponse.json({ data: trendingTopics })
 
-            return NextResponse.json({
-                data: {
-                    metrics: dashboardMetrics,
-                    topPages: dashboardTopPages,
-                    eventCounts: dashboardEventCounts,
-                    timeSeries: dashboardTimeSeries,
-                    contentPerformance: dashboardContentPerformance
-                }
+        case 'popular-moods':
+            const popularMoods = await AnalyticsDB.getPopularMoods(startDate, endDate)
+            return NextResponse.json({ data: popularMoods })
+
+        case 'user-behavior':
+            const userBehavior = await AnalyticsDB.getUserBehaviorData(startDate, endDate)
+            return NextResponse.json({ data: userBehavior })
+
+        case 'moderation-stats':
+            const moderationStats = await AnalyticsDB.getModerationStats(startDate, endDate)
+            return NextResponse.json({ data: moderationStats })
+
+        default:
+            // Return comprehensive dashboard data based on include flags
+            const promises: Promise<any>[] = []
+            const dataKeys: string[] = []
+
+            // Always include basic metrics
+            promises.push(AnalyticsDB.getMetrics(startDate, endDate))
+            dataKeys.push('metrics')
+
+            promises.push(AnalyticsDB.getTopPages(10, startDate, endDate))
+            dataKeys.push('topPages')
+
+            if (params.includeEventCounts) {
+                promises.push(AnalyticsDB.getEventCountsByType(startDate, endDate))
+                dataKeys.push('eventCounts')
+            }
+
+            if (params.includeTimeSeries) {
+                promises.push(AnalyticsDB.getTimeSeriesData(intervalType, startDate, endDate))
+                dataKeys.push('timeSeries')
+            }
+
+            if (params.includeContentPerformance) {
+                promises.push(AnalyticsDB.getContentPerformance(startDate, endDate))
+                dataKeys.push('contentPerformance')
+            }
+
+            if (params.includeTrendingTopics) {
+                promises.push(AnalyticsDB.getTrendingTopics(startDate, endDate))
+                dataKeys.push('trendingTopics')
+            }
+
+            if (params.includePopularMoods) {
+                promises.push(AnalyticsDB.getPopularMoods(startDate, endDate))
+                dataKeys.push('popularMoods')
+            }
+
+            if (params.includeUserBehavior) {
+                promises.push(AnalyticsDB.getUserBehaviorData(startDate, endDate))
+                dataKeys.push('userBehavior')
+            }
+
+            if (params.includeModerationStats) {
+                promises.push(AnalyticsDB.getModerationStats(startDate, endDate))
+                dataKeys.push('moderationStats')
+            }
+
+            // If no specific includes are set, include basic dashboard data
+            if (!params.includeTimeSeries && !params.includeContentPerformance && !params.includeEventCounts) {
+                promises.push(AnalyticsDB.getEventCountsByType(startDate, endDate))
+                dataKeys.push('eventCounts')
+
+                promises.push(AnalyticsDB.getTimeSeriesData(intervalType, startDate, endDate))
+                dataKeys.push('timeSeries')
+
+                promises.push(AnalyticsDB.getContentPerformance(startDate, endDate))
+                dataKeys.push('contentPerformance')
+            }
+
+            const results = await Promise.all(promises)
+
+            const data: any = {}
+            results.forEach((result, index) => {
+                data[dataKeys[index]] = result
             })
+
+            return NextResponse.json({ data })
     }
 }
 

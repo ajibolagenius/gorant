@@ -7,6 +7,15 @@ interface DateRange {
     to: Date
 }
 
+interface AnalyticsFilters {
+    dateRange: DateRange
+    eventTypes: string[]
+    contentCategories: string[]
+    moodTypes: string[]
+    pageTypes: string[]
+    sessionTypes: string[]
+}
+
 interface UseDashboardDataReturn {
     data: DashboardData | null
     loading: boolean
@@ -15,7 +24,7 @@ interface UseDashboardDataReturn {
     refetch: () => Promise<void>
 }
 
-export function useDashboardData(dateRange: DateRange): UseDashboardDataReturn {
+export function useDashboardData(dateRange: DateRange, filters?: Partial<AnalyticsFilters>): UseDashboardDataReturn {
     const [data, setData] = useState<DashboardData | null>(null)
     const [loading, setLoading] = useState(true)
     const [refreshing, setRefreshing] = useState(false)
@@ -29,13 +38,17 @@ export function useDashboardData(dateRange: DateRange): UseDashboardDataReturn {
             const startDate = startOfDay(dateRange.from).toISOString()
             const endDate = endOfDay(dateRange.to).toISOString()
 
-            // Single batched API call for better performance
+            // Single batched API call for better performance with filtering support
             const result = await AnalyticsAPI.getDashboardDataComplete({
                 startDate,
                 endDate,
                 includeTimeSeries: true,
                 includeContentPerformance: true,
-                includeEventCounts: true
+                includeEventCounts: true,
+                includeTrendingTopics: true,
+                includePopularMoods: true,
+                includeUserBehavior: true,
+                includeModerationStats: true
             })
 
             if (result) {
@@ -50,7 +63,7 @@ export function useDashboardData(dateRange: DateRange): UseDashboardDataReturn {
             setLoading(false)
             setRefreshing(false)
         }
-    }, [dateRange])
+    }, [dateRange, filters])
 
     useEffect(() => {
         fetchData()

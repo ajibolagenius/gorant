@@ -16,6 +16,9 @@ import { UserActionsChart } from "@/components/analytics/user-actions-chart"
 import { TopPagesVisualization } from "@/components/analytics/top-pages-visualization"
 import { AnalyticsInsights } from "@/components/analytics/analytics-insights"
 import { RealTimeMetrics } from "@/components/analytics/real-time-metrics"
+import { AdvancedFilters, type AnalyticsFilters } from "@/components/analytics/advanced-filters"
+import { ContentAnalytics } from "@/components/analytics/content-analytics"
+import { UserBehaviorFlow } from "@/components/analytics/user-behavior-flow"
 
 interface DateRange {
     from: Date
@@ -93,11 +96,28 @@ export default function AnalyticsDashboard() {
         from: subDays(new Date(), 7),
         to: new Date()
     })
-    const { data: dashboardData, loading, refreshing, error, refetch } = useDashboardData(dateRange)
+    const [filters, setFilters] = useState<AnalyticsFilters>({
+        dateRange: {
+            from: subDays(new Date(), 7),
+            to: new Date()
+        },
+        eventTypes: [],
+        contentCategories: [],
+        moodTypes: [],
+        pageTypes: [],
+        sessionTypes: []
+    })
+    const { data: dashboardData, loading, refreshing, error, refetch } = useDashboardData(filters.dateRange)
     const metrics = useAnalyticsMetrics(dashboardData)
 
     const handleDateRangeChange = useCallback((range: DateRange) => {
         setDateRange(range)
+        setFilters(prev => ({ ...prev, dateRange: range }))
+    }, [])
+
+    const handleFiltersChange = useCallback((newFilters: AnalyticsFilters) => {
+        setFilters(newFilters)
+        setDateRange(newFilters.dateRange)
     }, [])
 
     // Memoize chart data to prevent unnecessary re-renders
@@ -119,6 +139,15 @@ export default function AnalyticsDashboard() {
 
             <div className="container mx-auto px-4 py-6 max-w-7xl">
                 <ErrorBoundary error={error} onRetry={refetch} refreshing={refreshing} />
+
+                {/* Advanced Filters */}
+                <AnimatedSection delay={0}>
+                    <AdvancedFilters
+                        filters={filters}
+                        onFiltersChange={handleFiltersChange}
+                        className="mb-8"
+                    />
+                </AnimatedSection>
 
                 <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" aria-label="Key Metrics">
                     <MetricCard
@@ -165,28 +194,44 @@ export default function AnalyticsDashboard() {
 
                 <section className="space-y-8" aria-label="Detailed Analytics">
                     {/* Real-time Metrics */}
-                    <AnimatedSection delay={0}>
+                    <AnimatedSection delay={200}>
                         <RealTimeMetrics />
                     </AnimatedSection>
 
                     {/* Time Series Chart - Full Width */}
-                    <AnimatedSection delay={200}>
+                    <AnimatedSection delay={400}>
                         <EnhancedTimeSeriesChart
                             data={chartData.timeSeries}
                             loading={loading}
                         />
                     </AnimatedSection>
 
+                    {/* Content Analytics - Full Width */}
+                    <AnimatedSection delay={600}>
+                        <ContentAnalytics
+                            data={null} // Will use mock data for now
+                            loading={loading}
+                        />
+                    </AnimatedSection>
+
+                    {/* User Behavior Flow - Full Width */}
+                    <AnimatedSection delay={800}>
+                        <UserBehaviorFlow
+                            data={null} // Will use mock data for now
+                            loading={loading}
+                        />
+                    </AnimatedSection>
+
                     {/* Two column layout for charts */}
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                        <AnimatedSection delay={400}>
+                        <AnimatedSection delay={1000}>
                             <UserActionsChart
                                 data={chartData.eventCounts}
                                 loading={loading}
                             />
                         </AnimatedSection>
 
-                        <AnimatedSection delay={600}>
+                        <AnimatedSection delay={1200}>
                             <ContentPerformanceChart
                                 data={chartData.contentPerformance}
                                 loading={loading}
@@ -195,7 +240,7 @@ export default function AnalyticsDashboard() {
                     </div>
 
                     {/* Top Pages Visualization - Full Width */}
-                    <AnimatedSection delay={800}>
+                    <AnimatedSection delay={1400}>
                         <TopPagesVisualization
                             data={chartData.topPages}
                             loading={loading}
@@ -203,7 +248,7 @@ export default function AnalyticsDashboard() {
                     </AnimatedSection>
 
                     {/* Analytics Insights Section */}
-                    <AnimatedSection delay={1000}>
+                    <AnimatedSection delay={1600}>
                         <AnalyticsInsights
                             data={dashboardData}
                             loading={loading}

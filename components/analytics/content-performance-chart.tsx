@@ -1,6 +1,7 @@
 "use client"
 
-import React, { useMemo } from 'react'
+import React from 'react'
+import { useContentPerformanceData } from '@/hooks/use-content-performance-data'
 import {
     BarChart,
     Bar,
@@ -15,8 +16,18 @@ import {
     Cell
 } from 'recharts'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ChartBar, Heart } from "@phosphor-icons/react/dist/ssr"
+
+// Define proper types for mood engagement data
+interface MoodEngagementData {
+    mood: string
+    likes: number
+    comments: number
+    bookmarks: number
+    posts: number
+}
 
 interface ContentPerformanceData {
     contentType: string
@@ -32,18 +43,7 @@ interface ContentPerformanceChartProps {
     description?: string
 }
 
-// Mood colors matching the platform's theme
-const MOOD_COLORS = {
-    angry: '#ef4444',
-    sad: '#3b82f6',
-    happy: '#22c55e',
-    excited: '#f59e0b',
-    frustrated: '#dc2626',
-    grateful: '#10b981',
-    anxious: '#8b5cf6',
-    content: '#06b6d4',
-    default: '#6b7280'
-}
+import { MOOD_COLORS, type MoodType } from '@/lib/analytics-constants'
 
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -112,71 +112,8 @@ export function ContentPerformanceChart({
         )
     }
 
-    // Process data for different visualizations
-    const moodEngagementData = data.reduce((acc, item) => {
-        const mood = item.contentType || 'unknown'
-        if (!acc[mood]) {
-            acc[mood] = { mood, likes: 0, comments: 0, bookmarks: 0, posts: 0 }
-        }
-
-        switch (item.actionType) {
-            case 'like':
-                acc[mood].likes += item.actionCount
-                break
-            case 'comment':
-                acc[mood].comments += item.actionCount
-                break
-            case 'bookmark':
-                acc[mood].bookmarks += item.actionCount
-                break
-            case 'post':
-                acc[mood].posts += item.actionCount
-                break
-        }
-
-        return acc
-    }, {} as Record<string, any>)
-
-    const moodEngagementArray = Object.values(moodEngagementData)
-
-    // Pie chart data for action distribution
-    const actionDistribution = data.reduce((acc, item) => {
-        const action = item.actionType
-        const existing = acc.find(a => a.name === action)
-        if (existing) {
-            existing.value += item.actionCount
-        } else {
-            acc.push({ name: action, value: item.actionCount })
-        }
-        return acc
-    }, [] as Array<{ name: string; value: number }>)
-
-    // Calculate mood insights
-    const moodInsights = useMemo(() => {
-        if (!moodEngagementArray.length) return null
-
-        const totalEngagement = moodEngagementArrassNeduce((sum, mood) =>
-            sum + mood.likes + mood.comments + mood.bookmarks + mood.posts, 0
-        )
-
-        const topMood = moodEngagementArray.reduce((prev, current) => {
-            const prevTotal = prev.likes + prev.comments + prev.bookmarks + prev.posts
-            const currentTotal = current.likes + current.comments + current.bookmarks + current.posts
-            return currentTotal > prevTotal ? current : prev
-        })
-
-        const topMoodTotal = topMood.likes + topMood.comments + topMood.bookmarks + topMood.posts
-        const topMoodPercentage = totalEngagement > 0 ? ((topMoodTotal / totalEngagement) * 100).toFixed(1) : '0'
-
-        return {
-            topMood: topMood.mood,
-            topMoodPercentage,
-            totalEngagement,
-            mostEngagedAction: Object.entries(topMood)
-                .filter(([key]) => key !== 'mood')
-                .reduce((a, b) => a[1] > b[1] ? a : b)[0]
-        }
-    }, [moodEngagementArray])
+    // Use custom hook for data processing
+    const { moodEngagementArray, actionDistribution, moodInsights } = useContentPerformanceData(data)
 
     return (
         <Card className="bg-card/80 dark:bg-card/80 backdrop-blur shadow-sm border-0">
@@ -279,7 +216,7 @@ export function ContentPerformanceChart({
                                         fill="#8884d8"
                                         dataKey="value"
                                     >
-                                        {actionDistribution.map((entry, index) => {
+                                        {actionDistribution.map((_, index) => {
                                             const colors = ['#ef4444', '#3b82f6', '#22c55e', '#f59e0b', '#8b5cf6']
                                             return (
                                                 <Cell
@@ -297,7 +234,7 @@ export function ContentPerformanceChart({
 
                     <TabsContent value="mood-breakdown" className="mt-4">
                         <div className="space-y-4">
-                            {moodEngagementArray.map((mood, index) => {
+                            {moodEngagementArray.map((mood) => {
                                 const total = mood.likes + mood.comments + mood.bookmarks + mood.posts
                                 const moodColor = MOOD_COLORS[mood.mood as keyof typeof MOOD_COLORS] || MOOD_COLORS.default
 

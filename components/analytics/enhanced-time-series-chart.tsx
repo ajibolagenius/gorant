@@ -36,7 +36,7 @@ interface EnhancedTimeSeriesChartProps {
 }
 
 const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payad && payload.length) {
+    if (active && payload && payload.length) {
         const date = parseISO(label)
         return (
             <div className="bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg p-4 min-w-[200px]">
@@ -69,11 +69,11 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return null
 }
 
-const MetricSummary = ({ data }: { data: TimeSeriesData[] }) => {
+const MetricSummary = React.memo(({ data }: { data: TimeSeriesData[] }) => {
     const summary = useMemo(() => {
         if (!data || data.length === 0) return null
 
-        const totalPageViews = ta.reduce((sum, item) => sum + item.pageViews, 0)
+        const totalPageViews = data.reduce((sum, item) => sum + item.pageViews, 0)
         const totalSessions = data.reduce((sum, item) => sum + item.uniqueSessions, 0)
         const totalEvents = data.reduce((sum, item) => sum + item.totalEvents, 0)
         const avgPageViews = Math.round(totalPageViews / data.length)
@@ -143,7 +143,7 @@ const MetricSummary = ({ data }: { data: TimeSeriesData[] }) => {
             </div>
         </div>
     )
-}
+})
 
 export function EnhancedTimeSeriesChart({
     data,
@@ -180,7 +180,7 @@ export function EnhancedTimeSeriesChart({
         return (
             <Card className="bg-card/80 dark:bg-card/80 backdrop-blur shadow-sm border-0">
                 <CardHeader>
-                    <CardTitle className="text-lg font-sem-gray-900 dark:text-white flex items-center gap-2">
+                    <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                         <TrendUp weight="duotone" className="h-5 w-5" />
                         {title}
                     </CardTitle>
