@@ -51,7 +51,7 @@ A modern, anonymous social platform where users can express their thoughts, frus
 - Comprehensive keyboard shortcuts support
 - Local storage for offline functionality
 - Advanced content moderation and filtering
-- Self-hosted analytics system with privacy controls and admin dashboard
+- Self-hosted analytics system with privacy controls, admin dashboard, and comprehensive testing utilities
 
 ## 🚀 Getting Started
 

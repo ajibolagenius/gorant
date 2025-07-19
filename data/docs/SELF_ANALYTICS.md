@@ -164,22 +164,7 @@ This will test:
 - Event counts by type with session tracking
 - Error handling and graceful fallbacks
 
-**Sample Output:**
-```
-Testing analytics database...
-DB Available: true
-Metrics: { totalPageViews: 1247, uniqueSessions: 342, totalEvents: 2891, avgSessionDuration: "4m 32s" }
-Top Pages: [
-  { page: "/", pageViews: 456, uniqueSessions: 123 },
-  { page: "/bookmarks", pageViews: 234, uniqueSessions: 89 },
-  ...
-]
-Event Counts: [
-  { eventType: "pageview", eventCount: 1247, uniqueSessions: 342 },
-  { eventType: "user_action", eventCount: 891, uniqueSessions: 234 },
-  ...
-]
-```
+For detailed testing procedures, troubleshooting, and advanced testing scenarios, see the [Analytics Testing Guide](ANALYTICS_TESTING.md).
 
 ### **Development Mode**
 - Enhanced logging and error reporting
