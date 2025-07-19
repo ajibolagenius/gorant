@@ -29,9 +29,13 @@ export function useDashboardData(dateRange: DateRange): UseDashboardDataReturn {
             const startDate = startOfDay(dateRange.from).toISOString()
             const endDate = endOfDay(dateRange.to).toISOString()
 
-            const result = await AnalyticsAPI.getDashboardData({
+            // Single batched API call for better performance
+            const result = await AnalyticsAPI.getDashboardDataComplete({
                 startDate,
-                endDate
+                endDate,
+                includeTimeSeries: true,
+                includeContentPerformance: true,
+                includeEventCounts: true
             })
 
             if (result) {

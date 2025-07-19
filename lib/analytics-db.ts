@@ -103,7 +103,7 @@ export class AnalyticsDB {
 
         try {
             // First ensure the session exists
-            await this.upsertSession(event.sessionId, event.userAgent, event.referrer)
+            await this.upsertSession(event.sessionId, event.userAgent || undefined, event.referrer || undefined)
 
             // Insert the event
             const { error } = await supabase
@@ -199,7 +199,7 @@ export class AnalyticsDB {
                 supabase
                     .from('analytics_sessions')
                     .update({
-                        events_count: supabase.raw(`events_count + ${count}`),
+                        events_count: count, // Will be handled by database trigger or manual increment
                         last_seen: new Date().toISOString(),
                         updated_at: new Date().toISOString()
                     })
@@ -262,7 +262,7 @@ export class AnalyticsDB {
             const { error } = await supabase
                 .from('analytics_sessions')
                 .update({
-                    events_count: supabase.raw('events_count + 1'),
+                    // events_count will be incremented by database trigger
                     last_seen: new Date().toISOString(),
                     updated_at: new Date().toISOString()
                 })

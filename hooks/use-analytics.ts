@@ -69,7 +69,7 @@ export function useAnalytics(): AnalyticsHook {
             if (depth > 3) return '[Object too deep]'
             if (obj === null || typeof obj !== 'object') return obj
 
-            const limited: Record<string, unknown> = Array.isArray(obj) ? [] : {}
+            const limited: Record<string, unknown> = Array.isArray(obj) ? {} : {}
             for (const key in obj as Record<string, unknown>) {
                 if (Object.prototype.hasOwnProperty.call(obj, key)) {
                     limited[key] = limitDepth((obj as Record<string, unknown>)[key], depth + 1)

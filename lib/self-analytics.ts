@@ -99,39 +99,31 @@ class AnalyticsService {
         return this.config.enabled
     }
 
-    private sanitizeDetails(details: Record<string, unknown>): Record<string, unknown> {
-        const sanitized = { ...details }
+    private sanitizeDetails(details: Record<string, unknown>): Record<string, string | number | boolean> {
+        const sanitized: Record<string, string | number | boolean> = {}
 
         // Remove any potential PII
         const piiKeys = ['email', 'phone', 'address', 'name', 'ip', 'userId', 'user_id', 'password', 'token']
-        piiKeys.forEach(key => {
-            delete sanitized[key]
-            delete sanitized[key.toLowerCase()]
-            delete sanitized[key.toUpperCase()]
-        })
 
-        // Sanitize and limit values
-        Object.keys(sanitized).forEach(key => {
-            const value = sanitized[key]
-
-            // Remove functions and undefined values
-            if (typeof value === 'function' || value === undefined) {
-                delete sanitized[key]
+        Object.keys(details).forEach(key => {
+            // Skip PII keys
+            if (piiKeys.some(piiKey => key.toLowerCase().includes(piiKey.toLowerCase()))) {
                 return
             }
 
-            // Limit string lengths to prevent abuse
-            if (typeof value === 'string') {
-                if (value.length > this.maxStringLength) {
-                    sanitized[key] = value.substring(0, this.maxStringLength) + '...'
-                }
-                // Remove potential script tags or suspicious content
-                sanitized[key] = (sanitized[key] as string).replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '[script removed]')
-            }
+            const value = details[key]
 
-            // Limit array lengths
-            if (Array.isArray(value) && value.length > 100) {
-                sanitized[key] = value.slice(0, 100)
+            // Only include primitive types
+            if (typeof value === 'string') {
+                // Limit string lengths to prevent abuse
+                let sanitizedString = value.length > this.maxStringLength
+                    ? value.substring(0, this.maxStringLength) + '...'
+                    : value
+                // Remove potential script tags or suspicious content
+                sanitizedString = sanitizedString.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '[script removed]')
+                sanitized[key] = sanitizedString
+            } else if (typeof value === 'number' || typeof value === 'boolean') {
+                sanitized[key] = value
             }
         })
 

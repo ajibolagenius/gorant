@@ -2,7 +2,7 @@
 
 import React, { memo } from 'react'
 import { Button } from "@/components/ui/button"
-import { ArrowClockwise } from "@phosphor-icons/react/dist/ssr"
+import { ArrowsClockwise } from "@phosphor-icons/react/dist/ssr"
 import { DateRangePicker } from "./date-range-picker"
 import { cn } from "@/lib/utils"
 
@@ -53,10 +53,32 @@ export const DashboardHeader = memo(function DashboardHeader({
                             disabled={refreshing}
                             className="px-3"
                         >
-                            <ArrowClockwise
+                            <ArrowsClockwise
                                 weight="duotone"
                                 className={cn("h-4 w-4", refreshing && "animate-spin")}
                             />
+                        </Button>
+
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                // Export functionality - could be enhanced to export CSV/PDF
+                                const dataStr = JSON.stringify({
+                                    dateRange,
+                                    exportedAt: new Date().toISOString()
+                                }, null, 2)
+                                const dataBlob = new Blob([dataStr], { type: 'application/json' })
+                                const url = URL.createObjectURL(dataBlob)
+                                const link = document.createElement('a')
+                                link.href = url
+                                link.download = `analytics-export-${new Date().toISOString().split('T')[0]}.json`
+                                link.click()
+                                URL.revokeObjectURL(url)
+                            }}
+                            className="px-3"
+                        >
+                            Export
                         </Button>
                     </div>
                 </div>
