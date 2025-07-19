@@ -22,7 +22,7 @@ import { HelpCircle, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, MoreHori
 import { toast } from "sonner"
 import confetti from "canvas-confetti"
 import { useTheme } from "@/hooks/use-theme"
-import { useGameification } from "@/hooks/use-gamification"
+import { useGamification } from "@/hooks/use-gamification"
 import { useAccessibility } from "@/hooks/use-accessibility"
 import { MasonryGrid } from "@/components/masonry-grid"
 import { EnhancedRantCard, Rant, Comment } from "@/components/enhanced-rant-card"
@@ -196,7 +196,7 @@ export default function RantApp() {
         localStorage.setItem("personalizationTipDismissed", "true")
     }
 
-    const { userPoints, userLevel, addPoints, checkAchievements } = useGameification()
+    const { userPoints, userLevel, addPoints, checkAchievements } = useGamification()
     const router = useRouter()
     const searchParams = useSearchParams()
     const pathname = usePathname()

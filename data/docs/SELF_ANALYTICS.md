@@ -52,8 +52,11 @@ The Rant platform now includes a fully implemented, privacy-first analytics syst
 - **No Personal Data** - Zero collection of emails, names, or identifying information
 - **Anonymous Sessions** - Generated session IDs with no cross-session tracking
 - **DNT Respect** - Honors "Do Not Track" browser settings
-- **User Consent** - Respects user privacy preferences from settings
-- **Data Sanitization** - Automatic removal of potential PII from event data
+- **User Consent** - Respects user privacy preferences from settings and consent banner
+- **Data Sanitization** - Automatic removal of potential PII from event data (enforced at API level)
+- **PII Enforcement** - All analytics event details are sanitized server-side to remove any fields that could contain personally identifiable information (PII) before storage. This includes keys like email, name, address, IP, userId, etc.
+- **Audit Logging** - Every access to the analytics dashboard is logged for compliance, including timestamp, query parameters, and client identifier. This supports privacy audits and regulatory requirements.
+- **Session Anonymization** - All analytics identifiers (sessionId, userId) are randomly generated and not linkable to real users. No persistent or cross-session tracking is performed.
 
 ### **Security Measures**
 - **Rate Limiting** - Prevents abuse and spam
@@ -237,10 +240,11 @@ const queueSize = analyticsService.getQueueSize()
 
 1. **Event Generation** - User interactions trigger analytics events
 2. **Privacy Check** - System verifies user consent and DNT settings
-3. **Data Sanitization** - Remove PII and validate event data
-4. **Queuing** - Events are batched for efficient processing
-5. **Storage** - Events stored in Supabase database
-6. **Dashboard** - Admin interface queries and displays analytics data
+3. **Data Sanitization** - Remove PII and validate event data (client and API enforced)
+4. **Audit Logging** - Dashboard access is logged for compliance and security
+5. **Queuing** - Events are batched for efficient processing
+6. **Storage** - Events stored in Supabase database
+7. **Dashboard** - Admin interface queries and displays analytics data
 
 ---
 

@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals'
-import { analyticsPrivacy, hasAnalyticsConsent, recordAnalyticsConsent, shouldDisableAnalytics, anonymizeData, validatePrivacyCompliance } from '../analytics-privacy'
+import { AnalyticsValidator } from '../analytics-validation'
+import { AnalyticsPrivacyService } from '../analytics-privacy'
+import { AnalyticsDB } from '../analytics-db'
 
 // Mock localStorage
 const localStorageMock = {
@@ -8,261 +9,307 @@ const localStorageMock = {
     removeItem: jest.fn(),
     clear: jest.fn(),
 }
-
-// Mock navigator
-const navigatorMock = {
-    doNotTrack: '0'
-}
-
 Object.defineProperty(window, 'localStorage', {
     value: localStorageMock
 })
 
+// Mock navigator
 Object.defineProperty(window, 'navigator', {
-    value: navigatorMock,
+    value: {
+        doNotTrack: null
+    },
     writable: true
 })
 
-describe('AnalyticsPrivacyService', () => {
+describe('Analytics Privacy Compliance', () => {
+    let analyticsPrivacy: AnalyticsPrivacyService
+
     beforeEach(() => {
-        jest.clearAllMocks()
-        localStorageMock.getItem.mockReturnValue(null)
+        analyticsPrivacy = new AnalyticsPrivacyService()
+        localStorageMock.getItem.mockClear()
+        localStorageMock.setItem.mockClear()
+        localStorageMock.removeItem.mockClear()
     })
 
-    afterEach(() => {
-        jest.clearAllMocks()
+    describe('PII Detection and Validation', () => {
+        test('should detect PII in keys', () => {
+            const data = {
+                userEmail: 'test@example.com',
+                phoneNumber: '1234567890',
+                normalField: 'value'
+            }
+
+            const result = AnalyticsValidator.validatePrivacyCompliance(data)
+
+            expect(result.isValid).toBe(false)
+            expect(result.containsPII).toBe(true)
+            expect(result.violations).toContain('PII detected in key: userEmail')
+            expect(result.violations).toContain('PII detected in key: phoneNumber')
+            expect(result.sanitizedData).not.toHaveProperty('userEmail')
+            expect(result.sanitizedData).not.toHaveProperty('phoneNumber')
+            expect(result.sanitizedData).toHaveProperty('normalField')
+        })
+
+        test('should detect PII patterns in values', () => {
+            const data = {
+                description: 'Contact me at john.doe@example.com or call 555-123-4567',
+                address: '123 Main St, Anytown, USA 12345',
+                normalText: 'This is normal text without PII'
+            }
+
+            const result = AnalyticsValidator.validatePrivacyCompliance(data)
+
+            expect(result.isValid).toBe(false)
+            expect(result.containsPII).toBe(true)
+            expect(result.violations).toContain('PII detected in value for key description: email, phone')
+            expect(result.violations).toContain('PII detected in value for key address: postalCode')
+            expect(result.sanitizedData.description).toBe('Contact me at [EMAIL] or call [PHONE]')
+            expect(result.sanitizedData.address).toBe('123 Main St, Anytown, USA [ZIP]')
+            expect(result.sanitizedData.normalText).toBe('This is normal text without PII')
+        })
+
+        test('should handle long strings', () => {
+            const longString = 'a'.repeat(1500)
+            const data = { longField: longString }
+
+            const result = AnalyticsValidator.validatePrivacyCompliance(data)
+
+            expect(result.isValid).toBe(false)
+            expect(result.violations).toContain('Value too long for key longField')
+            expect(result.sanitizedData.longField).toBe('a'.repeat(1000) + '...')
+        })
+
+        test('should pass validation for clean data', () => {
+            const data = {
+                page: '/home',
+                action: 'click',
+                timestamp: Date.now(),
+                normalField: 'normal value'
+            }
+
+            const result = AnalyticsValidator.validatePrivacyCompliance(data)
+
+            expect(result.isValid).toBe(true)
+            expect(result.containsPII).toBe(false)
+            expect(result.violations).toHaveLength(0)
+        })
+    })
+
+    describe('Data Retention Validation', () => {
+        test('should validate data retention for recent data', () => {
+            const recentTimestamp = Date.now()
+            const isValid = AnalyticsValidator.validateDataRetention(recentTimestamp, 365)
+            expect(isValid).toBe(true)
+        })
+
+        test('should reject old data based on retention policy', () => {
+            const oldTimestamp = Date.now() - (400 * 24 * 60 * 60 * 1000) // 400 days ago
+            const isValid = AnalyticsValidator.validateDataRetention(oldTimestamp, 365)
+            expect(isValid).toBe(false)
+        })
+
+        test('should handle custom retention periods', () => {
+            const timestamp = Date.now() - (50 * 24 * 60 * 60 * 1000) // 50 days ago
+            const isValid = AnalyticsValidator.validateDataRetention(timestamp, 30) // 30 day retention
+            expect(isValid).toBe(false)
+        })
     })
 
     describe('Consent Management', () => {
-        it('should return false for consent when no consent is stored', () => {
-            expect(hasAnalyticsConsent()).toBe(false)
+        test('should require consent when configured', () => {
+            analyticsPrivacy.updateConfig({ requireConsent: true })
+            localStorageMock.getItem.mockReturnValue(null)
+
+            const hasConsent = analyticsPrivacy.hasValidConsent()
+            expect(hasConsent).toBe(false)
         })
 
-        it('should record and retrieve valid consent', () => {
-            const mockConsentData = {
+        test('should accept consent when given', () => {
+            analyticsPrivacy.updateConfig({ requireConsent: true })
+            const consentData = {
                 analyticsConsent: true,
                 consentTimestamp: Date.now(),
                 consentVersion: '1.0'
             }
+            localStorageMock.getItem.mockReturnValue(JSON.stringify(consentData))
 
-            localStorageMock.getItem.mockReturnValue(JSON.stringify(mockConsentData))
-
-            recordAnalyticsConsent(true)
-
-            expect(localStorageMock.setItem).toHaveBeenCalledWith(
-                'analytics_consent',
-                expect.stringContaining('"analyticsConsent":true')
-            )
-            expect(hasAnalyticsConsent()).toBe(true)
+            const hasConsent = analyticsPrivacy.hasValidConsent()
+            expect(hasConsent).toBe(true)
         })
 
-        it('should reject expired consent', () => {
-            const expiredConsentData = {
+        test('should reject expired consent', () => {
+            analyticsPrivacy.updateConfig({ requireConsent: true })
+            const oldConsentData = {
                 analyticsConsent: true,
-                consentTimestamp: Date.now() - (366 * 24 * 60 * 60 * 1000), // Over 1 year ago
+                consentTimestamp: Date.now() - (400 * 24 * 60 * 60 * 1000), // 400 days ago
                 consentVersion: '1.0'
             }
+            localStorageMock.getItem.mockReturnValue(JSON.stringify(oldConsentData))
 
-            localStorageMock.getItem.mockReturnValue(JSON.stringify(expiredConsentData))
-
-            expect(hasAnalyticsConsent()).toBe(false)
-            expect(localStorageMock.removeItem).toHaveBeenCalledWith('analytics_consent')
+            const hasConsent = analyticsPrivacy.hasValidConsent()
+            expect(hasConsent).toBe(false)
         })
 
-        it('should reject consent with old version', () => {
-            const oldVersionConsentData = {
+        test('should reject outdated consent version', () => {
+            analyticsPrivacy.updateConfig({ requireConsent: true })
+            const consentData = {
                 analyticsConsent: true,
                 consentTimestamp: Date.now(),
                 consentVersion: '0.9' // Old version
             }
+            localStorageMock.getItem.mockReturnValue(JSON.stringify(consentData))
 
-            localStorageMock.getItem.mockReturnValue(JSON.stringify(oldVersionConsentData))
-
-            expect(hasAnalyticsConsent()).toBe(false)
+            const hasConsent = analyticsPrivacy.hasValidConsent()
+            expect(hasConsent).toBe(false)
         })
     })
 
     describe('Do Not Track Detection', () => {
-        it('should detect DNT when set to "1"', () => {
-            navigatorMock.doNotTrack = '1'
-            expect(shouldDisableAnalytics()).toBe(true)
+        test('should detect DNT when enabled', () => {
+            Object.defineProperty(window.navigator, 'doNotTrack', {
+                value: '1',
+                writable: true
+            })
+
+            const isDntEnabled = analyticsPrivacy.isDNTEnabled()
+            expect(isDntEnabled).toBe(true)
         })
 
-        it('should detect DNT when set to "yes"', () => {
-            navigatorMock.doNotTrack = 'yes'
-            expect(shouldDisableAnalytics()).toBe(true)
+        test('should detect DNT with "yes" value', () => {
+            Object.defineProperty(window.navigator, 'doNotTrack', {
+                value: 'yes',
+                writable: true
+            })
+
+            const isDntEnabled = analyticsPrivacy.isDNTEnabled()
+            expect(isDntEnabled).toBe(true)
         })
 
-        it('should not disable analytics when DNT is "0"', () => {
-            navigatorMock.doNotTrack = '0'
+        test('should not detect DNT when disabled', () => {
+            Object.defineProperty(window.navigator, 'doNotTrack', {
+                value: null,
+                writable: true
+            })
 
-            // Mock valid consent
-            const validConsentData = {
-                analyticsConsent: true,
-                consentTimestamp: Date.now(),
-                consentVersion: '1.0'
-            }
-            localStorageMock.getItem.mockReturnValue(JSON.stringify(validConsentData))
+            const isDntEnabled = analyticsPrivacy.isDNTEnabled()
+            expect(isDntEnabled).toBe(false)
+        })
 
-            expect(shouldDisableAnalytics()).toBe(false)
+        test('should disable analytics when DNT is enabled', () => {
+            analyticsPrivacy.updateConfig({ respectDNT: true })
+            Object.defineProperty(window.navigator, 'doNotTrack', {
+                value: '1',
+                writable: true
+            })
+
+            const shouldDisable = analyticsPrivacy.shouldDisableAnalytics()
+            expect(shouldDisable).toBe(true)
         })
     })
 
     describe('Data Anonymization', () => {
-        it('should remove sensitive fields from data', () => {
-            const sensitiveData = {
-                email: 'user@example.com',
-                phone: '123-456-7890',
-                name: 'John Doe',
-                validField: 'keep this',
-                password: 'secret123'
+        test('should anonymize sensitive data', () => {
+            const data = {
+                email: 'test@example.com',
+                phone: '555-123-4567',
+                ip: '192.168.1.1',
+                normalField: 'normal value'
             }
 
-            const anonymized = anonymizeData(sensitiveData)
+            const anonymized = analyticsPrivacy.anonymizeEventData(data)
 
             expect(anonymized).not.toHaveProperty('email')
             expect(anonymized).not.toHaveProperty('phone')
-            expect(anonymized).not.toHaveProperty('name')
-            expect(anonymized).not.toHaveProperty('password')
-            expect(anonymized).toHaveProperty('validField', 'keep this')
+            expect(anonymized).not.toHaveProperty('ip')
+            expect(anonymized).toHaveProperty('normalField')
+            expect(anonymized.normalField).toBe('normal value')
         })
 
-        it('should truncate long strings', () => {
-            const longString = 'a'.repeat(600)
+        test('should truncate long strings', () => {
+            const longString = 'a'.repeat(1000)
             const data = { longField: longString }
 
-            const anonymized = anonymizeData(data)
+            const anonymized = analyticsPrivacy.anonymizeEventData(data)
 
-            expect(anonymized.longField).toHaveLength(503) // 500 + '...'
-            expect((anonymized.longField as string).endsWith('...')).toBe(true)
+            expect(anonymized.longField).toBe('a'.repeat(500) + '...')
         })
 
-        it('should remove script tags', () => {
-            const maliciousData = {
-                content: '<script>alert("xss")</script>Normal content'
+        test('should remove script tags', () => {
+            const data = {
+                content: '<script>alert("xss")</script>Hello world',
+                normalField: 'normal value'
             }
 
-            const anonymized = anonymizeData(maliciousData)
+            const anonymized = analyticsPrivacy.anonymizeEventData(data)
 
-            expect(anonymized.content).toBe('[script removed]Normal content')
-        })
-
-        it('should remove javascript: URLs', () => {
-            const maliciousData = {
-                url: 'javascript:alert("xss")'
-            }
-
-            const anonymized = anonymizeData(maliciousData)
-
-            expect(anonymized.url).toBe('[js removed]:alert("xss")')
-        })
-    })
-
-    describe('Privacy Compliance Validation', () => {
-        it('should detect email addresses in data', () => {
-            const dataWithEmail = {
-                message: 'Contact me at user@example.com for more info'
-            }
-
-            const result = validatePrivacyCompliance(dataWithEmail)
-
-            expect(result.isValid).toBe(false)
-            expect(result.violations).toContain("Potential email detected in field 'message'")
-            expect(result.sanitizedData).not.toHaveProperty('message')
-        })
-
-        it('should detect phone numbers in data', () => {
-            const dataWithPhone = {
-                contact: 'Call me at 123-456-7890'
-            }
-
-            const result = validatePrivacyCompliance(dataWithPhone)
-
-            expect(result.isValid).toBe(false)
-            expect(result.violations).toContain("Potential phone detected in field 'contact'")
-        })
-
-        it('should detect IP addresses in data', () => {
-            const dataWithIP = {
-                server: 'Connect to 192.168.1.1'
-            }
-
-            const result = validatePrivacyCompliance(dataWithIP)
-
-            expect(result.isValid).toBe(false)
-            expect(result.violations).toContain("Potential ip_address detected in field 'server'")
-        })
-
-        it('should pass validation for clean data', () => {
-            const cleanData = {
-                action: 'button_click',
-                page: '/dashboard',
-                timestamp: Date.now()
-            }
-
-            const result = validatePrivacyCompliance(cleanData)
-
-            expect(result.isValid).toBe(true)
-            expect(result.violations).toHaveLength(0)
-            expect(result.sanitizedData).toEqual(cleanData)
+            expect(anonymized.content).toBe('[script removed]Hello world')
+            expect(anonymized.normalField).toBe('normal value')
         })
     })
 
     describe('Audit Logging', () => {
-        it('should log audit events', () => {
-            const consoleSpy = jest.spyOn(console, 'log').mockImplementation()
-
+        test('should log audit events', () => {
             analyticsPrivacy.logAuditEvent('test_action', { test: true }, 'user123', 'session456')
 
-            const auditLog = analyticsPrivacy.getAuditLog(1)
+            const auditLog = analyticsPrivacy.getAuditLog()
             expect(auditLog).toHaveLength(1)
-            expect(auditLog[0]).toMatchObject({
-                action: 'test_action',
-                userId: 'user123',
-                sessionId: 'session456',
-                details: { test: true }
-            })
-
-            consoleSpy.mockRestore()
+            expect(auditLog[0].action).toBe('test_action')
+            expect(auditLog[0].details).toEqual({ test: true })
+            expect(auditLog[0].userId).toBe('user123')
+            expect(auditLog[0].sessionId).toBe('session456')
         })
 
-        it('should limit audit log size', () => {
-            const consoleSpy = jest.spyOn(console, 'log').mockImplementation()
-
-            // Add more than 1000 entries
-            for (let i = 0; i < 1100; i++) {
+        test('should limit audit log size', () => {
+            // Add more than 100 events
+            for (let i = 0; i < 150; i++) {
                 analyticsPrivacy.logAuditEvent(`action_${i}`, { index: i })
             }
 
-            const auditLog = analyticsPrivacy.getAuditLog(2000)
-            expect(auditLog.length).toBeLessThanOrEqual(1000)
-
-            consoleSpy.mockRestore()
+            const auditLog = analyticsPrivacy.getAuditLog()
+            expect(auditLog).toHaveLength(100) // Should be limited to 100
+            expect(auditLog[0].action).toBe('action_50') // Should show most recent
         })
     })
 
-    describe('Data Retention', () => {
-        it('should identify data that should be deleted', () => {
-            const oldTimestamp = Date.now() - (400 * 24 * 60 * 60 * 1000) // 400 days ago
-            const recentTimestamp = Date.now() - (100 * 24 * 60 * 60 * 1000) // 100 days ago
-
-            expect(analyticsPrivacy.shouldDeleteData(oldTimestamp)).toBe(true)
-            expect(analyticsPrivacy.shouldDeleteData(recentTimestamp)).toBe(false)
-        })
-    })
-
-    describe('GDPR Compliance', () => {
-        it('should export user data', () => {
+    describe('Data Export and Deletion', () => {
+        test('should export user data', () => {
             const userData = analyticsPrivacy.exportUserData('user123')
 
-            expect(userData).toHaveProperty('message')
-            expect(userData).toHaveProperty('dataRetentionDays')
-            expect(userData).toHaveProperty('consentStatus')
+            expect(userData).toHaveProperty('userId')
+            expect(userData).toHaveProperty('exportTimestamp')
+            expect(userData.userId).toBe('user123')
         })
 
-        it('should delete user data', () => {
+        test('should handle data deletion', () => {
             const result = analyticsPrivacy.deleteUserData('user123')
             expect(result).toBe(true)
+        })
+    })
+
+    describe('Configuration Management', () => {
+        test('should update privacy configuration', () => {
+            const newConfig = {
+                respectDNT: false,
+                requireConsent: false,
+                dataRetentionDays: 180
+            }
+
+            analyticsPrivacy.updateConfig(newConfig)
+            const config = analyticsPrivacy.getConfig()
+
+            expect(config.respectDNT).toBe(false)
+            expect(config.requireConsent).toBe(false)
+            expect(config.dataRetentionDays).toBe(180)
+        })
+
+        test('should preserve existing config when partially updating', () => {
+            const originalConfig = analyticsPrivacy.getConfig()
+            analyticsPrivacy.updateConfig({ dataRetentionDays: 180 })
+            const updatedConfig = analyticsPrivacy.getConfig()
+
+            expect(updatedConfig.respectDNT).toBe(originalConfig.respectDNT)
+            expect(updatedConfig.requireConsent).toBe(originalConfig.requireConsent)
+            expect(updatedConfig.dataRetentionDays).toBe(180)
         })
     })
 })

@@ -5,13 +5,13 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Star, Lightning, Trophy } from "@phosphor-icons/react"
 
-interface GameificationPanelProps {
+interface GamificationPanelProps {
     userPoints: number
     userLevel: number
     nextLevelPoints: number
 }
 
-export function GameificationPanel({ userPoints, userLevel, nextLevelPoints }: GameificationPanelProps) {
+export function GamificationPanel({ userPoints, userLevel, nextLevelPoints }: GamificationPanelProps) {
     const currentLevelPoints = (userLevel - 1) * 100
     const progressToNext = ((userPoints - currentLevelPoints) / (nextLevelPoints - currentLevelPoints)) * 100
 

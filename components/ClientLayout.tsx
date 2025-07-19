@@ -1,7 +1,7 @@
 "use client"
 import { useAccessibility } from "@/hooks/use-accessibility"
 import React, { useEffect } from "react"
-import { useGameification } from "@/hooks/use-gamification"
+import { useGamification } from "@/hooks/use-gamification"
 import { useTheme } from "@/hooks/use-theme"
 import { usePathname } from "next/navigation"
 import Header from "./Header"
@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button"
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
     const { fontSize, screenReaderMode } = useAccessibility()
-    const { userLevel } = useGameification()
+    const { userLevel } = useGamification()
     const { theme, toggleTheme } = useTheme()
     const pathname = usePathname()
     const showFooter = !pathname.startsWith("/settings")

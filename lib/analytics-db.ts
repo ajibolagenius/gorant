@@ -1213,4 +1213,152 @@ export class AnalyticsDB {
     static isAvailable(): boolean {
         return supabase !== null
     }
+
+    /**
+     * Enforce data retention policies and clean up old data
+     * This should be called periodically (e.g., daily via cron job)
+     */
+    static async enforceDataRetention(retentionDays = 365): Promise<{
+        eventsDeleted: number
+        sessionsDeleted: number
+        usersDeleted: number
+        totalDeleted: number
+    }> {
+        if (!this.isAvailable()) {
+            console.warn('AnalyticsDB not available for data retention enforcement')
+            return { eventsDeleted: 0, sessionsDeleted: 0, usersDeleted: 0, totalDeleted: 0 }
+        }
+
+        try {
+            const cutoffDate = new Date(Date.now() - (retentionDays * 24 * 60 * 60 * 1000))
+            const cutoffTimestamp = cutoffDate.getTime()
+
+            // Delete old analytics events
+            const { count: eventsDeleted } = await supabase
+                .from('analytics_events')
+                .delete()
+                .lt('timestamp', cutoffTimestamp)
+
+            // Delete old sessions
+            const { count: sessionsDeleted } = await supabase
+                .from('analytics_sessions')
+                .delete()
+                .lt('last_seen', cutoffDate.toISOString())
+
+            // Delete old user activity records
+            const { count: usersDeleted } = await supabase
+                .from('analytics_users')
+                .delete()
+                .lt('last_seen', cutoffDate.toISOString())
+
+            const totalDeleted = (eventsDeleted || 0) + (sessionsDeleted || 0) + (usersDeleted || 0)
+
+            console.log(`Data retention cleanup completed: ${totalDeleted} records deleted`)
+
+            return {
+                eventsDeleted: eventsDeleted || 0,
+                sessionsDeleted: sessionsDeleted || 0,
+                usersDeleted: usersDeleted || 0,
+                totalDeleted
+            }
+        } catch (error) {
+            DatabaseUtils.handleError('enforce data retention', error)
+            return { eventsDeleted: 0, sessionsDeleted: 0, usersDeleted: 0, totalDeleted: 0 }
+        }
+    }
+
+    /**
+     * Get data retention statistics
+     */
+    static async getDataRetentionStats(retentionDays = 365): Promise<{
+        totalEvents: number
+        eventsToDelete: number
+        totalSessions: number
+        sessionsToDelete: number
+        totalUsers: number
+        usersToDelete: number
+        oldestRecord: Date | null
+        retentionDate: Date
+    }> {
+        if (!this.isAvailable()) {
+            return {
+                totalEvents: 0,
+                eventsToDelete: 0,
+                totalSessions: 0,
+                sessionsToDelete: 0,
+                totalUsers: 0,
+                usersToDelete: 0,
+                oldestRecord: null,
+                retentionDate: new Date()
+            }
+        }
+
+        try {
+            const cutoffDate = new Date(Date.now() - (retentionDays * 24 * 60 * 60 * 1000))
+
+            // Get event statistics
+            const { count: totalEvents } = await supabase
+                .from('analytics_events')
+                .select('*', { count: 'exact', head: true })
+
+            const { count: eventsToDelete } = await supabase
+                .from('analytics_events')
+                .select('*', { count: 'exact', head: true })
+                .lt('timestamp', cutoffDate.getTime())
+
+            // Get session statistics
+            const { count: totalSessions } = await supabase
+                .from('analytics_sessions')
+                .select('*', { count: 'exact', head: true })
+
+            const { count: sessionsToDelete } = await supabase
+                .from('analytics_sessions')
+                .select('*', { count: 'exact', head: true })
+                .lt('last_seen', cutoffDate.toISOString())
+
+            // Get user statistics
+            const { count: totalUsers } = await supabase
+                .from('analytics_users')
+                .select('*', { count: 'exact', head: true })
+
+            const { count: usersToDelete } = await supabase
+                .from('analytics_users')
+                .select('*', { count: 'exact', head: true })
+                .lt('last_seen', cutoffDate.toISOString())
+
+            // Get oldest record
+            const { data: oldestEvent } = await supabase
+                .from('analytics_events')
+                .select('timestamp')
+                .order('timestamp', { ascending: true })
+                .limit(1)
+
+            const oldestRecord = oldestEvent?.[0]?.timestamp
+                ? new Date(oldestEvent[0].timestamp)
+                : null
+
+            return {
+                totalEvents: totalEvents || 0,
+                eventsToDelete: eventsToDelete || 0,
+                totalSessions: totalSessions || 0,
+                sessionsToDelete: sessionsToDelete || 0,
+                totalUsers: totalUsers || 0,
+                usersToDelete: usersToDelete || 0,
+                oldestRecord,
+                retentionDate: cutoffDate
+            }
+        } catch (error) {
+            DatabaseUtils.handleError('get data retention stats', error)
+            return {
+                totalEvents: 0,
+                eventsToDelete: 0,
+                totalSessions: 0,
+                sessionsToDelete: 0,
+                totalUsers: 0,
+                usersToDelete: 0,
+                oldestRecord: null,
+                retentionDate: cutoffDate
+            }
+        }
+    }
 }

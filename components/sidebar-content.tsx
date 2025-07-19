@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { GameificationPanel } from "@/components/gamification-panel"
+import { GamificationPanel } from "@/components/gamification-panel"
 import { Trophy, Users } from "@phosphor-icons/react"
 import React, { useState } from "react"
 import { ComingSoonPill } from "@/components/ui/coming-soon-pill"
@@ -24,7 +24,7 @@ export function SidebarContent({ userPoints, userLevel, nextLevelPoints, followe
     return (
         <div className="space-y-6">
             {/* Gamification Panel */}
-            <GameificationPanel userPoints={userPoints} userLevel={userLevel} nextLevelPoints={nextLevelPoints} />
+            <GamificationPanel userPoints={userPoints} userLevel={userLevel} nextLevelPoints={nextLevelPoints} />
 
             {/* Quick Stats */}
             <Card className="shadow-sm border-0 bg-card/60 dark:bg-card/60 backdrop-blur rounded-none">

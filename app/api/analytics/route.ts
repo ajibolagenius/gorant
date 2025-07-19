@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { AnalyticsDB, AnalyticsEvent } from '@/lib/analytics-db'
+import { AnalyticsValidator } from '@/lib/analytics-validation'
+import { AnalyticsPrivacyService } from '@/lib/analytics-privacy'
 import { z } from 'zod'
 
 // Rate limiting store (in production, use Redis or similar)
@@ -127,7 +129,8 @@ export async function POST(request: NextRequest) {
                 ...event,
                 page: event.page || undefined,
                 userId: event.userId || undefined,
-                details: event.details || undefined,
+                // Sanitize details to remove PII before storage
+                details: event.details ? AnalyticsValidator.sanitizeDetails(event.details) : undefined,
                 userAgent: event.userAgent || undefined,
                 referrer: event.referrer || undefined,
                 dnt: event.dnt || undefined
@@ -146,7 +149,8 @@ export async function POST(request: NextRequest) {
                 ...validatedEvent,
                 page: validatedEvent.page || undefined,
                 userId: validatedEvent.userId || undefined,
-                details: validatedEvent.details || undefined,
+                // Sanitize details to remove PII before storage
+                details: validatedEvent.details ? AnalyticsValidator.sanitizeDetails(validatedEvent.details) : undefined,
                 userAgent: validatedEvent.userAgent || undefined,
                 referrer: validatedEvent.referrer || undefined,
                 dnt: validatedEvent.dnt || undefined
@@ -225,6 +229,22 @@ export async function GET(request: NextRequest) {
         }
 
         const validatedParams = validation.data
+
+        // Audit log dashboard access for compliance
+        // Note: In production, this should be sent to a secure audit logging service or DB
+        try {
+            if (AnalyticsPrivacyService.logAuditEvent) {
+                AnalyticsPrivacyService.logAuditEvent(
+                    'dashboard_access',
+                    { queryParams: validatedParams },
+                    undefined, // userId (if available)
+                    clientId // sessionId or client identifier
+                )
+            }
+        } catch (auditError) {
+            console.warn('Failed to log audit event:', auditError)
+            // Don't fail the entire request if audit logging fails
+        }
 
         // Parse dates
         const startDateObj = validatedParams.startDate ? new Date(validatedParams.startDate) : undefined

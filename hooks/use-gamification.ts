@@ -23,7 +23,7 @@ interface UserStats {
     streakDays: number
 }
 
-export function useGameification() {
+export function useGamification() {
     const [userPoints, setUserPoints] = useState(0)
     const [userLevel, setUserLevel] = useState(1)
     const [userStats, setUserStats] = useState<UserStats>({

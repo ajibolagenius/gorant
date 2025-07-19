@@ -104,8 +104,8 @@ class AnalyticsPrivacyService {
             const stored = localStorage.getItem('analytics_consent')
             return stored ? JSON.parse(stored) : null
         } catch (error) {
-            console.warn('Error reading analytics consent:', err
-       return null
+            console.warn('Error reading analytics consent:', error)
+            return null
         }
     }
 
