@@ -1,24 +1,12 @@
 import { AnalyticsDB, type AnalyticsEvent } from './analytics-db'
 import { AnalyticsAPI } from './analytics-api'
+import { getAnalyticsConfig, type AnalyticsConfig } from './analytics-config'
 
 export type { AnalyticsEvent }
 
-interface AnalyticsConfig {
-    enabled: boolean
-    batchSize: number
-    flushInterval: number
-    maxRetries: number
-    retryDelay: number
-}
-
 class AnalyticsService {
-    private config: AnalyticsConfig = {
-        enabled: true,
-        batchSize: 10,
-        flushInterval: 5000, // 5 seconds
-        maxRetries: 3,
-        retryDelay: 1000, // 1 second
-    }
+    private config: AnalyticsConfig = getAnalyticsConfig()
+    private maxStringLength: number = 500
 
     private eventQueue: AnalyticsEvent[] = []
     private sessionId: string = ''
@@ -28,6 +16,7 @@ class AnalyticsService {
     constructor() {
         if (typeof window !== 'undefined') {
             this.sessionId = this.generateSessionId()
+            this.maxStringLength = this.config.maxStringLength
             this.setupEventListeners()
             this.startFlushTimer()
         }
@@ -37,31 +26,52 @@ class AnalyticsService {
         return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     }
 
+    private handleOnline = () => {
+        this.isOnline = true
+        this.flushQueue()
+    }
+
+    private handleOffline = () => {
+        this.isOnline = false
+    }
+
+    private handleBeforeUnload = () => {
+        this.flushQueue(true)
+    }
+
     private setupEventListeners(): void {
         // Online/offline detection
-        window.addEventListener('online', () => {
-            this.isOnline = true
-            this.flushQueue()
-        })
-
-        window.addEventListener('offline', () => {
-            this.isOnline = false
-        })
+        window.addEventListener('online', this.handleOnline)
+        window.addEventListener('offline', this.handleOffline)
 
         // Flush queue before page unload
-        window.addEventListener('beforeunload', () => {
-            this.flushQueue(true)
-        })
+        window.addEventListener('beforeunload', this.handleBeforeUnload)
     }
 
     private startFlushTimer(): void {
-        if (this.flushTimer) {
-            clearInterval(this.flushTimer)
-        }
+        this.stopFlushTimer()
 
         this.flushTimer = setInterval(() => {
             this.flushQueue()
         }, this.config.flushInterval)
+    }
+
+    private stopFlushTimer(): void {
+        if (this.flushTimer) {
+            clearInterval(this.flushTimer)
+            this.flushTimer = null
+        }
+    }
+
+    public destroy(): void {
+        this.stopFlushTimer()
+        this.eventQueue = []
+
+        if (typeof window !== 'undefined') {
+            window.removeEventListener('online', this.handleOnline)
+            window.removeEventListener('offline', this.handleOffline)
+            window.removeEventListener('beforeunload', this.handleBeforeUnload)
+        }
     }
 
     private respectsPrivacy(): boolean {
@@ -89,21 +99,39 @@ class AnalyticsService {
         return this.config.enabled
     }
 
-    private sanitizeDetails(details: Record<string, any>): Record<string, any> {
+    private sanitizeDetails(details: Record<string, unknown>): Record<string, unknown> {
         const sanitized = { ...details }
 
         // Remove any potential PII
-        const piiKeys = ['email', 'phone', 'address', 'name', 'ip', 'userId', 'user_id']
+        const piiKeys = ['email', 'phone', 'address', 'name', 'ip', 'userId', 'user_id', 'password', 'token']
         piiKeys.forEach(key => {
             delete sanitized[key]
             delete sanitized[key.toLowerCase()]
             delete sanitized[key.toUpperCase()]
         })
 
-        // Limit string lengths to prevent abuse
+        // Sanitize and limit values
         Object.keys(sanitized).forEach(key => {
-            if (typeof sanitized[key] === 'string' && sanitized[key].length > 500) {
-                sanitized[key] = sanitized[key].substring(0, 500) + '...'
+            const value = sanitized[key]
+
+            // Remove functions and undefined values
+            if (typeof value === 'function' || value === undefined) {
+                delete sanitized[key]
+                return
+            }
+
+            // Limit string lengths to prevent abuse
+            if (typeof value === 'string') {
+                if (value.length > this.maxStringLength) {
+                    sanitized[key] = value.substring(0, this.maxStringLength) + '...'
+                }
+                // Remove potential script tags or suspicious content
+                sanitized[key] = (sanitized[key] as string).replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '[script removed]')
+            }
+
+            // Limit array lengths
+            if (Array.isArray(value) && value.length > 100) {
+                sanitized[key] = value.slice(0, 100)
             }
         })
 
@@ -169,7 +197,7 @@ class AnalyticsService {
         }
     }
 
-    public async trackEvent(type: string, details: Record<string, any> = {}): Promise<void> {
+    public async trackEvent(type: string, details: Record<string, unknown> = {}): Promise<void> {
         if (!this.respectsPrivacy() || typeof window === 'undefined') {
             return
         }
@@ -231,7 +259,7 @@ class AnalyticsService {
 const analyticsService = new AnalyticsService()
 
 // Export the main functions for backward compatibility
-export async function trackEvent(type: string, details: Record<string, any> = {}): Promise<void> {
+export async function trackEvent(type: string, details: Record<string, unknown> = {}): Promise<void> {
     return analyticsService.trackEvent(type, details)
 }
 

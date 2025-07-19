@@ -148,7 +148,13 @@ export default function RantApp() {
     const [searchSuggestions, setSearchSuggestions] = useState<string[]>([])
     const [moodFilter, setMoodFilter] = useState("")
     const [sortFilter, setSortFilter] = useState("latest")
-    const [likedRants, setLikedRants] = useState<Set<string>>(new Set())
+    const [likedRants, setLikedRants] = useState<Set<string>>(() => {
+        if (typeof window !== 'undefined') {
+            const stored = localStorage.getItem('likedRants')
+            if (stored) return new Set(JSON.parse(stored))
+        }
+        return new Set()
+    })
     const [bookmarkedRants, setBookmarkedRants] = useState<Set<string>>(new Set())
     const [blockedUsers, setBlockedUsers] = useState<Set<string>>(new Set())
     const [followedTags, setFollowedTags] = useState<Set<string>>(new Set())
@@ -253,33 +259,33 @@ export default function RantApp() {
             if (notificationSettings.comments) toast.error(`Comment flagged: ${moderationResult.reason}`)
             throw new Error(`Comment flagged: ${moderationResult.reason}`)
         }
-
-        const newComment: Comment = {
-            id: `c_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        // Only send valid fields
+        const { error } = await supabase.from('comments').insert([
+            {
+                rant_id: rantId,
+                content: content.trim(),
+                created_at: new Date().toISOString(),
+                anonymous_id: getAnonymousId(),
+            }
+        ])
+        if (error) {
+            toast.error('Failed to post comment.')
+            throw new Error('Failed to post comment.')
+        }
+        await supabase.from('rants').update({ comments_count: (rants.find(r => r.id === rantId)?.comments_count || 0) + 1 }).eq('id', rantId)
+        fetchRants()
+        addPoints(2, "comment")
+        checkAchievements("comments_posted", Object.values(comments).flat().length + 1)
+        if (notificationSettings.comments) toast.success("Comment posted! +2 points")
+        // Return a minimal comment object for UI
+        return {
+            id: '', // You may want to re-fetch comments to get the real ID
             rant_id: rantId,
             content: content.trim(),
             created_at: new Date().toISOString(),
             anonymous_id: getAnonymousId(),
             likes_count: 0,
         }
-
-        // Update local comments state
-        setComments((prev) => ({
-            ...prev,
-            [rantId]: [newComment, ...(prev[rantId] || [])],
-        }))
-
-        // Update rant comments count
-        setRants((prev) =>
-            prev.map((rant) => (rant.id === rantId ? { ...rant, comments_count: rant.comments_count + 1 } : rant)),
-        )
-
-        // Add points for commenting
-        addPoints(2, "comment")
-        checkAchievements("comments_posted", Object.values(comments).flat().length + 1)
-        if (notificationSettings.comments) toast.success("Comment posted! +2 points")
-
-        return newComment
     }
 
     // Handle comment likes
@@ -336,7 +342,7 @@ export default function RantApp() {
             // Always use Supabase in production
             const { data, error } = await supabase
                 .from("rants")
-                .select("id, content, mood, likes_count, comments_count, anonymous_id, created_at")
+                .select("id, content, mood, likes_count, comments_count, anonymous_id, created_at, tags")
                 .order("created_at", { ascending: false })
             // console.log("Supabase rants data:", data)
             if (error) throw error
@@ -389,10 +395,18 @@ export default function RantApp() {
         try {
             const rant = rants.find(r => r.id === rantId)
 
-            setLikedRants((prev) => new Set([...prev, rantId]))
-            setRants((prev) =>
-                prev.map((rant) => (rant.id === rantId ? { ...rant, likes_count: rant.likes_count + 1 } : rant)),
-            )
+            // Update likes_count in Supabase
+            const { error } = await supabase.from('rants').update({ likes_count: (rant?.likes_count || 0) + 1 }).eq('id', rantId)
+            if (error) {
+                toast.error('Failed to like rant.')
+                return
+            }
+            setLikedRants((prev) => {
+                const newSet = new Set([...prev, rantId])
+                localStorage.setItem('likedRants', JSON.stringify(Array.from(newSet)))
+                return newSet
+            })
+            fetchRants()
 
             // Track analytics for like action
             await trackUserAction("like_rant", {
@@ -498,18 +512,28 @@ export default function RantApp() {
         const rant = rants.find(r => r.id === rantId)
         const isCurrentlyBookmarked = bookmarkedRants.has(rantId)
 
-        setBookmarkedRants((prev) => {
-            const newSet = new Set(prev)
-            if (newSet.has(rantId)) {
+        if (isCurrentlyBookmarked) {
+            // Remove bookmark from Supabase
+            supabase.from('bookmarks').delete().match({ rant_id: rantId, anonymous_id: getAnonymousId() })
+            setBookmarkedRants((prev) => {
+                const newSet = new Set(prev)
                 newSet.delete(rantId)
-                toast.info("Bookmark removed")
-            } else {
+                return newSet
+            })
+            toast.info("Bookmark removed")
+        } else {
+            // Add bookmark to Supabase
+            supabase.from('bookmarks').insert([
+                { rant_id: rantId, anonymous_id: getAnonymousId() }
+            ])
+            setBookmarkedRants((prev) => {
+                const newSet = new Set(prev)
                 newSet.add(rantId)
-                addPoints(1, "bookmark")
-                toast.success("Rant bookmarked! +1 point")
-            }
-            return newSet
-        })
+                return newSet
+            })
+            addPoints(1, "bookmark")
+            toast.success("Rant bookmarked! +1 point")
+        }
 
         // Track analytics for bookmark action
         trackUserAction(isCurrentlyBookmarked ? "unbookmark_rant" : "bookmark_rant", {
@@ -1196,36 +1220,31 @@ export default function RantApp() {
                         // Content moderation check
                         const isAppropriate = await moderateContent(content)
                         if (!isAppropriate) return
-
-                        // Sentiment analysis
-                        const sentimentScore = await SentimentAnalysisService.analyzeSentiment(content)
-
-                        const newRant: Rant = {
-                            id: Date.now().toString(),
-                            content,
-                            mood,
-                            created_at: new Date().toISOString(),
-                            likes_count: 0,
-                            comments_count: 0,
-                            anonymous_id: getAnonymousId(),
-                            tags,
-                            sentiment_score: sentimentScore,
-                            moderation_status: "approved",
-                            reputation_impact: 3,
-                            reported: false,
-                            moderation_score: 1,
+                        // Only send valid fields, including tags array
+                        const { data, error } = await supabase.from('rants').insert([
+                            {
+                                content,
+                                mood,
+                                anonymous_id: getAnonymousId(),
+                                tags: Array.isArray(tags) ? tags : [],
+                                created_at: new Date().toISOString(),
+                                likes_count: 0,
+                                comments_count: 0
+                            }
+                        ]).select('*')
+                        if (error) {
+                            toast.error('Failed to post rant.')
+                            return
                         }
-
-                        setRants((prev) => [newRant, ...prev])
-
-                        // Add points for posting
+                        // Optimistically update UI
+                        if (data && data[0]) {
+                            setRants((prev) => [normalizeRant(data[0]), ...prev])
+                        }
+                        fetchRants()
                         addPoints(5, "post")
                         await checkAchievements("posts_created", rants.length + 1)
-
-                        // Play post sound and mood sound
                         await audioService.playActionSound('post')
                         await audioService.playMoodSound(mood)
-
                         toast.success("Your rant has been posted! +5 points")
                         confetti({
                             particleCount: 100,

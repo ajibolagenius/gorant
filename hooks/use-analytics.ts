@@ -3,9 +3,9 @@ import { useSettings } from './use-settings'
 import { analyticsService, AnalyticsEvent } from '@/lib/self-analytics'
 
 export interface AnalyticsHook {
-    trackEvent: (type: string, details?: Record<string, any>) => Promise<void>
+    trackEvent: (type: string, details?: Record<string, unknown>) => Promise<void>
     trackPageView: (page: string) => Promise<void>
-    trackUserAction: (action: string, context?: Record<string, any>) => Promise<void>
+    trackUserAction: (action: string, context?: Record<string, unknown>) => Promise<void>
     isEnabled: () => boolean
     setEnabled: (enabled: boolean) => void
     sessionId: string
@@ -54,7 +54,7 @@ export function useAnalytics(): AnalyticsHook {
         return true
     }, [])
 
-    const sanitizeDetails = useCallback((details: Record<string, any> = {}): Record<string, any> => {
+    const sanitizeDetails = useCallback((details: Record<string, unknown> = {}): Record<string, unknown> => {
         const sanitized = { ...details }
 
         // Remove functions and undefined values
@@ -65,23 +65,23 @@ export function useAnalytics(): AnalyticsHook {
         })
 
         // Limit object depth to prevent circular references
-        const limitDepth = (obj: any, depth = 0): any => {
+        const limitDepth = (obj: unknown, depth = 0): unknown => {
             if (depth > 3) return '[Object too deep]'
             if (obj === null || typeof obj !== 'object') return obj
 
-            const limited: any = Array.isArray(obj) ? [] : {}
-            for (const key in obj) {
-                if (obj.hasOwnProperty(key)) {
-                    limited[key] = limitDepth(obj[key], depth + 1)
+            const limited: Record<string, unknown> = Array.isArray(obj) ? [] : {}
+            for (const key in obj as Record<string, unknown>) {
+                if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                    limited[key] = limitDepth((obj as Record<string, unknown>)[key], depth + 1)
                 }
             }
             return limited
         }
 
-        return limitDepth(sanitized)
+        return limitDepth(sanitized) as Record<string, unknown>
     }, [])
 
-    const trackEvent = useCallback(async (type: string, details: Record<string, any> = {}): Promise<void> => {
+    const trackEvent = useCallback(async (type: string, details: Record<string, unknown> = {}): Promise<void> => {
         // Respect user privacy settings
         if (!privacy.shareAnalytics) {
             return
@@ -120,7 +120,7 @@ export function useAnalytics(): AnalyticsHook {
         }
     }, [privacy.shareAnalytics])
 
-    const trackUserAction = useCallback(async (action: string, context: Record<string, any> = {}): Promise<void> => {
+    const trackUserAction = useCallback(async (action: string, context: Record<string, unknown> = {}): Promise<void> => {
         if (!privacy.shareAnalytics) {
             return
         }
@@ -177,7 +177,7 @@ export function usePageViewTracking() {
 export function useUserActionTracking() {
     const { trackUserAction } = useAnalytics()
 
-    return useCallback((action: string, context?: Record<string, any>) => {
+    return useCallback((action: string, context?: Record<string, unknown>) => {
         trackUserAction(action, context)
     }, [trackUserAction])
 }

@@ -51,7 +51,7 @@ A modern, anonymous social platform where users can express their thoughts, frus
 - Comprehensive keyboard shortcuts support
 - Local storage for offline functionality
 - Advanced content moderation and filtering
-- Analytics tracking with privacy controls
+- Self-hosted analytics system with privacy controls and admin dashboard
 
 ## 🚀 Getting Started
 
@@ -104,6 +104,7 @@ npm run dev          # Start development server
 npm run build        # Build for production
 npm run start        # Start production server
 npm run lint         # Run ESLint
+node test-analytics.js  # Test analytics database functionality
 ```
 
 ## 🏗️ Tech Stack
@@ -173,15 +174,18 @@ npm run lint         # Run ESLint
 ├── app/                    # Next.js App Router pages
 │   ├── layout.tsx         # Root layout with providers
 │   ├── page.tsx           # Main feed page
+│   ├── admin/analytics/   # Analytics dashboard
 │   └── [feature]/         # Feature-based routes
 ├── components/            # React components
 │   ├── ui/               # shadcn/ui components
+│   ├── analytics/        # Analytics dashboard components
 │   └── [feature].tsx     # Feature components
 ├── hooks/                # Custom React hooks
-├── lib/                  # Utility functions
+├── lib/                  # Utility functions and analytics
 ├── services/             # Business logic services
 ├── data/                 # Static data and docs
-└── scripts/              # Database and setup scripts
+├── scripts/              # Database and setup scripts
+└── test-analytics.js     # Analytics testing utility
 ```
 
 ### Key Design Patterns

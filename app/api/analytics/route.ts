@@ -8,13 +8,13 @@ const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
 // Validation schemas
 const AnalyticsEventSchema = z.object({
     type: z.string().min(1).max(50),
-    page: z.string().max(255).optional(),
+    page: z.string().max(255).optional().nullable(),
     timestamp: z.number().int().positive(),
     sessionId: z.string().min(1).max(36),
-    details: z.record(z.union([z.string(), z.number(), z.boolean()])).optional(),
-    userAgent: z.string().optional(),
-    referrer: z.string().optional(),
-    dnt: z.boolean().optional()
+    details: z.record(z.union([z.string(), z.number(), z.boolean()])).optional().nullable(),
+    userAgent: z.string().optional().nullable(),
+    referrer: z.string().optional().nullable(),
+    dnt: z.boolean().optional().nullable()
 })
 
 const BatchEventsSchema = z.object({
@@ -22,12 +22,12 @@ const BatchEventsSchema = z.object({
 })
 
 const DashboardQuerySchema = z.object({
-    startDate: z.string().datetime().optional(),
-    endDate: z.string().datetime().optional(),
-    eventType: z.string().optional(),
-    page: z.string().optional(),
-    limit: z.number().int().min(1).max(1000).optional(),
-    intervalType: z.enum(['hour', 'day', 'week']).optional()
+    startDate: z.string().datetime().optional().nullable(),
+    endDate: z.string().datetime().optional().nullable(),
+    eventType: z.string().optional().nullable(),
+    page: z.string().optional().nullable(),
+    limit: z.number().int().min(1).max(1000).optional().nullable(),
+    intervalType: z.enum(['hour', 'day', 'week']).optional().nullable()
 })
 
 /**
@@ -56,11 +56,11 @@ function checkRateLimit(identifier: string, maxRequests = 100, windowMs = 60000)
  * API Response helper class
  */
 class ApiResponse {
-    static success(data?: any, stored = true) {
+    static success(data?: Record<string, unknown>, stored = true) {
         return NextResponse.json({ success: true, stored, ...data })
     }
 
-    static error(message: string, status: number, details?: any) {
+    static error(message: string, status: number, details?: Record<string, unknown>) {
         return NextResponse.json({ error: message, details }, { status })
     }
 
@@ -110,7 +110,14 @@ export async function POST(request: NextRequest) {
                     { status: 400 }
                 )
             }
-            events = validation.data.events
+            events = validation.data.events.map(event => ({
+                ...event,
+                page: event.page || null,
+                details: event.details || null,
+                userAgent: event.userAgent || null,
+                referrer: event.referrer || null,
+                dnt: event.dnt || null
+            }))
         } else {
             // Single event
             const validation = AnalyticsEventSchema.safeParse(body)
@@ -120,7 +127,15 @@ export async function POST(request: NextRequest) {
                     { status: 400 }
                 )
             }
-            events = [validation.data]
+            const validatedEvent = validation.data
+            events = [{
+                ...validatedEvent,
+                page: validatedEvent.page || null,
+                details: validatedEvent.details || null,
+                userAgent: validatedEvent.userAgent || null,
+                referrer: validatedEvent.referrer || null,
+                dnt: validatedEvent.dnt || null
+            }]
         }
 
         // Store events in database
@@ -165,12 +180,12 @@ export async function GET(request: NextRequest) {
 
         const { searchParams } = new URL(request.url)
         const queryParams = {
-            startDate: searchParams.get('startDate'),
-            endDate: searchParams.get('endDate'),
-            eventType: searchParams.get('eventType'),
-            page: searchParams.get('page'),
-            limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined,
-            intervalType: searchParams.get('intervalType') as 'hour' | 'day' | 'week' | undefined
+            startDate: searchParams.get('startDate') || null,
+            endDate: searchParams.get('endDate') || null,
+            eventType: searchParams.get('eventType') || null,
+            page: searchParams.get('page') || null,
+            limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : null,
+            intervalType: searchParams.get('intervalType') as 'hour' | 'day' | 'week' | null
         }
 
         // Validate query parameters
@@ -182,7 +197,7 @@ export async function GET(request: NextRequest) {
             )
         }
 
-        const { startDate, endDate, eventType, page, limit, intervalType } = validation.data
+        const { startDate, endDate, limit, intervalType } = validation.data
 
         // Parse dates
         const startDateObj = startDate ? new Date(startDate) : undefined

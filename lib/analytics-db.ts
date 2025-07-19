@@ -5,17 +5,43 @@
 
 import { supabase } from './supabaseClient'
 
+/**
+ * Utility functions for common database operations
+ */
+class DatabaseUtils {
+    static handleError(operation: string, error: any): void {
+        console.error(`Analytics DB: Error ${operation}:`, error)
+    }
+
+    static handleException(operation: string, error: any): void {
+        console.error(`Analytics DB: Exception ${operation}:`, error)
+    }
+
+    static async executeWithErrorHandling<T>(
+        operation: string,
+        fn: () => Promise<T>,
+        fallback?: T
+    ): Promise<T | null> {
+        try {
+            return await fn()
+        } catch (error) {
+            this.handleException(operation, error)
+            return fallback ?? null
+        }
+    }
+}
+
 // Types for analytics data
 export interface AnalyticsEvent {
     id?: string
     type: string
-    page?: string
+    page?: string | null
     timestamp: number
     sessionId: string
-    details?: Record<string, any>
-    userAgent?: string
-    referrer?: string
-    dnt?: boolean
+    details?: Record<string, string | number | boolean> | null
+    userAgent?: string | null
+    referrer?: string | null
+    dnt?: boolean | null
 }
 
 export interface AnalyticsSession {
@@ -86,7 +112,7 @@ export class AnalyticsDB {
                     type: event.type,
                     page: event.page,
                     timestamp: event.timestamp,
-                    session_id: event.sessionId,
+                    anonymous_id: event.sessionId,
                     details: event.details || {},
                     user_agent: event.userAgent,
                     referrer: event.referrer,
@@ -117,11 +143,27 @@ export class AnalyticsDB {
         }
 
         try {
-            // Ensure all sessions exist
+            // Prepare session data for batch upsert
             const uniqueSessions = [...new Set(events.map(e => e.sessionId))]
-            for (const sessionId of uniqueSessions) {
+            const sessionData = uniqueSessions.map(sessionId => {
                 const event = events.find(e => e.sessionId === sessionId)
-                await this.upsertSession(sessionId, event?.userAgent, event?.referrer)
+                return {
+                    anonymous_id: sessionId,
+                    user_agent: event?.userAgent || null,
+                    referrer: event?.referrer || null,
+                    last_seen: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                }
+            })
+
+            // Batch upsert sessions
+            const { error: sessionError } = await supabase
+                .from('analytics_sessions')
+                .upsert(sessionData, { onConflict: 'anonymous_id' })
+
+            if (sessionError) {
+                console.error('Analytics DB: Error upserting sessions:', sessionError)
+                return false
             }
 
             // Insert all events
@@ -129,29 +171,42 @@ export class AnalyticsDB {
                 type: event.type,
                 page: event.page,
                 timestamp: event.timestamp,
-                session_id: event.sessionId,
+                anonymous_id: event.sessionId,
                 details: event.details || {},
                 user_agent: event.userAgent,
                 referrer: event.referrer,
                 dnt: event.dnt || false
             }))
 
-            const { error } = await supabase
+            const { error: eventError } = await supabase
                 .from('analytics_events')
                 .insert(eventData)
 
-            if (error) {
-                console.error('Analytics DB: Error storing batch events:', error)
+            if (eventError) {
+                console.error('Analytics DB: Error storing batch events:', eventError)
                 return false
             }
 
-            // Increment events count for each session
-            for (const sessionId of uniqueSessions) {
-                const sessionEventCount = events.filter(e => e.sessionId === sessionId).length
-                for (let i = 0; i < sessionEventCount; i++) {
-                    await this.incrementSessionEvents(sessionId)
-                }
-            }
+            // Batch update session event counts
+            const sessionEventCounts = new Map<string, number>()
+            events.forEach(event => {
+                const count = sessionEventCounts.get(event.sessionId) || 0
+                sessionEventCounts.set(event.sessionId, count + 1)
+            })
+
+            // Update session counts in parallel
+            const updatePromises = Array.from(sessionEventCounts.entries()).map(([sessionId, count]) =>
+                supabase
+                    .from('analytics_sessions')
+                    .update({
+                        events_count: supabase.raw(`events_count + ${count}`),
+                        last_seen: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('anonymous_id', sessionId)
+            )
+
+            await Promise.all(updatePromises)
 
             return true
         } catch (error) {
@@ -169,11 +224,18 @@ export class AnalyticsDB {
         }
 
         try {
-            const { error } = await supabase.rpc('upsert_analytics_session', {
-                p_session_id: sessionId,
-                p_user_agent: userAgent,
-                p_referrer: referrer
-            })
+            // Use direct SQL instead of stored procedure for now
+            const { error } = await supabase
+                .from('analytics_sessions')
+                .upsert({
+                    anonymous_id: sessionId,
+                    user_agent: userAgent,
+                    referrer: referrer,
+                    last_seen: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                }, {
+                    onConflict: 'anonymous_id'
+                })
 
             if (error) {
                 console.error('Analytics DB: Error upserting session:', error)
@@ -196,9 +258,15 @@ export class AnalyticsDB {
         }
 
         try {
-            const { error } = await supabase.rpc('increment_session_events', {
-                p_session_id: sessionId
-            })
+            // Use direct SQL update instead of stored procedure for now
+            const { error } = await supabase
+                .from('analytics_sessions')
+                .update({
+                    events_count: supabase.raw('events_count + 1'),
+                    last_seen: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                })
+                .eq('anonymous_id', sessionId)
 
             if (error) {
                 console.error('Analytics DB: Error incrementing session events:', error)
@@ -227,10 +295,18 @@ export class AnalyticsDB {
         }
 
         try {
-            const { data, error } = await supabase.rpc('get_analytics_metrics', {
-                p_start_date: startDate?.toISOString(),
-                p_end_date: endDate?.toISOString()
-            })
+            let query = supabase
+                .from('analytics_events')
+                .select('type, anonymous_id, created_at')
+
+            if (startDate) {
+                query = query.gte('created_at', startDate.toISOString())
+            }
+            if (endDate) {
+                query = query.lte('created_at', endDate.toISOString())
+            }
+
+            const { data, error } = await query
 
             if (error) {
                 console.error('Analytics DB: Error getting metrics:', error)
@@ -245,12 +321,16 @@ export class AnalyticsDB {
                 }
             }
 
-            const result = data[0]
+            // Calculate metrics from the data
+            const totalEvents = data.length
+            const pageViews = data.filter(event => event.type === 'pageview').length
+            const uniqueSessions = new Set(data.map(event => event.anonymous_id)).size
+
             return {
-                totalPageViews: parseInt(result.total_page_views) || 0,
-                uniqueSessions: parseInt(result.unique_sessions) || 0,
-                totalEvents: parseInt(result.total_events) || 0,
-                avgSessionDuration: result.avg_session_duration
+                totalPageViews: pageViews,
+                uniqueSessions: uniqueSessions,
+                totalEvents: totalEvents,
+                avgSessionDuration: "0m" // Simplified for now
             }
         } catch (error) {
             console.error('Analytics DB: Exception getting metrics:', error)
@@ -274,22 +354,53 @@ export class AnalyticsDB {
         }
 
         try {
-            const { data, error } = await supabase.rpc('get_top_pages', {
-                p_limit: limit,
-                p_start_date: startDate?.toISOString(),
-                p_end_date: endDate?.toISOString()
-            })
+            let query = supabase
+                .from('analytics_events')
+                .select('page, anonymous_id')
+                .eq('type', 'pageview')
+
+            if (startDate) {
+                query = query.gte('created_at', startDate.toISOString())
+            }
+            if (endDate) {
+                query = query.lte('created_at', endDate.toISOString())
+            }
+
+            const { data, error } = await query
 
             if (error) {
                 console.error('Analytics DB: Error getting top pages:', error)
                 return []
             }
 
-            return data?.map((row: any) => ({
-                page: row.page,
-                pageViews: parseInt(row.page_views) || 0,
-                uniqueSessions: parseInt(row.unique_sessions) || 0
-            })) || []
+            if (!data || data.length === 0) {
+                return []
+            }
+
+            // Group by page and calculate metrics
+            const pageStats = new Map<string, { pageViews: number, sessions: Set<string> }>()
+
+            data.forEach(event => {
+                const page = event.page || '/'
+                if (!pageStats.has(page)) {
+                    pageStats.set(page, { pageViews: 0, sessions: new Set() })
+                }
+                const stats = pageStats.get(page)!
+                stats.pageViews++
+                stats.sessions.add(event.anonymous_id)
+            })
+
+            // Convert to array and sort by page views
+            const result = Array.from(pageStats.entries())
+                .map(([page, stats]) => ({
+                    page,
+                    pageViews: stats.pageViews,
+                    uniqueSessions: stats.sessions.size
+                }))
+                .sort((a, b) => b.pageViews - a.pageViews)
+                .slice(0, limit)
+
+            return result
         } catch (error) {
             console.error('Analytics DB: Exception getting top pages:', error)
             return []
@@ -311,21 +422,50 @@ export class AnalyticsDB {
         }
 
         try {
-            const { data, error } = await supabase.rpc('get_event_counts_by_type', {
-                p_start_date: startDate?.toISOString(),
-                p_end_date: endDate?.toISOString()
-            })
+            let query = supabase
+                .from('analytics_events')
+                .select('type, anonymous_id')
+
+            if (startDate) {
+                query = query.gte('created_at', startDate.toISOString())
+            }
+            if (endDate) {
+                query = query.lte('created_at', endDate.toISOString())
+            }
+
+            const { data, error } = await query
 
             if (error) {
                 console.error('Analytics DB: Error getting event counts:', error)
                 return []
             }
 
-            return data?.map((row: any) => ({
-                eventType: row.event_type,
-                eventCount: parseInt(row.event_count) || 0,
-                uniqueSessions: parseInt(row.unique_sessions) || 0
-            })) || []
+            if (!data || data.length === 0) {
+                return []
+            }
+
+            // Group by event type and calculate metrics
+            const eventStats = new Map<string, { eventCount: number, sessions: Set<string> }>()
+
+            data.forEach(event => {
+                if (!eventStats.has(event.type)) {
+                    eventStats.set(event.type, { eventCount: 0, sessions: new Set() })
+                }
+                const stats = eventStats.get(event.type)!
+                stats.eventCount++
+                stats.sessions.add(event.anonymous_id)
+            })
+
+            // Convert to array and sort by event count
+            const result = Array.from(eventStats.entries())
+                .map(([eventType, stats]) => ({
+                    eventType,
+                    eventCount: stats.eventCount,
+                    uniqueSessions: stats.sessions.size
+                }))
+                .sort((a, b) => b.eventCount - a.eventCount)
+
+            return result
         } catch (error) {
             console.error('Analytics DB: Exception getting event counts:', error)
             return []
@@ -358,23 +498,71 @@ export class AnalyticsDB {
         }
 
         try {
-            const { data, error } = await supabase.rpc('get_analytics_time_series', {
-                p_interval_type: intervalType,
-                p_start_date: startDate?.toISOString(),
-                p_end_date: endDate?.toISOString()
-            })
+            let query = supabase
+                .from('analytics_events')
+                .select('type, anonymous_id, created_at')
+
+            if (startDate) {
+                query = query.gte('created_at', startDate.toISOString())
+            }
+            if (endDate) {
+                query = query.lte('created_at', endDate.toISOString())
+            }
+
+            const { data, error } = await query.order('created_at', { ascending: false })
 
             if (error) {
                 console.error('Analytics DB: Error getting time series data:', error)
                 return []
             }
 
-            return data?.map((row: any) => ({
-                timeBucket: row.time_bucket,
-                pageViews: parseInt(row.page_views) || 0,
-                uniqueSessions: parseInt(row.unique_sessions) || 0,
-                totalEvents: parseInt(row.total_events) || 0
-            })) || []
+            if (!data || data.length === 0) {
+                return []
+            }
+
+            // Group by time bucket
+            const timeStats = new Map<string, { pageViews: number, sessions: Set<string>, totalEvents: number }>()
+
+            data.forEach(event => {
+                const date = new Date(event.created_at)
+                let timeBucket: string
+
+                switch (intervalType) {
+                    case 'hour':
+                        timeBucket = date.toISOString().substring(0, 13) + ':00:00.000Z'
+                        break
+                    case 'week':
+                        const weekStart = new Date(date)
+                        weekStart.setDate(date.getDate() - date.getDay())
+                        timeBucket = weekStart.toISOString().split('T')[0]
+                        break
+                    default: // day
+                        timeBucket = date.toISOString().split('T')[0]
+                        break
+                }
+
+                if (!timeStats.has(timeBucket)) {
+                    timeStats.set(timeBucket, { pageViews: 0, sessions: new Set(), totalEvents: 0 })
+                }
+                const stats = timeStats.get(timeBucket)!
+                stats.totalEvents++
+                if (event.type === 'pageview') {
+                    stats.pageViews++
+                }
+                stats.sessions.add(event.anonymous_id)
+            })
+
+            // Convert to array and sort by time bucket
+            const result = Array.from(timeStats.entries())
+                .map(([timeBucket, stats]) => ({
+                    timeBucket,
+                    pageViews: stats.pageViews,
+                    uniqueSessions: stats.sessions.size,
+                    totalEvents: stats.totalEvents
+                }))
+                .sort((a, b) => b.timeBucket.localeCompare(a.timeBucket))
+
+            return result
         } catch (error) {
             console.error('Analytics DB: Exception getting time series data:', error)
             return []
@@ -396,22 +584,59 @@ export class AnalyticsDB {
         }
 
         try {
-            const { data, error } = await supabase.rpc('get_content_performance', {
-                p_start_date: startDate?.toISOString(),
-                p_end_date: endDate?.toISOString()
-            })
+            let query = supabase
+                .from('analytics_events')
+                .select('type, details, anonymous_id')
+                .neq('type', 'pageview') // Exclude pageviews from content performance
+
+            if (startDate) {
+                query = query.gte('created_at', startDate.toISOString())
+            }
+            if (endDate) {
+                query = query.lte('created_at', endDate.toISOString())
+            }
+
+            const { data, error } = await query
 
             if (error) {
                 console.error('Analytics DB: Error getting content performance:', error)
                 return []
             }
 
-            return data?.map((row: any) => ({
-                contentType: row.content_type,
-                actionType: row.action_type,
-                actionCount: parseInt(row.action_count) || 0,
-                uniqueSessions: parseInt(row.unique_sessions) || 0
-            })) || []
+            if (!data || data.length === 0) {
+                return []
+            }
+
+            // Group by content type and action type
+            const contentStats = new Map<string, { actionCount: number, sessions: Set<string> }>()
+
+            data.forEach(event => {
+                const contentType = (event.details as any)?.contentType || 'unknown'
+                const actionType = event.type
+                const key = `${contentType}:${actionType}`
+
+                if (!contentStats.has(key)) {
+                    contentStats.set(key, { actionCount: 0, sessions: new Set() })
+                }
+                const stats = contentStats.get(key)!
+                stats.actionCount++
+                stats.sessions.add(event.anonymous_id)
+            })
+
+            // Convert to array and sort by action count
+            const result = Array.from(contentStats.entries())
+                .map(([key, stats]) => {
+                    const [contentType, actionType] = key.split(':')
+                    return {
+                        contentType,
+                        actionType,
+                        actionCount: stats.actionCount,
+                        uniqueSessions: stats.sessions.size
+                    }
+                })
+                .sort((a, b) => b.actionCount - a.actionCount)
+
+            return result
         } catch (error) {
             console.error('Analytics DB: Exception getting content performance:', error)
             return []
