@@ -11,6 +11,7 @@ const AnalyticsEventSchema = z.object({
     page: z.string().max(255).optional().nullable(),
     timestamp: z.number().int().positive(),
     sessionId: z.string().min(1).max(36),
+    userId: z.string().min(1).max(36).optional().nullable(),
     details: z.record(z.union([z.string(), z.number(), z.boolean()])).optional().nullable(),
     userAgent: z.string().optional().nullable(),
     referrer: z.string().optional().nullable(),
@@ -124,11 +125,12 @@ export async function POST(request: NextRequest) {
             }
             events = validation.data.events.map(event => ({
                 ...event,
-                page: event.page || null,
-                details: event.details || null,
-                userAgent: event.userAgent || null,
-                referrer: event.referrer || null,
-                dnt: event.dnt || null
+                page: event.page || undefined,
+                userId: event.userId || undefined,
+                details: event.details || undefined,
+                userAgent: event.userAgent || undefined,
+                referrer: event.referrer || undefined,
+                dnt: event.dnt || undefined
             }))
         } else {
             // Single event
@@ -142,11 +144,12 @@ export async function POST(request: NextRequest) {
             const validatedEvent = validation.data
             events = [{
                 ...validatedEvent,
-                page: validatedEvent.page || null,
-                details: validatedEvent.details || null,
-                userAgent: validatedEvent.userAgent || null,
-                referrer: validatedEvent.referrer || null,
-                dnt: validatedEvent.dnt || null
+                page: validatedEvent.page || undefined,
+                userId: validatedEvent.userId || undefined,
+                details: validatedEvent.details || undefined,
+                userAgent: validatedEvent.userAgent || undefined,
+                referrer: validatedEvent.referrer || undefined,
+                dnt: validatedEvent.dnt || undefined
             }]
         }
 
@@ -309,6 +312,14 @@ async function handleAnalyticsEndpoint(
         case 'moderation-stats':
             const moderationStats = await AnalyticsDB.getModerationStats(startDate, endDate)
             return NextResponse.json({ data: moderationStats })
+
+        case 'user-metrics':
+            const userMetrics = await AnalyticsDB.getUserMetrics()
+            return NextResponse.json({ data: userMetrics })
+
+        case 'user-growth':
+            const userGrowthData = await AnalyticsDB.getUserGrowthData(limit)
+            return NextResponse.json({ data: userGrowthData })
 
         default:
             // Return comprehensive dashboard data based on include flags

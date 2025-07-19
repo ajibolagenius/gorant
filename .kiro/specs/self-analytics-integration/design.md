@@ -86,6 +86,7 @@ CREATE TABLE analytics_events (
   page VARCHAR(255),
   timestamp BIGINT NOT NULL,
   session_id VARCHAR(36),
+  user_id VARCHAR(36),
   details JSONB,
   user_agent TEXT,
   referrer TEXT,
@@ -95,10 +96,23 @@ CREATE TABLE analytics_events (
 -- Analytics Sessions Table
 CREATE TABLE analytics_sessions (
   id VARCHAR(36) PRIMARY KEY,
+  user_id VARCHAR(36),
   first_seen TIMESTAMP DEFAULT NOW(),
   last_seen TIMESTAMP DEFAULT NOW(),
   page_views INTEGER DEFAULT 0,
-  events_count INTEGER DEFAULT 0
+  events_count INTEGER DEFAULT 0,
+  is_active BOOLEAN DEFAULT TRUE
+);
+
+-- Analytics Users Table
+CREATE TABLE analytics_users (
+  id VARCHAR(36) PRIMARY KEY,
+  first_seen TIMESTAMP DEFAULT NOW(),
+  last_seen TIMESTAMP DEFAULT NOW(),
+  total_sessions INTEGER DEFAULT 0,
+  total_page_views INTEGER DEFAULT 0,
+  total_events INTEGER DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW()
 );
 ```
 
@@ -124,10 +138,20 @@ interface AnalyticsEvent {
 interface AnalyticsMetrics {
   totalPageViews: number
   uniqueSessions: number
+  totalUsers: number
+  onlineUsers: number
   topPages: PageMetric[]
   userActions: ActionMetric[]
   contentPerformance: ContentMetric[]
   timeRangeData: TimeSeriesData[]
+}
+
+interface UserMetrics {
+  totalUsers: number
+  onlineUsers: number
+  newUsersToday: number
+  activeUsersLast7Days: number
+  userGrowthData: TimeSeriesData[]
 }
 ```
 

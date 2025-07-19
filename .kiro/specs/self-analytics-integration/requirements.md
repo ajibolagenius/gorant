@@ -25,9 +25,10 @@ The Self Analytics Integration feature will implement a privacy-first, in-house 
 
 1. WHEN accessing the analytics dashboard THEN the system SHALL display total pageviews, unique sessions, and top pages
 2. WHEN viewing analytics data THEN the system SHALL show user action metrics including rant posts, likes, bookmarks, and comments
-3. WHEN filtering analytics THEN the system SHALL allow filtering by date range and event type
-4. WHEN displaying metrics THEN the system SHALL present data using charts and tables for easy visualization
-5. WHEN no data is available THEN the system SHALL display appropriate empty states with helpful messaging
+3. WHEN accessing user metrics THEN the system SHALL display total number of unique users and currently online users
+4. WHEN filtering analytics THEN the system SHALL allow filtering by date range and event type
+5. WHEN displaying metrics THEN the system SHALL present data using charts and tables for easy visualization
+6. WHEN no data is available THEN the system SHALL display appropriate empty states with helpful messaging
 
 ### Requirement 3
 
@@ -65,6 +66,19 @@ The Self Analytics Integration feature will implement a privacy-first, in-house 
 5. WHEN analytics data is accessed THEN the system SHALL log access for audit purposes
 
 ### Requirement 6
+
+**User Story:** As a platform administrator, I want to track user metrics while maintaining anonymity, so that I can understand platform growth and current activity levels.
+
+#### Acceptance Criteria
+
+1. WHEN a user first visits the platform THEN the system SHALL generate and track a unique anonymous user identifier
+2. WHEN tracking total users THEN the system SHALL count unique anonymous identifiers while maintaining privacy
+3. WHEN determining online users THEN the system SHALL track active sessions within a defined time window (e.g., last 5 minutes)
+4. WHEN a user becomes inactive THEN the system SHALL update their online status based on session activity
+5. WHEN displaying user metrics THEN the system SHALL show total registered anonymous users and current online count
+6. WHEN storing user tracking data THEN the system SHALL ensure no personally identifiable information is collected
+
+### Requirement 7
 
 **User Story:** As a developer, I want a simple analytics tracking API, so that I can easily add analytics to new features without complex implementation.
 

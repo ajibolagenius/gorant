@@ -10,18 +10,21 @@ export interface AnalyticsHook {
     isEnabled: () => boolean
     setEnabled: (enabled: boolean) => void
     sessionId: string
+    userId: string
     queueSize: number
 }
 
 export function useAnalytics(): AnalyticsHook {
     const { privacy } = useSettings()
     const [sessionId, setSessionId] = useState('')
+    const [userId, setUserId] = useState('')
     const [queueSize, setQueueSize] = useState(0)
 
-    // Update session ID when analytics service initializes
+    // Update session ID and user ID when analytics service initializes
     useEffect(() => {
         if (typeof window !== 'undefined') {
             setSessionId(analyticsService.getSessionId())
+            setUserId(analyticsService.getUserId())
         }
     }, [])
 
@@ -109,7 +112,7 @@ export function useAnalytics(): AnalyticsHook {
         }
     }, [privacy.shareAnalytics, validateEventType, sanitizeDetails])
 
-    const isEnabled = useMemo((): boolean => {
+    const isEnabled = useCallback((): boolean => {
         return privacy.shareAnalytics && analyticsService.isEnabled()
     }, [privacy.shareAnalytics])
 
@@ -124,6 +127,7 @@ export function useAnalytics(): AnalyticsHook {
         isEnabled,
         setEnabled,
         sessionId,
+        userId,
         queueSize,
     }
 }

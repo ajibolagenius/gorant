@@ -19,6 +19,10 @@ export interface DashboardData {
         uniqueSessions: number
         totalEvents: number
         avgSessionDuration?: string
+        totalUsers?: number
+        onlineUsers?: number
+        newUsersToday?: number
+        activeUsersLast7Days?: number
     }
     topPages?: Array<{
         page: string
@@ -365,6 +369,34 @@ export class AnalyticsAPI {
             console.error('Dashboard API request failed:', error)
             return null
         }
+    }
+
+    /**
+     * Get user metrics (total users, online users, etc.)
+     */
+    static async getUserMetrics(): Promise<{
+        totalUsers: number
+        onlineUsers: number
+        newUsersToday: number
+        activeUsersLast7Days: number
+    } | null> {
+        return this.getDashboardData({
+            endpoint: 'user-metrics'
+        })
+    }
+
+    /**
+     * Get user growth data for charts
+     */
+    static async getUserGrowthData(days: number = 30): Promise<Array<{
+        date: string
+        newUsers: number
+        totalUsers: number
+    }> | null> {
+        return this.getDashboardData({
+            endpoint: 'user-growth',
+            limit: days
+        })
     }
 
     /**

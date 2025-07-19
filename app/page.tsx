@@ -15,12 +15,12 @@ import {
     HeartBreak,
     Cloud,
     Confetti,
-    SmileySticker
+    SmileySticker,
+    LegoSmiley
 } from "@phosphor-icons/react"
 import { HelpCircle, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, MoreHorizontal, Dot, GripVertical, Search, PanelLeft, Award, MessageCircle, Send, X, Filter, Eraser } from "lucide-react"
 import { toast } from "sonner"
 import confetti from "canvas-confetti"
-import Link from "next/link"
 import { useTheme } from "@/hooks/use-theme"
 import { useGameification } from "@/hooks/use-gamification"
 import { useAccessibility } from "@/hooks/use-accessibility"
@@ -28,9 +28,7 @@ import { MasonryGrid } from "@/components/masonry-grid"
 import { EnhancedRantCard, Rant, Comment } from "@/components/enhanced-rant-card"
 import { PostRantModal } from "@/components/post-rant-modal"
 import { FilterPanel } from "@/components/filter-panel"
-import { GameificationPanel } from "@/components/gamification-panel"
 import { ContentModerationService } from "@/services/content-moderation"
-import { SentimentAnalysisService } from "@/services/sentiment-analysis"
 import { PersonalizationService } from "@/services/personalization"
 import { getAnonymousId, normalizeRant } from "@/lib/utils"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -62,6 +60,8 @@ const MOODS = [
     { icon: Confetti, emoji: "", label: "Excited", value: "excited", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" },
     { icon: SmileySticker, emoji: "", label: "Confident", value: "confident", color: "bg-lime-100 text-lime-800 dark:bg-lime-900/30 dark:text-lime-300" },
 ]
+
+
 
 const mockComments: { [key: string]: Comment[] } = {
     "1": [
@@ -121,7 +121,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
     static getDerivedStateFromError() {
         return { hasError: true }
     }
-    componentDidCatch(error: any, errorInfo: any) {
+    componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
         // Log error if needed
         console.error("ErrorBoundary caught an error:", error, errorInfo)
     }
@@ -166,11 +166,7 @@ export default function RantApp() {
     const [showRantOfTheDayModal, setShowRantOfTheDayModal] = useState(false)
     const {
         notifications: notificationSettings,
-        privacy: privacySettings,
         contentFilters: contentFilterSettings,
-        updateNotification,
-        updatePrivacy,
-        updateContentFilter,
         loaded: settingsLoaded,
         feedLayout,
         defaultSort,
@@ -179,6 +175,13 @@ export default function RantApp() {
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const [showPersonalizationTip, setShowPersonalizationTip] = useState(false)
     const personalizationTipDismissed = useRef(false)
+
+    // Track rant visibility
+    const [visibleRants, setVisibleRants] = useState<Set<string>>(new Set())
+    const rantRefs = useRef<Map<string, HTMLElement>>(new Map())
+
+    const { theme, toggleTheme } = useTheme()
+    const { fontSize, contrast, screenReaderMode } = useAccessibility()
 
     // Show onboarding tip for personalization
     useEffect(() => {
@@ -193,9 +196,7 @@ export default function RantApp() {
         localStorage.setItem("personalizationTipDismissed", "true")
     }
 
-    const { theme, toggleTheme } = useTheme()
     const { userPoints, userLevel, addPoints, checkAchievements } = useGameification()
-    const { fontSize, contrast, screenReaderMode, updateAccessibility } = useAccessibility()
     const router = useRouter()
     const searchParams = useSearchParams()
     const pathname = usePathname()
@@ -227,7 +228,7 @@ export default function RantApp() {
         if (moodFilter) {
             trackUserAction("filter_by_mood", {
                 mood: moodFilter,
-                resultsCount: rants.filter(r => r.mood === moodFilter).length
+                resultsCount: rants.filter(r => r?.mood === moodFilter).length
             })
         }
     }, [moodFilter])
@@ -299,22 +300,41 @@ export default function RantApp() {
             }
         }
         if (!rantId) return
-        // Optimistically update UI
+        // Track liked comments in localStorage
+        const likedCommentsKey = `likedComments_${rantId}`
+        const likedComments = new Set(JSON.parse(localStorage.getItem(likedCommentsKey) || '[]'))
+        const isLiked = likedComments.has(commentId)
         setComments(prev => {
             const updated = { ...prev }
             if (updated[rantId]) {
                 updated[rantId] = updated[rantId].map(c =>
-                    c.id === commentId ? { ...c, likes_count: (c.likes_count || 0) + 1 } : c
+                    c.id === commentId
+                        ? { ...c, likes_count: isLiked ? Math.max((c.likes_count || 1) - 1, 0) : (c.likes_count || 0) + 1 }
+                        : c
                 )
             }
             return updated
         })
+        if (isLiked) {
+            likedComments.delete(commentId)
+        } else {
+            likedComments.add(commentId)
+        }
+        localStorage.setItem(likedCommentsKey, JSON.stringify(Array.from(likedComments)))
         // Update likes_count in Supabase
         const { error } = await supabase.from('comments').update({
-            likes_count: (comments[rantId]?.find(c => c.id === commentId)?.likes_count || 0) + 1
+            likes_count: isLiked
+                ? Math.max((comments[rantId]?.find(c => c.id === commentId)?.likes_count || 1) - 1, 0)
+                : (comments[rantId]?.find(c => c.id === commentId)?.likes_count || 0) + 1
         }).eq('id', commentId)
         if (error) {
-            toast.error('Failed to like comment.')
+            toast.error(isLiked ? 'Failed to unlike comment.' : 'Failed to like comment.')
+        } else {
+            if (isLiked) {
+                toast.info('Comment unliked.')
+            } else {
+                toast.success('Comment liked!')
+            }
         }
     }
 
@@ -328,20 +348,20 @@ export default function RantApp() {
                 query: query.toLowerCase(),
                 queryLength: query.length,
                 resultsCount: rants.filter(r =>
-                    r.content.toLowerCase().includes(query.toLowerCase()) ||
-                    r.tags?.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
+                    r?.content?.toLowerCase().includes(query.toLowerCase()) ||
+                    r?.tags?.some(tag => tag?.toLowerCase().includes(query.toLowerCase()))
                 ).length
             })
 
             const suggestions = [
                 ...new Set([
                     ...rants
-                        .filter((r) => r.content.toLowerCase().includes(query.toLowerCase()))
+                        .filter((r) => r?.content?.toLowerCase().includes(query.toLowerCase()))
                         .slice(0, 3)
-                        .map((r) => r.content.length > 50 ? r.content.substring(0, 50) : r.content),
+                        .map((r) => r?.content?.length > 50 ? r.content.substring(0, 50) : r.content),
                     ...rants
-                        .flatMap((r) => r.tags || [])
-                        .filter((tag) => tag.toLowerCase().includes(query.toLowerCase()))
+                        .flatMap((r) => r?.tags || [])
+                        .filter((tag) => tag?.toLowerCase().includes(query.toLowerCase()))
                         .slice(0, 3)
                         .map((tag) => `#${tag}`),
                 ]),
@@ -421,19 +441,28 @@ export default function RantApp() {
         const commentsChannel = supabase
             .channel('public:comments')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, payload => {
-                const rantId = payload.new?.rant_id || payload.old?.rant_id
-                if (!rantId) return
+                // Type assertion for payload.new and payload.old
+                const newComment = payload.new as Comment | undefined;
+                const oldComment = payload.old as Partial<Comment> | undefined;
+
+                const rantId = newComment?.rant_id || oldComment?.rant_id;
+                if (!rantId) return;
+
                 setComments(prev => {
-                    const updated = { ...prev }
-                    if (payload.eventType === 'INSERT') {
-                        updated[rantId] = [payload.new, ...(updated[rantId] || [])]
-                    } else if (payload.eventType === 'UPDATE') {
-                        updated[rantId] = (updated[rantId] || []).map(c => c.id === payload.new.id ? payload.new : c)
-                    } else if (payload.eventType === 'DELETE') {
-                        updated[rantId] = (updated[rantId] || []).filter(c => c.id !== payload.old.id)
+                    const updated = { ...prev };
+                    if (payload.eventType === 'INSERT' && newComment) {
+                        updated[rantId] = [newComment, ...(updated[rantId] || [])];
+                    } else if (payload.eventType === 'UPDATE' && newComment) {
+                        updated[rantId] = (updated[rantId] || []).map(c =>
+                            c.id === newComment.id ? newComment : c
+                        );
+                    } else if (payload.eventType === 'DELETE' && oldComment?.id) {
+                        updated[rantId] = (updated[rantId] || []).filter(c =>
+                            c.id !== oldComment.id
+                        );
                     }
-                    return updated
-                })
+                    return updated;
+                });
             })
             .subscribe()
         return () => {
@@ -476,54 +505,45 @@ export default function RantApp() {
 
     // Enhanced like function with gamification
     const likeRant = async (rantId: string) => {
-        if (likedRants.has(rantId)) {
-            toast.info("You already liked this rant!")
-            return
-        }
-
-        try {
-            const rant = rants.find(r => r.id === rantId)
-
-            // Update likes_count in Supabase
-            const { error } = await supabase.from('rants').update({ likes_count: (rant?.likes_count || 0) + 1 }).eq('id', rantId)
-            if (error) {
-                toast.error('Failed to like rant.')
-                return
+        const rant = rants.find(r => r.id === rantId)
+        const isLiked = likedRants.has(rantId)
+        // Optimistically update UI
+        setRants(prev => prev.map(r => r.id === rantId ? { ...r, likes_count: isLiked ? Math.max((r.likes_count || 1) - 1, 0) : (r.likes_count || 0) + 1 } : r))
+        setLikedRants((prev) => {
+            const newSet = new Set(prev)
+            if (isLiked) {
+                newSet.delete(rantId)
+            } else {
+                newSet.add(rantId)
             }
-            setLikedRants((prev) => {
-                const newSet = new Set([...prev, rantId])
-                localStorage.setItem('likedRants', JSON.stringify(Array.from(newSet)))
-                return newSet
-            })
-            fetchRants()
-
-            // Track analytics for like action
-            await trackUserAction("like_rant", {
-                rantId,
-                rantMood: rant?.mood,
-                rantTags: rant?.tags,
-                rantAge: rant ? Math.floor((Date.now() - new Date(rant.created_at).getTime()) / (1000 * 60 * 60)) : null, // hours
-                previousLikesCount: rant?.likes_count || 0,
-                userTotalLikes: likedRants.size + 1
-            })
-
-            // Add points for liking
-            addPoints(1, "like")
-            await checkAchievements("likes_given", likedRants.size + 1)
-
-            // Play like sound
-            await audioService.playActionSound('like')
-
-            toast.success("Rant liked! +1 point")
-
-            // Trigger confetti
-            confetti({
-                particleCount: 50,
-                spread: 60,
-                origin: { y: 0.7 },
-            })
-        } catch (error) {
-            console.error("Error liking rant:", error)
+            localStorage.setItem('likedRants', JSON.stringify(Array.from(newSet)))
+            return newSet
+        })
+        // Update likes_count in Supabase
+        const { error } = await supabase.from('rants').update({
+            likes_count: isLiked ? Math.max((rant?.likes_count || 1) - 1, 0) : (rant?.likes_count || 0) + 1
+        }).eq('id', rantId)
+        if (error) {
+            toast.error(isLiked ? 'Failed to unlike rant.' : 'Failed to like rant.')
+        } else {
+            if (!isLiked) {
+                // Like analytics, points, confetti, etc.
+                await trackUserAction("like_rant", {
+                    rantId,
+                    rantMood: rant?.mood,
+                    rantTags: rant?.tags,
+                    rantAge: rant ? Math.floor((Date.now() - new Date(rant.created_at).getTime()) / (1000 * 60 * 60)) : null,
+                    previousLikesCount: rant?.likes_count || 0,
+                    userTotalLikes: likedRants.size + 1
+                })
+                addPoints(1, "like")
+                await checkAchievements("likes_given", likedRants.size + 1)
+                await audioService.playActionSound('like')
+                toast.success("Rant liked! +1 point")
+                confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } })
+            } else {
+                toast.info("Rant unliked.")
+            }
         }
     }
 
@@ -566,9 +586,11 @@ export default function RantApp() {
 
     // Share rant function
     const shareRant = async (rant: Rant) => {
+        // Remove all HTML tags from rant.content for sharing
+        const plainText = rant.content.replace(/<[^>]+>/g, '').trim();
         const shareData = {
             title: "Check out this rant on Rant App",
-            text: rant.content.substring(0, 100) + "...",
+            text: plainText.substring(0, 100) + (plainText.length > 100 ? "..." : ""),
             url: `${window.location.origin}/rant/${rant.id}`,
         }
 
@@ -577,22 +599,25 @@ export default function RantApp() {
             rantId: rant.id,
             rantMood: rant.mood,
             rantTags: rant.tags,
-            shareMethod: navigator.share ? "native_share" : "clipboard",
+            shareMethod: 'share' in navigator ? "native_share" : "clipboard",
             rantAge: Math.floor((Date.now() - new Date(rant.created_at).getTime()) / (1000 * 60 * 60))
         })
 
-        if (navigator.share) {
+        if (typeof navigator !== 'undefined' && 'share' in navigator) {
             try {
-                await navigator.share(shareData)
+                await (navigator as any).share(shareData)
                 addPoints(2, "share")
                 toast.success("Rant shared! +2 points")
             } catch (error) {
                 console.log("Error sharing:", error)
             }
-        } else {
+        } else if (typeof navigator !== 'undefined' && 'clipboard' in navigator) {
             // Fallback: copy to clipboard
-            await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`)
+            await (navigator as any).clipboard.writeText(`${shareData.text} ${shareData.url}`)
             toast.success("Link copied to clipboard!")
+        } else {
+            // No sharing capabilities
+            toast.error("Sharing is not supported on this device")
         }
     }
 
@@ -822,7 +847,7 @@ export default function RantApp() {
         return () => {
             observer.disconnect()
         }
-    }, [filteredRants, rants, trackUserAction]) // Remove visibleRants from dependencies to avoid circular dependency
+    }, [filteredRants, rants, trackUserAction, visibleRants]) // Removed visibleRants from dependencies to avoid circular dependency
 
     const getMoodIcon = (mood: string) => {
         return MOODS.find((m) => m.value === mood)?.icon || SmileyMeh
@@ -849,10 +874,6 @@ export default function RantApp() {
     const [selectedRantIndex, setSelectedRantIndex] = useState(0)
     const searchInputRef = useRef<HTMLInputElement>(null)
     const [showShortcutsHelp, setShowShortcutsHelp] = useState(false)
-
-    // Track rant visibility
-    const [visibleRants, setVisibleRants] = useState<Set<string>>(new Set())
-    const rantRefs = useRef<Map<string, HTMLElement>>(new Map())
 
     // Keyboard shortcut handlers
     useKeyboardShortcuts({
@@ -926,7 +947,7 @@ export default function RantApp() {
         <ErrorBoundary>
             <main
                 role="main"
-                className={`min-h-screen bg-background dark:bg-background transition-colors ${fontSize} ${contrast}`}
+                className={`min-h-screen bg-background dark:bg-background transition-colors ${fontSize} ${contrast} pb-28 md:pb-32`}
                 style={{ fontSize: fontSize === "text-lg" ? "1.125rem" : fontSize === "text-xl" ? "1.25rem" : "1rem" }}
             >
                 <script
@@ -953,15 +974,21 @@ export default function RantApp() {
                         <div className="lg:col-span-3 space-y-6">
                             {/* Modern Feed Header */}
                             <div className="flex items-center justify-between rounded-none bg-purple-100/80 dark:bg-purple-900/40 backdrop-blur px-6 py-4 mb-2 shadow border-0">
-                                <div className="flex items-center gap-3">
-                                    <SmileySticker className="w-8 h-8 text-purple-600 dark:text-purple-300" weight="duotone" />
-                                    <h1 className="text-3xl md:text-4xl font-bold mb-2 font-heading tracking-tight flex items-center gap-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                                        {/* Main header content, e.g., logo/title */}
-                                        Rant
-                                    </h1>
-                                    <Badge className="ml-2 bg-green-500 text-white font-mono text-xs px-2 py-1 rounded-none">Live</Badge>
-                                    <span className="text-xs text-muted-foreground ml-4">Press <kbd className="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">?</kbd> for shortcuts</span>
+                                <div className="flex flex-1 items-center gap-3">
+                                    <LegoSmiley className="w-8 h-8 text-purple-600 dark:text-purple-300" weight="duotone" />
+                                    <Badge
+                                        variant="secondary"
+                                        className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
+                                    >
+                                        Anonymous
+                                    </Badge>
+                                    <Badge
+                                        className="ml-2 bg-green-400 text-green-900 dark:bg-green-300/20 dark:text-green-300 font-normal text-sm px-3 py-1 rounded-none h-7 flex items-center"
+                                    >
+                                        Live
+                                    </Badge>
                                 </div>
+                                <span className="text-xs text-muted-foreground ml-4">Press <kbd className="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">?</kbd> for shortcuts</span>
                             </div>
                             {/* Welcome Message */}
                             <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur">

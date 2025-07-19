@@ -89,7 +89,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             {children}
             {/* Desktop Footer */}
             {showFooter && (
-                <footer className="fixed bottom-0 left-0 w-full z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-t border-gray-200 dark:border-gray-700 mt-12 md:block hidden">
+                <footer className="fixed bottom-0 left-0 w-full z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-t border-gray-200 dark:border-gray-700 mt-8 md:mt-16 md:block hidden">
                     <div className="container mx-auto px-4 py-4 max-w-7xl">
                         <div className="flex flex-col items-center justify-center gap-4 text-gray-500 dark:text-gray-400 text-sm">
                             {/* Centralized Navigation Links */}
@@ -170,7 +170,12 @@ function HamburgerDrawer() {
                             <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
                                 Nigerian Crisis Helplines
                             </DialogTitle>
+                            <p className="text-sm text-gray-500 dark:text-gray-400" as-child>
+                                <span id="crisis-helplines-desc">If you or someone you know is in crisis, please reach out immediately to these Nigerian helplines. Your feelings matter. Help is available 24/7. All calls are confidential.</span>
+                            </p>
                         </DialogHeader>
+                        {/* DialogDescription for accessibility */}
+                        {/* The id is referenced by aria-describedby automatically by Radix Dialog */}
                         <div className="space-y-3">
                             <p className="text-gray-700 dark:text-gray-200">
                                 If you or someone you know is in crisis, please reach out immediately to these Nigerian helplines:
@@ -195,7 +200,12 @@ function HamburgerDrawer() {
                             <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
                                 <Users className="w-5 h-5 text-purple-700" /> Nigerian Support Groups
                             </DialogTitle>
+                            <p className="text-sm text-gray-500 dark:text-gray-400" as-child>
+                                <span id="support-groups-desc">Connect with mental health support groups and communities in Nigeria. These groups offer peer support, resources, and a safe space to share your journey.</span>
+                            </p>
                         </DialogHeader>
+                        {/* DialogDescription for accessibility */}
+                        {/* The id is referenced by aria-describedby automatically by Radix Dialog */}
                         <div className="space-y-3">
                             <p className="text-gray-700 dark:text-gray-200">
                                 Connect with mental health support groups and communities in Nigeria:

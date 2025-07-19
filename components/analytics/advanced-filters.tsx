@@ -55,7 +55,7 @@ const EVENT_TYPES = [
 const CONTENT_CATEGORIES = [
     { value: 'rant', label: 'Rants', color: 'blue' },
     { value: 'comment', label: 'Comments', color: 'green' },
-    { value: 'challenge', label: 'Cnges', color: 'purple' },
+    { value: 'challenge', label: 'Challenges', color: 'purple' },
     { value: 'bookmark', label: 'Bookmarks', color: 'orange' },
     { value: 'notification', label: 'Notifications', color: 'yellow' }
 ]

@@ -15,11 +15,11 @@
   - _Requirements: 6.1, 6.2, 6.3, 6.4_
 
 - [x] 3. Set up database schema and migrations for analytics storage
-  - Create database migration scripts for analytics_events and analytics_sessions tables
-  - Add proper indexing for efficient querying of analytics data
+  - Create database migration scripts for analytics_events, analytics_sessions, and analytics_users tables
+  - Add proper indexing for efficient querying of analytics data including user metrics
   - Implement data retention policies and cleanup procedures
-  - Create database utility functions for analytics data operations
-  - _Requirements: 4.4, 5.4_
+  - Create database utility functions for analytics data operations and user tracking
+  - _Requirements: 4.4, 5.4, 6.1, 6.2_
 
 - [x] 4. Implement enhanced analytics API endpoints
   - Update existing `app/api/analytics.ts` to handle event storage in database
@@ -56,30 +56,38 @@
   - Implement moderation analytics tracking content removal and reporting statistics
   - _Requirements: 2.3, 3.1, 3.2, 3.3_
 
-- [ ] 9. Implement privacy compliance and security features
+- [x] 9. Implement user tracking metrics for total and online users
+  - Add anonymous user ID generation and tracking to analytics service
+  - Implement user session activity monitoring for online user detection
+  - Create database queries for total users and online users metrics
+  - Add user metrics display to analytics dashboard with real-time updates
+  - Implement user growth tracking and historical user data visualization
+  - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6_
+
+- [ ] 10. Implement privacy compliance and security features
   - Add privacy-by-design validation to ensure no PII collection
   - Implement audit logging for analytics dashboard access
   - Create user consent management for analytics data collection
   - Add data anonymization and session identifier management
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
 
-- [ ] 10. Add performance optimization and caching
+- [ ] 11. Add performance optimization and caching
   - Implement database query optimization with proper indexing
   - Add caching layer for frequently accessed dashboard metrics
   - Create background processing for analytics data aggregation
   - Implement efficient data pagination for large datasets
   - _Requirements: 4.3, 4.4_
 
-- [ ] 11. Create comprehensive test suite for analytics system
+- [ ] 12. Create comprehensive test suite for analytics system
   - Write unit tests for analytics hook, service, and API endpoints
   - Create integration tests for end-to-end event flow and dashboard data retrieval
   - Implement privacy compliance tests for DNT handling and user preferences
   - Add performance tests for high-volume event processing and dashboard loading
   - _Requirements: 4.1, 4.2, 5.1, 5.2, 5.3_
 
-- [ ] 12. Integrate analytics with existing admin and settings systems
+- [ ] 13. Integrate analytics with existing admin and settings systems
   - Add analytics settings to existing user preferences system
   - Create admin navigation integration for analytics dashboard access
   - Implement role-based access control for analytics features
   - Add analytics toggle controls to settings page with privacy explanations
-  - _Requirements: 2.1, 5.4, 5.5, 6.5_
+  - _Requirements: 2.1, 5.4, 5.5, 7.5_

@@ -38,6 +38,7 @@ export interface AnalyticsEvent {
     page?: string | null
     timestamp: number
     sessionId: string
+    userId?: string
     details?: Record<string, string | number | boolean> | null
     userAgent?: string | null
     referrer?: string | null
@@ -102,7 +103,12 @@ export class AnalyticsDB {
         }
 
         try {
-            // First ensure the session exists
+            // First ensure the user exists if userId is provided
+            if (event.userId) {
+                await this.upsertUser(event.userId)
+            }
+
+            // Ensure the session exists
             await this.upsertSession(event.sessionId, event.userAgent || undefined, event.referrer || undefined)
 
             // Insert the event
@@ -112,7 +118,8 @@ export class AnalyticsDB {
                     type: event.type,
                     page: event.page,
                     timestamp: event.timestamp,
-                    anonymous_id: event.sessionId,
+                    session_id: event.sessionId,
+                    user_id: event.userId,
                     details: event.details || {},
                     user_agent: event.userAgent,
                     referrer: event.referrer,
@@ -124,8 +131,13 @@ export class AnalyticsDB {
                 return false
             }
 
-            // Increment session events count
+            // Increment session events count and update activity
             await this.incrementSessionEvents(event.sessionId)
+
+            // Update session activity if userId is provided
+            if (event.userId) {
+                await this.updateSessionActivity(event.sessionId, event.userId, true)
+            }
 
             return true
         } catch (error) {
@@ -149,6 +161,7 @@ export class AnalyticsDB {
                 const event = events.find(e => e.sessionId === sessionId)
                 return {
                     anonymous_id: sessionId,
+                    user_id: event?.userId || null,
                     user_agent: event?.userAgent || null,
                     referrer: event?.referrer || null,
                     last_seen: new Date().toISOString(),
@@ -171,7 +184,8 @@ export class AnalyticsDB {
                 type: event.type,
                 page: event.page,
                 timestamp: event.timestamp,
-                anonymous_id: event.sessionId,
+                session_id: event.sessionId,
+                user_id: event.userId,
                 details: event.details || {},
                 user_agent: event.userAgent,
                 referrer: event.referrer,
@@ -297,7 +311,7 @@ export class AnalyticsDB {
         try {
             let query = supabase
                 .from('analytics_events')
-                .select('type, anonymous_id, created_at')
+                .select('type, user_id, anonymous_id, created_at')
 
             if (startDate) {
                 query = query.gte('created_at', startDate.toISOString())
@@ -324,7 +338,7 @@ export class AnalyticsDB {
             // Calculate metrics from the data
             const totalEvents = data.length
             const pageViews = data.filter(event => event.type === 'pageview').length
-            const uniqueSessions = new Set(data.map(event => event.anonymous_id)).size
+            const uniqueSessions = new Set(data.map(event => event.anonymous_id || event.user_id)).size
 
             return {
                 totalPageViews: pageViews,
@@ -711,7 +725,7 @@ export class AnalyticsDB {
                     topic,
                     mentions,
                     growth: Math.floor(Math.random() * 100) - 20, // Mock growth calculation
-                    sentiment: mentions > 100 ? 'negative' : mention > 50 ? 'neutral' : 'positive' as const
+                    sentiment: mentions > 100 ? 'negative' : mentions > 50 ? 'neutral' : 'positive' as const
                 }))
                 .sort((a, b) => b.mentions - a.mentions)
                 .slice(0, 10)
@@ -998,6 +1012,198 @@ export class AnalyticsDB {
         } catch (error) {
             console.error('Analytics DB: Exception cleaning up old data:', error)
             return 0
+        }
+    }
+
+    /**
+     * Get user metrics (total users and online users)
+     */
+    static async getUserMetrics(): Promise<{
+        totalUsers: number
+        onlineUsers: number
+        newUsersToday: number
+        activeUsersLast7Days: number
+    } | null> {
+        if (!supabase) {
+            // Return mock data when database is not available
+            return {
+                totalUsers: 1247,
+                onlineUsers: 89,
+                newUsersToday: 23,
+                activeUsersLast7Days: 456
+            }
+        }
+
+        try {
+            // Use the database function for better performance
+            const { data, error } = await supabase.rpc('get_user_metrics')
+
+            if (error) {
+                console.error('Analytics DB: Error getting user metrics:', error)
+                return null
+            }
+
+            if (!data || data.length === 0) {
+                return {
+                    totalUsers: 0,
+                    onlineUsers: 0,
+                    newUsersToday: 0,
+                    activeUsersLast7Days: 0
+                }
+            }
+
+            const metrics = data[0]
+            return {
+                totalUsers: parseInt(metrics.total_users) || 0,
+                onlineUsers: parseInt(metrics.online_users) || 0,
+                newUsersToday: parseInt(metrics.new_users_today) || 0,
+                activeUsersLast7Days: parseInt(metrics.active_users_last_7_days) || 0
+            }
+        } catch (error) {
+            console.error('Analytics DB: Exception getting user metrics:', error)
+            return null
+        }
+    }
+
+    /**
+     * Upsert user record (create or update user activity)
+     */
+    static async upsertUser(userId: string): Promise<boolean> {
+        if (!supabase || !userId) {
+            return false
+        }
+
+        try {
+            const { error } = await supabase
+                .from('analytics_users')
+                .upsert({
+                    id: userId,
+                    last_seen: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                }, {
+                    onConflict: 'id'
+                })
+
+            if (error) {
+                console.error('Analytics DB: Error upserting user:', error)
+                return false
+            }
+
+            return true
+        } catch (error) {
+            console.error('Analytics DB: Exception upserting user:', error)
+            return false
+        }
+    }
+
+    /**
+     * Update session with user ID and activity status
+     */
+    static async updateSessionActivity(sessionId: string, userId: string, isActive: boolean = true): Promise<boolean> {
+        if (!supabase || !sessionId || !userId) {
+            return false
+        }
+
+        try {
+            const { error } = await supabase
+                .from('analytics_sessions')
+                .update({
+                    user_id: userId,
+                    is_active: isActive,
+                    last_seen: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', sessionId)
+
+            if (error) {
+                console.error('Analytics DB: Error updating session activity:', error)
+                return false
+            }
+
+            // Also update user record
+            await this.upsertUser(userId)
+
+            return true
+        } catch (error) {
+            console.error('Analytics DB: Exception updating session activity:', error)
+            return false
+        }
+    }
+
+    /**
+     * Get user growth data for charts
+     */
+    static async getUserGrowthData(days: number = 30): Promise<Array<{
+        date: string
+        newUsers: number
+        totalUsers: number
+    }>> {
+        if (!supabase) {
+            // Return mock data when database is not available
+            const mockData = []
+            for (let i = days - 1; i >= 0; i--) {
+                const date = new Date()
+                date.setDate(date.getDate() - i)
+                mockData.push({
+                    date: date.toISOString().split('T')[0],
+                    newUsers: Math.floor(Math.random() * 20) + 5,
+                    totalUsers: 1000 + (days - i) * 15
+                })
+            }
+            return mockData
+        }
+
+        try {
+            const startDate = new Date()
+            startDate.setDate(startDate.getDate() - days)
+
+            const { data, error } = await supabase
+                .from('analytics_users')
+                .select('first_seen')
+                .gte('first_seen', startDate.toISOString())
+                .order('first_seen', { ascending: true })
+
+            if (error) {
+                console.error('Analytics DB: Error getting user growth data:', error)
+                return []
+            }
+
+            if (!data || data.length === 0) {
+                return []
+            }
+
+            // Group by date and calculate cumulative totals
+            const dailyNewUsers = new Map<string, number>()
+
+            data.forEach(user => {
+                const date = new Date(user.first_seen).toISOString().split('T')[0]
+                const count = dailyNewUsers.get(date) || 0
+                dailyNewUsers.set(date, count + 1)
+            })
+
+            // Create array with cumulative totals
+            const result = []
+            let cumulativeTotal = 0
+
+            for (let i = days - 1; i >= 0; i--) {
+                const date = new Date()
+                date.setDate(date.getDate() - i)
+                const dateStr = date.toISOString().split('T')[0]
+
+                const newUsers = dailyNewUsers.get(dateStr) || 0
+                cumulativeTotal += newUsers
+
+                result.push({
+                    date: dateStr,
+                    newUsers,
+                    totalUsers: cumulativeTotal
+                })
+            }
+
+            return result
+        } catch (error) {
+            console.error('Analytics DB: Exception getting user growth data:', error)
+            return []
         }
     }
 

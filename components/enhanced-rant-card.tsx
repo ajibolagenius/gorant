@@ -242,12 +242,11 @@ const EnhancedRantCardComponent = React.forwardRef<HTMLDivElement, EnhancedRantC
     }
 
     const handleCommentLike = (commentId: string) => {
-        if (likedComments.has(commentId)) return
-
+        const isLiked = likedComments.has(commentId)
         const comment = localComments.find(c => c.id === commentId)
 
         // Track comment like analytics
-        trackUserAction("like_comment", {
+        trackUserAction(isLiked ? "unlike_comment" : "like_comment", {
             commentId,
             rantId: rant.id,
             rantMood: rant.mood,
@@ -255,14 +254,28 @@ const EnhancedRantCardComponent = React.forwardRef<HTMLDivElement, EnhancedRantC
             previousLikesCount: comment?.likes_count || 0
         })
 
-        setLikedComments((prev) => new Set([...prev, commentId]))
+        setLikedComments((prev) => {
+            const newSet = new Set(prev)
+            if (isLiked) {
+                newSet.delete(commentId)
+            } else {
+                newSet.add(commentId)
+            }
+            return newSet
+        })
         setLocalComments((prev) =>
-            prev.map((comment) =>
-                comment.id === commentId ? { ...comment, likes_count: (comment.likes_count || 0) + 1 } : comment,
+            prev.map((c) =>
+                c.id === commentId
+                    ? { ...c, likes_count: isLiked ? Math.max((c.likes_count || 1) - 1, 0) : (c.likes_count || 0) + 1 }
+                    : c,
             ),
         )
         onCommentLike(commentId)
-        toast.success("Comment liked!")
+        if (isLiked) {
+            toast.info("Comment unliked.")
+        } else {
+            toast.success("Comment liked!")
+        }
     }
 
     const getSentimentDisplay = () => {
@@ -590,7 +603,7 @@ const EnhancedRantCardComponent = React.forwardRef<HTMLDivElement, EnhancedRantC
                                                     : "text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
                                                     }`}
                                             >
-                                                <Heart className={`w-3 h-3 mr-1 ${likedComments.has(comment.id) ? "fill-current" : ""}`} />
+                                                <Heart className={`w-3 h-3 mr-1 ${likedComments.has(comment.id) ? "fill-current text-red-600 dark:text-red-400" : "text-gray-400 dark:text-gray-400"}`} />
                                                 {comment.likes_count || 0}
                                             </Button>
                                         </div>

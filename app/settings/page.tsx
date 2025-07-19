@@ -322,6 +322,16 @@ export default function SettingsPage() {
                                 </div>
                                 <Switch checked={allowMentions} onCheckedChange={setAllowMentions} />
                             </div>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h4 className="font-medium text-card-foreground">Share Analytics</h4>
+                                    <p className="text-sm text-muted-foreground">Help improve the platform by sharing anonymous usage analytics. No personal data is collected.</p>
+                                </div>
+                                <Switch
+                                    checked={privacy.shareAnalytics}
+                                    onCheckedChange={(checked) => handlePrivacyChange('shareAnalytics', checked)}
+                                />
+                            </div>
                         </CardContent>
                     </Card>
 

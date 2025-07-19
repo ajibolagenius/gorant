@@ -1,4 +1,4 @@
-Welcome to **Rant** &mdash; _Your Safe Space for Authentic Expression!_ 🚀
+![logo.svg](logo.svg)Welcome to **Rant** &mdash; _Your Safe Space for Authentic Expression!_ 🚀
 ---
 
 ‎

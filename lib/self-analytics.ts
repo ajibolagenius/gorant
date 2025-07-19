@@ -1,6 +1,8 @@
 import { AnalyticsDB, type AnalyticsEvent } from './analytics-db'
 import { AnalyticsAPI } from './analytics-api'
 import { getAnalyticsConfig, type AnalyticsConfig } from './analytics-config'
+import { analyticsPrivacy, validatePrivacyCompliance } from './analytics-privacy'
+import { analyticsPerformance } from './analytics-performance'
 
 export type { AnalyticsEvent }
 
@@ -10,20 +12,78 @@ class AnalyticsService {
 
     private eventQueue: AnalyticsEvent[] = []
     private sessionId: string = ''
+    private userId: string = ''
     private flushTimer: NodeJS.Timeout | null = null
     private isOnline: boolean = true
+    private lastActivityTime: number = Date.now()
 
     constructor() {
         if (typeof window !== 'undefined') {
             this.sessionId = this.generateSessionId()
+            this.userId = this.getOrCreateUserId()
             this.maxStringLength = this.config.maxStringLength
             this.setupEventListeners()
             this.startFlushTimer()
+            this.startActivityTracking()
         }
     }
 
     private generateSessionId(): string {
-        return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        return `session_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`
+    }
+
+    private getOrCreateUserId(): string {
+        if (typeof window === 'undefined') return ''
+
+        // Use existing anonymous ID function from utils
+        let id = localStorage.getItem("anon_id")
+        if (!id) {
+            id = Math.random().toString(36).substring(2, 15)
+            localStorage.setItem("anon_id", id)
+        }
+        return id
+    }
+
+    private startActivityTracking(): void {
+        if (typeof window === 'undefined') return
+
+        // Track user activity for online status
+        const updateActivity = () => {
+            this.lastActivityTime = Date.now()
+            this.trackUserActivity()
+        }
+
+        // Listen for user interactions
+        const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click']
+        events.forEach(event => {
+            window.addEventListener(event, updateActivity, { passive: true })
+        })
+
+        // Send periodic heartbeat to maintain online status
+        setInterval(() => {
+            if (Date.now() - this.lastActivityTime < 5 * 60 * 1000) { // 5 minutes
+                this.trackUserActivity()
+            }
+        }, 30000) // Every 30 seconds
+    }
+
+    private async trackUserActivity(): Promise<void> {
+        if (!this.respectsPrivacy()) return
+
+        try {
+            // Send user activity event to maintain online status
+            await this.trackEvent('user_activity', {
+                userId: this.userId,
+                sessionId: this.sessionId,
+                timestamp: Date.now(),
+                isActive: true
+            })
+        } catch (error) {
+            // Silent failure
+            if (process.env.NODE_ENV === 'development') {
+                console.warn('User activity tracking failed:', error)
+            }
+        }
     }
 
     private handleOnline = () => {
@@ -199,6 +259,7 @@ class AnalyticsService {
             page: window.location.pathname,
             timestamp: Date.now(),
             sessionId: this.sessionId,
+            userId: this.userId,
             details: this.sanitizeDetails(details),
             userAgent: navigator.userAgent,
             referrer: document.referrer || '',
@@ -220,6 +281,7 @@ class AnalyticsService {
             ...event,
             details: this.sanitizeDetails(event.details || {}),
             sessionId: this.sessionId,
+            userId: this.userId,
         }))
 
         this.eventQueue.push(...sanitizedEvents)
@@ -228,6 +290,10 @@ class AnalyticsService {
 
     public getSessionId(): string {
         return this.sessionId
+    }
+
+    public getUserId(): string {
+        return this.userId
     }
 
     public isEnabled(): boolean {
@@ -257,6 +323,10 @@ export async function trackEvent(type: string, details: Record<string, unknown> 
 
 export function getSessionId(): string {
     return analyticsService.getSessionId()
+}
+
+export function getUserId(): string {
+    return analyticsService.getUserId()
 }
 
 export function isAnalyticsEnabled(): boolean {

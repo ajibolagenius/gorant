@@ -7,6 +7,7 @@ import { ChartBar, Eye, Users, Lightning, TrendUp } from "@phosphor-icons/react/
 import { subDays } from "date-fns"
 import { useDashboardData } from "@/hooks/use-dashboard-data"
 import { useAnalyticsMetrics } from "@/hooks/use-analytics-metrics"
+import { useUserMetrics } from "@/hooks/use-user-metrics"
 import { DashboardHeader } from "@/components/analytics/dashboard-header"
 import { MetricCard } from "@/components/analytics/metric-card"
 import { TopPagesTable } from "@/components/analytics/top-pages-table"
@@ -19,6 +20,7 @@ import { RealTimeMetrics } from "@/components/analytics/real-time-metrics"
 import { AdvancedFilters, type AnalyticsFilters } from "@/components/analytics/advanced-filters"
 import { ContentAnalytics } from "@/components/analytics/content-analytics"
 import { UserBehaviorFlow } from "@/components/analytics/user-behavior-flow"
+import { UserMetricsChart } from "@/components/analytics/user-metrics-chart"
 
 interface DateRange {
     from: Date
@@ -109,6 +111,7 @@ export default function AnalyticsDashboard() {
     })
     const { data: dashboardData, loading, refreshing, error, refetch } = useDashboardData(filters.dateRange)
     const metrics = useAnalyticsMetrics(dashboardData)
+    const { metrics: userMetrics, growthData: userGrowthData, loading: userMetricsLoading } = useUserMetrics(30000) // Refresh every 30 seconds
 
     const handleDateRangeChange = useCallback((range: DateRange) => {
         setDateRange(range)
@@ -149,7 +152,7 @@ export default function AnalyticsDashboard() {
                     />
                 </AnimatedSection>
 
-                <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" aria-label="Key Metrics">
+                <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-6 mb-8" aria-label="Key Metrics">
                     <MetricCard
                         title="Total Page Views"
                         value={metrics.totalPageViews}
@@ -171,6 +174,20 @@ export default function AnalyticsDashboard() {
                             isPositive: metrics.trends.sessionsTrend >= 0
                         } : undefined}
                         loading={loading}
+                    />
+                    <MetricCard
+                        title="Total Users"
+                        value={userMetrics?.totalUsers || 0}
+                        description="Total anonymous users"
+                        icon={<Users weight="duotone" className="h-4 w-4" />}
+                        loading={userMetricsLoading}
+                    />
+                    <MetricCard
+                        title="Online Users"
+                        value={userMetrics?.onlineUsers || 0}
+                        description="Currently active users"
+                        icon={<Users weight="duotone" className="h-4 w-4 text-green-500" />}
+                        loading={userMetricsLoading}
                     />
                     <MetricCard
                         title="Total Events"
@@ -211,6 +228,14 @@ export default function AnalyticsDashboard() {
                         <ContentAnalytics
                             data={null} // Will use mock data for now
                             loading={loading}
+                        />
+                    </AnimatedSection>
+
+                    {/* User Metrics Chart - Full Width */}
+                    <AnimatedSection delay={700}>
+                        <UserMetricsChart
+                            data={userGrowthData}
+                            loading={userMetricsLoading}
                         />
                     </AnimatedSection>
 

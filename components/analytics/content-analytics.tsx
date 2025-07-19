@@ -66,7 +66,7 @@ const MOOD_ICONS = {
 }
 
 export function ContentAnalytics({ data, loading = false, className }: ContentAnalyticsProps) {
-    const mockData: ContentlyticsData = useMemo(() => ({
+    const mockData: ContentAnalyticsData = useMemo(() => ({
         trendingTopics: [
             { topic: 'work-stress', mentions: 234, growth: 45, sentiment: 'negative' },
             { topic: 'coding-bugs', mentions: 189, growth: 23, sentiment: 'negative' },

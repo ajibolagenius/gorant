@@ -1,5 +1,5 @@
 "use client"
-import { Star, TrendUp, Trophy, Lightning, Moon, Sun, Bell, Shield, House, Gear, List } from "@phosphor-icons/react"
+import { Star, TrendUp, Trophy, Lightning, Moon, Sun, Bell, Shield, House, Gear, List, LegoSmiley } from "@phosphor-icons/react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -34,15 +34,11 @@ export default function Header({ userLevel, theme, toggleTheme, pathname }: Head
                         >
                             <List weight="duotone" className="w-6 h-6" />
                         </button>
-                        <Link href="/">
-                            <h1 className="text-2xl font-bold text-gray-800 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors">Rant 💭</h1>
+                        <Link href="/" className="flex items-center gap-2 group">
+                            <span className="inline-flex items-center">
+                                <h1 className="text-2xl font-bold text-gray-800 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">Rant</h1> <LegoSmiley className="w-7 h-7 text-purple-600 dark:text-purple-300 group-hover:text-purple-800 dark:group-hover:text-purple-400 transition-colors" weight="duotone" />
+                            </span>
                         </Link>
-                        {/* <Badge
-                            variant="secondary"
-                            className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
-                        >
-                            Anonymous
-                        </Badge> */}
                         {userLevel > 1 && (
                             <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
                                 <Star weight="duotone" className="w-3 h-3 mr-1" />

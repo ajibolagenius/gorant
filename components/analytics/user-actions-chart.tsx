@@ -29,9 +29,15 @@ interface UserActionsChartProps {
 
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
+        let labelText = label
+        if (typeof label === 'string') {
+            labelText = label.replace(/_/g, ' ')
+        } else if (label && label.toString) {
+            labelText = label.toString()
+        }
         return (
             <div className="bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg p-3">
-                <p className="font-medium text-foreground mb-2 capitalize">{label.replace('_', ' ')}</p>
+                <p className="font-medium text-foreground mb-2 capitalize">{labelText}</p>
                 {payload.map((entry: any, index: number) => (
                     <p key={index} className="text-sm" style={{ color: entry.color }}>
                         {entry.name}: {entry.value.toLocaleString()}
