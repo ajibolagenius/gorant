@@ -358,6 +358,54 @@ export default function RantApp() {
         }
     }
 
+    // --- Fetch comments for each rant from Supabase ---
+    const fetchCommentsForRants = async (rantIds: string[]) => {
+        if (!rantIds.length) return {}
+        const { data, error } = await supabase
+            .from('comments')
+            .select('id, rant_id, content, created_at, anonymous_id')
+            .in('rant_id', rantIds)
+        if (error) {
+            console.error('Error fetching comments:', error)
+            return {}
+        }
+        // Group comments by rant_id
+        const grouped: { [key: string]: Comment[] } = {}
+        for (const comment of data || []) {
+            if (!grouped[comment.rant_id]) grouped[comment.rant_id] = []
+            grouped[comment.rant_id].push(comment)
+        }
+        return grouped
+    }
+
+    // --- Real-time listeners for rants and comments ---
+    useEffect(() => {
+        // Listen for rants changes
+        const rantsSub = supabase
+            .channel('rants-changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'rants' }, payload => {
+                fetchRants()
+            })
+            .subscribe()
+        // Listen for comments changes
+        const commentsSub = supabase
+            .channel('comments-changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, payload => {
+                // Refetch comments for all visible rants
+                fetchCommentsForRants(rants.map(r => r.id)).then(setComments)
+            })
+            .subscribe()
+        return () => {
+            supabase.removeChannel(rantsSub)
+            supabase.removeChannel(commentsSub)
+        }
+    }, [rants])
+
+    // --- Fetch comments when rants change ---
+    useEffect(() => {
+        fetchCommentsForRants(rants.map(r => r.id)).then(setComments)
+    }, [rants])
+
     // Enhanced content moderation
     const moderateContent = async (content: string): Promise<boolean> => {
         const moderationResult = await ContentModerationService.moderateContent(content)
