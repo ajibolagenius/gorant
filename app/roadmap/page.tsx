@@ -21,6 +21,10 @@ const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 import 'react-quill/dist/quill.snow.css';
 import { CaretDown } from "@phosphor-icons/react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { EnvelopeIcon } from '@heroicons/react/24/outline'
+import {
+    AcademicCapIcon, AdjustmentsHorizontalIcon, ArchiveBoxIcon, ArrowDownCircleIcon, ArrowUpCircleIcon, AtSymbolIcon, BellIcon, BookOpenIcon, BookmarkIcon, BriefcaseIcon, BugAntIcon, CalendarIcon, ChartBarIcon, ChatBubbleLeftRightIcon, CheckCircleIcon, ChevronDownIcon, ClipboardDocumentCheckIcon, ClockIcon, CloudIcon, CodeBracketIcon, Cog6ToothIcon, CommandLineIcon, CpuChipIcon, CreditCardIcon, CubeIcon, CurrencyDollarIcon, DevicePhoneMobileIcon, DocumentTextIcon, ExclamationCircleIcon, EyeIcon, FlagIcon as HeroFlagIcon, FolderIcon, GiftIcon, GlobeAltIcon, HeartIcon, HomeIcon, IdentificationIcon, InboxIcon, InformationCircleIcon, KeyIcon, LightBulbIcon, LinkIcon, ListBulletIcon, LockClosedIcon, MagnifyingGlassIcon, MapPinIcon, MegaphoneIcon, MicrophoneIcon, MoonIcon, NewspaperIcon, PaintBrushIcon, PaperAirplaneIcon, PencilIcon, PhoneIcon, PhotoIcon, PlayCircleIcon, PlusCircleIcon, PresentationChartBarIcon, PrinterIcon, PuzzlePieceIcon, QuestionMarkCircleIcon, ReceiptPercentIcon, RocketLaunchIcon, ScaleIcon, ScissorsIcon, ServerStackIcon, ShieldCheckIcon, ShoppingBagIcon, SignalIcon, SparklesIcon, StarIcon, SunIcon, SwatchIcon, TableCellsIcon, TagIcon as HeroTagIcon, TicketIcon, TrashIcon, TrophyIcon, TruckIcon, UserCircleIcon, UserGroupIcon, UsersIcon, VideoCameraIcon, WalletIcon, WrenchScrewdriverIcon, XCircleIcon
+} from '@heroicons/react/24/outline'
 
 // Map feature keywords to Phosphor icons
 const featureIcons: Record<string, React.ReactNode> = {
@@ -46,6 +50,25 @@ const featureIcons: Record<string, React.ReactNode> = {
     view: <Eye className="inline w-5 h-5 mr-1 text-gray-500" />,
     edit: <Pencil className="inline w-5 h-5 mr-1 text-blue-400" />,
     add: <PlusCircle className="inline w-5 h-5 mr-1 text-green-400" />,
+    calendar: <Calendar className="inline w-5 h-5 mr-1 text-blue-400" />,
+    search: <MagnifyingGlass className="inline w-5 h-5 mr-1 text-blue-400" />,
+    lock: <LockClosedIcon className="inline w-5 h-5 mr-1 text-gray-500" />,
+    home: <HomeIcon className="inline w-5 h-5 mr-1 text-blue-400" />,
+    inbox: <InboxIcon className="inline w-5 h-5 mr-1 text-blue-400" />,
+    info: <InformationCircleIcon className="inline w-5 h-5 mr-1 text-blue-400" />,
+    warning: <ExclamationCircleIcon className="inline w-5 h-5 mr-1 text-yellow-500" />,
+    error: <XCircleIcon className="inline w-5 h-5 mr-1 text-red-500" />,
+    success: <CheckCircleIcon className="inline w-5 h-5 mr-1 text-green-500" />,
+    star: <StarIcon className="inline w-5 h-5 mr-1 text-yellow-500" />,
+    tag: <TagIcon className="inline w-5 h-5 mr-1 text-blue-500" />,
+    folder: <FolderIcon className="inline w-5 h-5 mr-1 text-gray-500" />,
+    document: <DocumentTextIcon className="inline w-5 h-5 mr-1 text-gray-500" />,
+    chart: <ChartBarIcon className="inline w-5 h-5 mr-1 text-violet-500" />,
+    usergroup: <UsersIcon className="inline w-5 h-5 mr-1 text-green-500" />,
+    group: <UserGroupIcon className="inline w-5 h-5 mr-1 text-green-500" />,
+    phone: <PhoneIcon className="inline w-5 h-5 mr-1 text-blue-500" />,
+    video: <VideoCameraIcon className="inline w-5 h-5 mr-1 text-blue-500" />,
+    mail: <EnvelopeIcon className="inline w-5 h-5 mr-1 text-blue-500" />,
 }
 
 // Map feature keywords to Lucide icons (for missing Phosphor icons)
@@ -89,6 +112,95 @@ const lucideIcons: Record<string, React.ReactNode> = {
     link: <Link className="inline w-5 h-5 mr-1 text-blue-400" />,
     copy: <Copy className="inline w-5 h-5 mr-1 text-gray-400" />,
     external: <ExternalLink className="inline w-5 h-5 mr-1 text-blue-400" />,
+}
+
+// Map feature keywords to Heroicons (as a third fallback)
+const heroIcons: Record<string, React.ReactNode> = {
+    academic: <AcademicCapIcon className="inline w-5 h-5 mr-1 text-blue-500" />,
+    adjustments: <AdjustmentsHorizontalIcon className="inline w-5 h-5 mr-1 text-blue-500" />,
+    archive: <ArchiveBoxIcon className="inline w-5 h-5 mr-1 text-gray-500" />,
+    arrowdown: <ArrowDownCircleIcon className="inline w-5 h-5 mr-1 text-blue-500" />,
+    arrowup: <ArrowUpCircleIcon className="inline w-5 h-5 mr-1 text-blue-500" />,
+    at: <AtSymbolIcon className="inline w-5 h-5 mr-1 text-purple-500" />,
+    bell: <BellIcon className="inline w-5 h-5 mr-1 text-yellow-500" />,
+    book: <BookOpenIcon className="inline w-5 h-5 mr-1 text-lime-500" />,
+    bookmark: <BookmarkIcon className="inline w-5 h-5 mr-1 text-blue-500" />,
+    briefcase: <BriefcaseIcon className="inline w-5 h-5 mr-1 text-gray-500" />,
+    bug: <BugAntIcon className="inline w-5 h-5 mr-1 text-red-500" />,
+    calendar: <CalendarIcon className="inline w-5 h-5 mr-1 text-blue-400" />,
+    chart: <ChartBarIcon className="inline w-5 h-5 mr-1 text-violet-500" />,
+    chat: <ChatBubbleLeftRightIcon className="inline w-5 h-5 mr-1 text-blue-500" />,
+    check: <CheckCircleIcon className="inline w-5 h-5 mr-1 text-green-500" />,
+    chevron: <ChevronDownIcon className="inline w-5 h-5 mr-1 text-gray-400" />,
+    clipboard: <ClipboardDocumentCheckIcon className="inline w-5 h-5 mr-1 text-gray-500" />,
+    clock: <ClockIcon className="inline w-5 h-5 mr-1 text-gray-400" />,
+    cloud: <CloudIcon className="inline w-5 h-5 mr-1 text-blue-400" />,
+    code: <CodeBracketIcon className="inline w-5 h-5 mr-1 text-gray-500" />,
+    cog: <Cog6ToothIcon className="inline w-5 h-5 mr-1 text-gray-500" />,
+    command: <CommandLineIcon className="inline w-5 h-5 mr-1 text-gray-500" />,
+    cpu: <CpuChipIcon className="inline w-5 h-5 mr-1 text-gray-500" />,
+    creditcard: <CreditCardIcon className="inline w-5 h-5 mr-1 text-blue-500" />,
+    cube: <CubeIcon className="inline w-5 h-5 mr-1 text-gray-500" />,
+    currency: <CurrencyDollarIcon className="inline w-5 h-5 mr-1 text-green-500" />,
+    device: <DevicePhoneMobileIcon className="inline w-5 h-5 mr-1 text-blue-500" />,
+    document: <DocumentTextIcon className="inline w-5 h-5 mr-1 text-gray-500" />,
+    exclamation: <ExclamationCircleIcon className="inline w-5 h-5 mr-1 text-yellow-500" />,
+    eye: <EyeIcon className="inline w-5 h-5 mr-1 text-gray-500" />,
+    flag: <HeroFlagIcon className="inline w-5 h-5 mr-1 text-red-500" />,
+    folder: <FolderIcon className="inline w-5 h-5 mr-1 text-gray-500" />,
+    gift: <GiftIcon className="inline w-5 h-5 mr-1 text-yellow-500" />,
+    globe: <GlobeAltIcon className="inline w-5 h-5 mr-1 text-blue-400" />,
+    heart: <HeartIcon className="inline w-5 h-5 mr-1 text-rose-500" />,
+    home: <HomeIcon className="inline w-5 h-5 mr-1 text-blue-400" />,
+    id: <IdentificationIcon className="inline w-5 h-5 mr-1 text-gray-500" />,
+    inbox: <InboxIcon className="inline w-5 h-5 mr-1 text-blue-400" />,
+    info: <InformationCircleIcon className="inline w-5 h-5 mr-1 text-blue-400" />,
+    key: <KeyIcon className="inline w-5 h-5 mr-1 text-gray-500" />,
+    lightbulb: <LightBulbIcon className="inline w-5 h-5 mr-1 text-yellow-500" />,
+    link: <LinkIcon className="inline w-5 h-5 mr-1 text-blue-500" />,
+    list: <ListBulletIcon className="inline w-5 h-5 mr-1 text-teal-500" />,
+    lock: <LockClosedIcon className="inline w-5 h-5 mr-1 text-gray-500" />,
+    magnifier: <MagnifyingGlassIcon className="inline w-5 h-5 mr-1 text-blue-400" />,
+    map: <MapPinIcon className="inline w-5 h-5 mr-1 text-blue-400" />,
+    megaphone: <MegaphoneIcon className="inline w-5 h-5 mr-1 text-blue-400" />,
+    microphone: <MicrophoneIcon className="inline w-5 h-5 mr-1 text-blue-400" />,
+    moon: <MoonIcon className="inline w-5 h-5 mr-1 text-gray-400" />,
+    news: <NewspaperIcon className="inline w-5 h-5 mr-1 text-blue-400" />,
+    paint: <PaintBrushIcon className="inline w-5 h-5 mr-1 text-blue-400" />,
+    paperplane: <PaperAirplaneIcon className="inline w-5 h-5 mr-1 text-blue-400" />,
+    pencil: <PencilIcon className="inline w-5 h-5 mr-1 text-blue-400" />,
+    phone: <PhoneIcon className="inline w-5 h-5 mr-1 text-blue-500" />,
+    photo: <PhotoIcon className="inline w-5 h-5 mr-1 text-blue-400" />,
+    play: <PlayCircleIcon className="inline w-5 h-5 mr-1 text-green-500" />,
+    plus: <PlusCircleIcon className="inline w-5 h-5 mr-1 text-green-400" />,
+    presentation: <PresentationChartBarIcon className="inline w-5 h-5 mr-1 text-violet-500" />,
+    printer: <PrinterIcon className="inline w-5 h-5 mr-1 text-gray-500" />,
+    puzzle: <PuzzlePieceIcon className="inline w-5 h-5 mr-1 text-teal-500" />,
+    question: <QuestionMarkCircleIcon className="inline w-5 h-5 mr-1 text-blue-400" />,
+    receipt: <ReceiptPercentIcon className="inline w-5 h-5 mr-1 text-green-500" />,
+    rocket: <RocketLaunchIcon className="inline w-5 h-5 mr-1 text-fuchsia-500" />,
+    scale: <ScaleIcon className="inline w-5 h-5 mr-1 text-blue-400" />,
+    scissors: <ScissorsIcon className="inline w-5 h-5 mr-1 text-gray-500" />,
+    server: <ServerStackIcon className="inline w-5 h-5 mr-1 text-gray-500" />,
+    shield: <ShieldCheckIcon className="inline w-5 h-5 mr-1 text-green-500" />,
+    shopping: <ShoppingBagIcon className="inline w-5 h-5 mr-1 text-blue-400" />,
+    signal: <SignalIcon className="inline w-5 h-5 mr-1 text-blue-400" />,
+    sparkles: <SparklesIcon className="inline w-5 h-5 mr-1 text-yellow-500" />,
+    star: <StarIcon className="inline w-5 h-5 mr-1 text-yellow-500" />,
+    sun: <SunIcon className="inline w-5 h-5 mr-1 text-yellow-400" />,
+    swatch: <SwatchIcon className="inline w-5 h-5 mr-1 text-blue-400" />,
+    table: <TableCellsIcon className="inline w-5 h-5 mr-1 text-gray-500" />,
+    tag: <HeroTagIcon className="inline w-5 h-5 mr-1 text-blue-500" />,
+    ticket: <TicketIcon className="inline w-5 h-5 mr-1 text-blue-400" />,
+    trash: <TrashIcon className="inline w-5 h-5 mr-1 text-red-500" />,
+    trophy: <TrophyIcon className="inline w-5 h-5 mr-1 text-amber-500" />,
+    truck: <TruckIcon className="inline w-5 h-5 mr-1 text-gray-500" />,
+    user: <UserCircleIcon className="inline w-5 h-5 mr-1 text-blue-500" />,
+    users: <UsersIcon className="inline w-5 h-5 mr-1 text-green-500" />,
+    video: <VideoCameraIcon className="inline w-5 h-5 mr-1 text-blue-500" />,
+    wallet: <WalletIcon className="inline w-5 h-5 mr-1 text-green-500" />,
+    wrench: <WrenchScrewdriverIcon className="inline w-5 h-5 mr-1 text-gray-500" />,
+    x: <XCircleIcon className="inline w-5 h-5 mr-1 text-red-500" />,
 }
 
 // Animation variants for framer-motion
@@ -431,9 +543,10 @@ export default function RoadmapPage() {
                                                 {phase.items.map((item, idx) => {
                                                     const text = item.text.toLowerCase()
                                                     const featureIcon = Object.entries(featureIcons).find(([k]) => text.includes(k))?.[1]
-                                                    const lucideIcon = featureIcon ? null : Object.entries(lucideIcons).find(([k]) => text.includes(k))?.[1]
-                                                    const fallbackIcon = (!featureIcon && !lucideIcon) ? <Dot className="inline w-4 h-4 text-gray-400 mr-2" /> : null
-                                                    const iconLabel = featureIcon ? Object.keys(featureIcons).find(k => text.includes(k)) : lucideIcon ? Object.keys(lucideIcons).find(k => text.includes(k)) : "feature"
+                                                    const lucideIcon = !featureIcon ? Object.entries(lucideIcons).find(([k]) => text.includes(k))?.[1] : null
+                                                    const heroIcon = !featureIcon && !lucideIcon ? Object.entries(heroIcons).find(([k]) => text.includes(k))?.[1] : null
+                                                    const fallbackIcon = (!featureIcon && !lucideIcon && !heroIcon) ? <Dot className="inline w-4 h-4 text-gray-400 mr-2" /> : null
+                                                    const iconLabel = featureIcon ? Object.keys(featureIcons).find(k => text.includes(k)) : lucideIcon ? Object.keys(lucideIcons).find(k => text.includes(k)) : heroIcon ? Object.keys(heroIcons).find(k => text.includes(k)) : "feature"
                                                     return (
                                                         <motion.li
                                                             key={item.text}
@@ -451,6 +564,7 @@ export default function RoadmapPage() {
                                                                     <span>
                                                                         {featureIcon}
                                                                         {lucideIcon}
+                                                                        {heroIcon}
                                                                         {fallbackIcon}
                                                                     </span>
                                                                 </TooltipTrigger>
