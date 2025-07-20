@@ -1,8 +1,9 @@
 "use client"
-import { Star, TrendUp, Trophy, Lightning, Moon, Sun, Bell, Shield, House, Gear, List, LegoSmiley } from "@phosphor-icons/react"
+import { Star, TrendUp, Trophy, Lightning, Moon, Sun, Bell, Shield, House, Gear, List } from "@phosphor-icons/react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { LogoIcon } from "@/components/ui/logo-icon"
 import React from "react"
 import { useNotifications } from "@/hooks/use-notifications"
 
@@ -36,7 +37,7 @@ export default function Header({ userLevel, theme, toggleTheme, pathname }: Head
                         </button>
                         <Link href="/" className="flex items-center gap-2 group">
                             <span className="inline-flex items-center">
-                                <h1 className="text-2xl font-bold text-gray-800 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">Rant</h1> <LegoSmiley className="w-7 h-7 text-purple-600 dark:text-purple-300 group-hover:text-purple-800 dark:group-hover:text-purple-400 transition-colors" weight="duotone" />
+                                <h1 className="text-2xl font-bold text-gray-800 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">Rant</h1> <LogoIcon className="w-7 h-7 text-purple-600 dark:text-purple-300 group-hover:text-purple-800 dark:group-hover:text-purple-400 transition-colors" weight="duotone" />
                             </span>
                         </Link>
                         {userLevel > 1 && (
