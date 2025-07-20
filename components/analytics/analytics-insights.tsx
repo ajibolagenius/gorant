@@ -261,6 +261,9 @@ export function AnalyticsInsights({ data, loading = false, dateRange }: Analytic
                         </div>
                     </div>
                 </div>
+                {/* End Quick Stats Summary */}
+                {/* Break line */}
+                <div className="my-6 border-t border-gray-200 dark:border-gray-700" />
             </CardContent>
         </Card>
     )
