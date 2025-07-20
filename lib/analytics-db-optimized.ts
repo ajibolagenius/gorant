@@ -1,6 +1,6 @@
 /**
- * Analytics Performance Utilities
- * Provides performance optimization functions for analytics operations
+ * Optimized Analytics Database Utilities
+ * Provides optimized functions for interacting with analytics data in the database
  */
 
 import { supabase } from './supabaseClient'
@@ -8,11 +8,11 @@ import { analyticsCache, cacheKeys } from './analytics-cache'
 import { AnalyticsMetrics, PageMetric, EventTypeMetric, TimeSeriesData, ContentPerformanceMetric } from './analytics-db'
 
 /**
- * Performance-optimized analytics database operations
+ * Optimized database utility functions for analytics operations
  */
-export class analyticsPerformance {
+export class AnalyticsDBOptimized {
     /**
-     * Get analytics metrics using materialized views and caching
+     * Get analytics metrics using pre-aggregated data
      */
     static async getMetrics(startDate?: Date, endDate?: Date): Promise<AnalyticsMetrics | null> {
         const cacheKey = cacheKeys.getMetricsCacheKey(startDate, endDate)
@@ -30,24 +30,6 @@ export class analyticsPerformance {
                 }
 
                 try {
-                    // Try to get data from pre-aggregated materialized view first
-                    if (!startDate && !endDate) {
-                        const { data, error } = await supabase
-                            .from('analytics_metrics_summary')
-                            .select('*')
-                            .order('day', { ascending: false })
-                            .limit(1)
-
-                        if (!error && data && data.length > 0) {
-                            return {
-                                totalPageViews: data[0].page_views,
-                                uniqueSessions: data[0].unique_sessions,
-                                totalEvents: data[0].total_events,
-                                avgSessionDuration: "4m 32s" // Simplified for now
-                            }
-                        }
-                    }
-
                     // Try to get data from pre-aggregated analytics_aggregations table
                     let timePeriod = 'daily'
                     if (startDate && endDate) {
@@ -71,7 +53,7 @@ export class analyticsPerformance {
                         const metrics = aggData[0].data
                         return {
                             totalPageViews: metrics.pageViews || 0,
-                            uniqueSessions: metrics.uniqueSessions || 0,
+                            uniqueSessitrics.uniqueSessions || 0,
                             totalEvents: metrics.totalEvents || 0,
                             avgSessionDuration: "4m 32s" // Simplified for now
                         }
@@ -92,7 +74,7 @@ export class analyticsPerformance {
                     const { data, error } = await query
 
                     if (error) {
-                        console.error('Analytics Performance: Error getting metrics:', error)
+                        console.error('Analytics DB Optimized: Error getting metrics:', error)
                         return null
                     }
 
@@ -116,7 +98,7 @@ export class analyticsPerformance {
                         avgSessionDuration: "0m" // Simplified for now
                     }
                 } catch (error) {
-                    console.error('Analytics Performance: Exception getting metrics:', error)
+                    console.error('Analytics DB Optimized: Exception getting metrics:', error)
                     return null
                 }
             },
@@ -125,7 +107,7 @@ export class analyticsPerformance {
     }
 
     /**
-     * Get top pages using materialized views and caching
+     * Get top pages using aggregation function
      */
     static async getTopPages(limit = 10, startDate?: Date, endDate?: Date): Promise<PageMetric[]> {
         const cacheKey = cacheKeys.getTopPagesCacheKey(limit, startDate, endDate)
@@ -145,39 +127,19 @@ export class analyticsPerformance {
                 }
 
                 try {
-                    // Try to get data from materialized view first if no date filters
-                    if (!startDate && !endDate) {
-                        const { data, error } = await supabase
-                            .from('analytics_top_pages')
-                            .select('page, page_views, unique_sessions')
-                            .order('page_views', { ascending: false })
-                            .limit(limit)
+                    // Use the aggregate_top_pages function if dates are provided
+                    if (startDate && endDate) {
+                        const { data, error } = await supabase.rpc('aggregate_top_pages', {
+                            start_date: startDate.toISOString(),
+                            end_date: endDate.toISOString()
+                        })
 
-                        if (!error && data && data.length > 0) {
-                            return data.map(item => ({
-                                page: item.page,
-                                pageViews: item.page_views,
-                                uniqueSessions: item.unique_sessions
-                            }))
+                        if (!error && data) {
+                            return data.slice(0, limit)
                         }
                     }
 
-                    // Try to get data from pre-aggregated analytics_aggregations table
-                    if (!startDate && !endDate) {
-                        const { data: aggData, error: aggError } = await supabase
-                            .from('analytics_aggregations')
-                            .select('data')
-                            .eq('aggregation_type', 'dashboard')
-                            .eq('time_period', 'daily')
-                            .order('created_at', { ascending: false })
-                            .limit(1)
-
-                        if (!aggError && aggData && aggData.length > 0 && aggData[0].data.topPages) {
-                            return aggData[0].data.topPages.slice(0, limit)
-                        }
-                    }
-
-                    // Fall back to direct query with pagination
+                    // Fall back to efficient paginated query
                     const { data, error } = await supabase.rpc('get_paginated_analytics_events', {
                         p_limit: 1000, // Get enough events to calculate top pages
                         p_event_type: 'pageview',
@@ -186,7 +148,7 @@ export class analyticsPerformance {
                     })
 
                     if (error) {
-                        console.error('Analytics Performance: Error getting top pages:', error)
+                        console.error('Analytics DB Optimized: Error getting top pages:', error)
                         return []
                     }
 
@@ -230,7 +192,7 @@ export class analyticsPerformance {
 
                     return result
                 } catch (error) {
-                    console.error('Analytics Performance: Exception getting top pages:', error)
+                    console.error('Analytics DB Optimized: Exception getting top pages:', error)
                     return []
                 }
             },
@@ -239,7 +201,7 @@ export class analyticsPerformance {
     }
 
     /**
-     * Get event counts by type using materialized views and caching
+     * Get event counts by type using aggregation function
      */
     static async getEventCountsByType(startDate?: Date, endDate?: Date): Promise<EventTypeMetric[]> {
         const cacheKey = cacheKeys.getEventCountsCacheKey(startDate, endDate)
@@ -258,19 +220,15 @@ export class analyticsPerformance {
                 }
 
                 try {
-                    // Try to get data from materialized view first if no date filters
-                    if (!startDate && !endDate) {
-                        const { data, error } = await supabase
-                            .from('analytics_event_counts')
-                            .select('event_type, event_count, unique_sessions')
-                            .order('event_count', { ascending: false })
+                    // Use the aggregate_event_counts function if dates are provided
+                    if (startDate && endDate) {
+                        const { data, error } = await supabase.rpc('aggregate_event_counts', {
+                            start_date: startDate.toISOString(),
+                            end_date: endDate.toISOString()
+                        })
 
-                        if (!error && data && data.length > 0) {
-                            return data.map(item => ({
-                                eventType: item.event_type,
-                                eventCount: item.event_count,
-                                uniqueSessions: item.unique_sessions
-                            }))
+                        if (!error && data) {
+                            return data
                         }
                     }
 
@@ -289,7 +247,7 @@ export class analyticsPerformance {
                     const { data, error } = await query
 
                     if (error) {
-                        console.error('Analytics Performance: Error getting event counts:', error)
+                        console.error('Analytics DB Optimized: Error getting event counts:', error)
                         return []
                     }
 
@@ -320,7 +278,7 @@ export class analyticsPerformance {
 
                     return result
                 } catch (error) {
-                    console.error('Analytics Performance: Exception getting event counts:', error)
+                    console.error('Analytics DB Optimized: Exception getting event counts:', error)
                     return []
                 }
             },
@@ -329,7 +287,7 @@ export class analyticsPerformance {
     }
 
     /**
-     * Get time series data using materialized views and caching
+     * Get time series data using aggregation function
      */
     static async getTimeSeriesData(
         intervalType: 'hour' | 'day' | 'week' = 'day',
@@ -359,21 +317,16 @@ export class analyticsPerformance {
                 }
 
                 try {
-                    // Try to get data from materialized view first if using daily interval and no date filters
-                    if (intervalType === 'day' && !startDate && !endDate) {
-                        const { data, error } = await supabase
-                            .from('analytics_time_series_daily')
-                            .select('time_bucket, page_views, unique_sessions, total_events')
-                            .order('time_bucket', { ascending: false })
-                            .limit(30) // Last 30 days
+                    // Use the aggregate_time_series function if dates are provided
+                    if (startDate && endDate) {
+                        const { data, error } = await supabase.rpc('aggregate_time_series', {
+                            interval_type: intervalType,
+                            start_date: startDate.toISOString(),
+                            end_date: endDate.toISOString()
+                        })
 
-                        if (!error && data && data.length > 0) {
-                            return data.map(item => ({
-                                timeBucket: new Date(item.time_bucket).toISOString().split('T')[0],
-                                pageViews: item.page_views,
-                                uniqueSessions: item.unique_sessions,
-                                totalEvents: item.total_events
-                            }))
+                        if (!error && data) {
+                            return data
                         }
                     }
 
@@ -392,7 +345,7 @@ export class analyticsPerformance {
                     const { data, error } = await query.order('created_at', { ascending: false })
 
                     if (error) {
-                        console.error('Analytics Performance: Error getting time series data:', error)
+                        console.error('Analytics DB Optimized: Error getting time series data:', error)
                         return []
                     }
 
@@ -444,7 +397,7 @@ export class analyticsPerformance {
 
                     return result
                 } catch (error) {
-                    console.error('Analytics Performance: Exception getting time series data:', error)
+                    console.error('Analytics DB Optimized: Exception getting time series data:', error)
                     return []
                 }
             },
@@ -453,126 +406,99 @@ export class analyticsPerformance {
     }
 
     /**
-     * Get content performance metrics using materialized views and caching
+     * Run the data retention cleanup function
      */
-    static async getContentPerformance(startDate?: Date, endDate?: Date): Promise<ContentPerformanceMetric[]> {
-        const cacheKey = cacheKeys.getContentPerformanceCacheKey(startDate, endDate)
+    static async runDataRetention(retentionDays: number = 365): Promise<boolean> {
+        if (!supabase) {
+            return false
+        }
 
-        return analyticsCache.getOrSet<ContentPerformanceMetric[]>(
-            cacheKey,
-            async () => {
-                if (!supabase) {
-                    // Return mock data when database is not available
-                    return [
-                        { contentType: "rant", actionType: "view", actionCount: 1247, uniqueSessions: 342 },
-                        { contentType: "rant", actionType: "like", actionCount: 297, uniqueSessions: 123 },
-                        { contentType: "rant", actionType: "comment", actionCount: 89, uniqueSessions: 67 },
-                        { contentType: "challenge", actionType: "view", actionCount: 189, uniqueSessions: 89 }
-                    ]
-                }
+        try {
+            const { error } = await supabase.rpc('cleanup_old_analytics_data', {
+                retention_days: retentionDays
+            })
 
-                try {
-                    // Try to get data from materialized view first if no date filters
-                    if (!startDate && !endDate) {
-                        const { data, error } = await supabase
-                            .from('analytics_content_performance')
-                            .select('content_type, action_type, action_count, unique_sessions')
-                            .order('action_count', { ascending: false })
+            if (error) {
+                console.error('Analytics DB Optimized: Error running data retention:', error)
+                return false
+            }
 
-                        if (!error && data && data.length > 0) {
-                            return data.map(item => ({
-                                contentType: item.content_type,
-                                actionType: item.action_type,
-                                actionCount: item.action_count,
-                                uniqueSessions: item.unique_sessions
-                            }))
-                        }
-                    }
-
-                    // Fall back to direct query with efficient filtering
-                    let query = supabase
-                        .from('analytics_events')
-                        .select('type, details, anonymous_id')
-                        .neq('type', 'pageview') // Exclude pageviews from content performance
-
-                    if (startDate) {
-                        query = query.gte('created_at', startDate.toISOString())
-                    }
-                    if (endDate) {
-                        query = query.lte('created_at', endDate.toISOString())
-                    }
-
-                    const { data, error } = await query
-
-                    if (error) {
-                        console.error('Analytics Performance: Error getting content performance:', error)
-                        return []
-                    }
-
-                    if (!data || data.length === 0) {
-                        return []
-                    }
-
-                    // Group by content type and action type
-                    const contentStats = new Map<string, { actionCount: number, sessions: Set<string> }>()
-
-                    data.forEach(event => {
-                        const contentType = (event.details as any)?.contentType || 'unknown'
-                        const actionType = event.type
-                        const key = `${contentType}:${actionType}`
-
-                        if (!contentStats.has(key)) {
-                            contentStats.set(key, { actionCount: 0, sessions: new Set() })
-                        }
-                        const stats = contentStats.get(key)!
-                        stats.actionCount++
-                        stats.sessions.add(event.anonymous_id)
-                    })
-
-                    // Convert to array and sort by action count
-                    const result = Array.from(contentStats.entries())
-                        .map(([key, stats]) => {
-                            const [contentType, actionType] = key.split(':')
-                            return {
-                                contentType,
-                                actionType,
-                                actionCount: stats.actionCount,
-                                uniqueSessions: stats.sessions.size
-                            }
-                        })
-                        .sort((a, b) => b.actionCount - a.actionCount)
-
-                    return result
-                } catch (error) {
-                    console.error('Analytics Performance: Exception getting content performance:', error)
-                    return []
-                }
-            },
-            { ttl: 20 * 60 * 1000 } // 20 minute cache
-        )
+            return true
+        } catch (error) {
+            console.error('Analytics DB Optimized: Exception running data retention:', error)
+            return false
+        }
     }
 
     /**
-     * Clear all analytics caches
+     * Run the analytics aggregation process
      */
-    static clearAllCaches(): void {
-        analyticsCache.clear()
+    static async runAggregation(): Promise<boolean> {
+        if (!supabase) {
+            return false
+        }
+
+        try {
+            const { error } = await supabase.rpc('process_analytics_aggregations')
+
+            if (error) {
+                console.error('Analytics DB Optimized: Error running aggregation:', error)
+                return false
+            }
+
+            return true
+        } catch (error) {
+            console.error('Analytics DB Optimized: Exception running aggregation:', error)
+            return false
+        }
     }
 
     /**
-     * Clear specific analytics cache by type
+     * Get paginated analytics events
      */
-    static clearCacheByType(type: 'metrics' | 'top-pages' | 'event-counts' | 'time-series' | 'content-performance'): void {
-        analyticsCache.clearByPrefix(`${type}:`)
-    }
+    static async getPaginatedEvents(
+        limit: number = 100,
+        cursorTimestamp?: number,
+        eventType?: string,
+        page?: string
+    ): Promise<{
+        events: any[],
+        nextCursor: number | null
+    }> {
+        if (!supabase) {
+            return { events: [], nextCursor: null }
+        }
 
-    /**
-     * Get cache statistics
-     */
-    static getCacheStats(): { size: number, keys: string[] } {
-        return analyticsCache.getStats()
+        try {
+            const { data, error } = await supabase.rpc('get_paginated_analytics_events', {
+                p_limit: limit,
+                p_cursor_timestamp: cursorTimestamp || null,
+                p_event_type: eventType || null,
+                p_page: page || null
+            })
+
+            if (error) {
+                console.error('Analytics DB Optimized: Error getting paginated events:', error)
+                return { events: [], nextCursor: null }
+            }
+
+            if (!data || data.length === 0) {
+                return { events: [], nextCursor: null }
+            }
+
+            // Extract the next cursor from the last item
+            const lastItem = data[data.length - 1]
+            const nextCursor = lastItem.next_cursor
+
+            return {
+                events: data,
+                nextCursor
+            }
+        } catch (error) {
+            console.error('Analytics DB Optimized: Exception getting paginated events:', error)
+            return { events: [], nextCursor: null }
+        }
     }
 }
 
-// Export the analytics performance utilities
-export default analyticsPerformance
+export default AnalyticsDBOptimized

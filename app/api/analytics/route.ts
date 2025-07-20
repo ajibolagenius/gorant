@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { AnalyticsDB, AnalyticsEvent } from '@/lib/analytics-db'
 import { AnalyticsValidator } from '@/lib/analytics-validation'
-import { AnalyticsPrivacyService } from '@/lib/analytics-privacy'
+import { analyticsPrivacy } from '@/lib/analytics-privacy'
+import { analyticsPerformance } from '@/lib/analytics-performance'
+import { analyticsCache } from '@/lib/analytics-cache'
 import { z } from 'zod'
 
 // Rate limiting store (in production, use Redis or similar)
@@ -233,8 +235,8 @@ export async function GET(request: NextRequest) {
         // Audit log dashboard access for compliance
         // Note: In production, this should be sent to a secure audit logging service or DB
         try {
-            if (AnalyticsPrivacyService.logAuditEvent) {
-                AnalyticsPrivacyService.logAuditEvent(
+            if (analyticsPrivacy.logAuditEvent) {
+                analyticsPrivacy.logAuditEvent(
                     'dashboard_access',
                     { queryParams: validatedParams },
                     undefined, // userId (if available)
@@ -271,7 +273,7 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * Handle different analytics endpoints
+ * Handle different analytics endpoints with performance optimizations
  */
 async function handleAnalyticsEndpoint(
     endpoint: string | null,
@@ -296,75 +298,131 @@ async function handleAnalyticsEndpoint(
 ) {
     const { startDate, endDate, limit, intervalType } = params
 
+    // Generate cache key for the entire response
+    const generateCacheKey = () => {
+        const start = startDate ? startDate.toISOString().split('T')[0] : 'all'
+        const end = endDate ? endDate.toISOString().split('T')[0] : 'now'
+        const includes = [
+            params.includeTimeSeries ? 'time' : '',
+            params.includeContentPerformance ? 'content' : '',
+            params.includeEventCounts ? 'events' : '',
+            params.includeTrendingTopics ? 'trending' : '',
+            params.includePopularMoods ? 'moods' : '',
+            params.includeUserBehavior ? 'behavior' : '',
+            params.includeModerationStats ? 'moderation' : ''
+        ].filter(Boolean).join('-')
+
+        return `api:${endpoint || 'dashboard'}:${start}:${end}:${limit}:${intervalType}:${includes}`
+    }
+
+    // Try to get from cache first for GET requests
+    const cacheKey = generateCacheKey()
+    const cachedResponse = analyticsCache.get(cacheKey)
+    if (cachedResponse) {
+        return NextResponse.json(cachedResponse)
+    }
+
+    // If not in cache, fetch the data
+    let responseData: any
+
     switch (endpoint) {
         case 'metrics':
-            const metrics = await AnalyticsDB.getMetrics(startDate, endDate)
-            return NextResponse.json({ data: metrics })
+            // Use optimized metrics function
+            const metrics = await analyticsPerformance.getMetrics(startDate, endDate)
+            responseData = { data: metrics }
+            break
 
         case 'top-pages':
-            const topPages = await AnalyticsDB.getTopPages(limit, startDate, endDate)
-            return NextResponse.json({ data: topPages })
+            // Use optimized top pages function
+            const topPages = await analyticsPerformance.getTopPages(limit, startDate, endDate)
+            responseData = { data: topPages }
+            break
 
         case 'event-counts':
-            const eventCounts = await AnalyticsDB.getEventCountsByType(startDate, endDate)
-            return NextResponse.json({ data: eventCounts })
+            // Use optimized event counts function
+            const eventCounts = await analyticsPerformance.getEventCountsByType(startDate, endDate)
+            responseData = { data: eventCounts }
+            break
 
         case 'time-series':
-            const timeSeries = await AnalyticsDB.getTimeSeriesData(intervalType, startDate, endDate)
-            return NextResponse.json({ data: timeSeries })
+            // Use optimized time series function
+            const timeSeries = await analyticsPerformance.getTimeSeriesData(intervalType, startDate, endDate)
+            responseData = { data: timeSeries }
+            break
 
         case 'content-performance':
-            const contentPerformance = await AnalyticsDB.getContentPerformance(startDate, endDate)
-            return NextResponse.json({ data: contentPerformance })
+            // Use optimized content performance function
+            const contentPerformance = await analyticsPerformance.getContentPerformance(startDate, endDate)
+            responseData = { data: contentPerformance }
+            break
 
         case 'trending-topics':
             const trendingTopics = await AnalyticsDB.getTrendingTopics(startDate, endDate)
-            return NextResponse.json({ data: trendingTopics })
+            responseData = { data: trendingTopics }
+            break
 
         case 'popular-moods':
             const popularMoods = await AnalyticsDB.getPopularMoods(startDate, endDate)
-            return NextResponse.json({ data: popularMoods })
+            responseData = { data: popularMoods }
+            break
 
         case 'user-behavior':
             const userBehavior = await AnalyticsDB.getUserBehaviorData(startDate, endDate)
-            return NextResponse.json({ data: userBehavior })
+            responseData = { data: userBehavior }
+            break
 
         case 'moderation-stats':
             const moderationStats = await AnalyticsDB.getModerationStats(startDate, endDate)
-            return NextResponse.json({ data: moderationStats })
+            responseData = { data: moderationStats }
+            break
 
         case 'user-metrics':
             const userMetrics = await AnalyticsDB.getUserMetrics()
-            return NextResponse.json({ data: userMetrics })
+            responseData = { data: userMetrics }
+            break
 
         case 'user-growth':
             const userGrowthData = await AnalyticsDB.getUserGrowthData(limit)
-            return NextResponse.json({ data: userGrowthData })
+            responseData = { data: userGrowthData }
+            break
+
+        case 'cache-stats':
+            // Special endpoint to get cache statistics (for debugging)
+            const cacheStats = analyticsPerformance.getCacheStats()
+            responseData = { data: cacheStats }
+            break
+
+        case 'clear-cache':
+            // Special endpoint to clear cache (for debugging)
+            analyticsPerformance.clearAllCaches()
+            responseData = { success: true, message: 'Cache cleared' }
+            break
 
         default:
             // Return comprehensive dashboard data based on include flags
+            // Use Promise.all for parallel execution of queries
             const promises: Promise<any>[] = []
             const dataKeys: string[] = []
 
             // Always include basic metrics
-            promises.push(AnalyticsDB.getMetrics(startDate, endDate))
+            promises.push(analyticsPerformance.getMetrics(startDate, endDate))
             dataKeys.push('metrics')
 
-            promises.push(AnalyticsDB.getTopPages(10, startDate, endDate))
+            promises.push(analyticsPerformance.getTopPages(10, startDate, endDate))
             dataKeys.push('topPages')
 
             if (params.includeEventCounts) {
-                promises.push(AnalyticsDB.getEventCountsByType(startDate, endDate))
+                promises.push(analyticsPerformance.getEventCountsByType(startDate, endDate))
                 dataKeys.push('eventCounts')
             }
 
             if (params.includeTimeSeries) {
-                promises.push(AnalyticsDB.getTimeSeriesData(intervalType, startDate, endDate))
+                promises.push(analyticsPerformance.getTimeSeriesData(intervalType, startDate, endDate))
                 dataKeys.push('timeSeries')
             }
 
             if (params.includeContentPerformance) {
-                promises.push(AnalyticsDB.getContentPerformance(startDate, endDate))
+                promises.push(analyticsPerformance.getContentPerformance(startDate, endDate))
                 dataKeys.push('contentPerformance')
             }
 
@@ -390,13 +448,13 @@ async function handleAnalyticsEndpoint(
 
             // If no specific includes are set, include basic dashboard data
             if (!params.includeTimeSeries && !params.includeContentPerformance && !params.includeEventCounts) {
-                promises.push(AnalyticsDB.getEventCountsByType(startDate, endDate))
+                promises.push(analyticsPerformance.getEventCountsByType(startDate, endDate))
                 dataKeys.push('eventCounts')
 
-                promises.push(AnalyticsDB.getTimeSeriesData(intervalType, startDate, endDate))
+                promises.push(analyticsPerformance.getTimeSeriesData(intervalType, startDate, endDate))
                 dataKeys.push('timeSeries')
 
-                promises.push(AnalyticsDB.getContentPerformance(startDate, endDate))
+                promises.push(analyticsPerformance.getContentPerformance(startDate, endDate))
                 dataKeys.push('contentPerformance')
             }
 
@@ -407,8 +465,13 @@ async function handleAnalyticsEndpoint(
                 data[dataKeys[index]] = result
             })
 
-            return NextResponse.json({ data })
+            responseData = { data }
     }
+
+    // Cache the response for future requests
+    analyticsCache.set(cacheKey, responseData, { ttl: 5 * 60 * 1000 }) // 5 minute cache
+
+    return NextResponse.json(responseData)
 }
 
 /**

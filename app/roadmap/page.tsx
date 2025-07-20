@@ -20,6 +20,7 @@ import dynamic from 'next/dynamic';
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 import 'react-quill/dist/quill.snow.css';
 import { CaretDown } from "@phosphor-icons/react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 // Map feature keywords to Phosphor icons
 const featureIcons: Record<string, React.ReactNode> = {
@@ -174,7 +175,10 @@ export default function RoadmapPage() {
     const [filterCategory, setFilterCategory] = useState("");
     const [filterPriority, setFilterPriority] = useState("");
     const [filterStatus, setFilterStatus] = useState("");
-    const [sortBy, setSortBy] = useState("newest");
+    // Admin flag (toggleable)
+    const [isAdmin, setIsAdmin] = useState(false); // Default to user view
+    // Sort state, default to 'all'
+    const [sortBy, setSortBy] = useState('all');
     const [search, setSearch] = useState("");
     const [activePhase, setActivePhase] = useState<string>("")
     const phaseRefs = useRef<Record<string, HTMLDivElement | null>>({})
@@ -323,7 +327,9 @@ export default function RoadmapPage() {
 
     // Filtering, sorting, and searching logic
     let filteredSuggestions = suggestions;
-    if (sortBy.startsWith('category:')) {
+    if (sortBy === 'all') {
+        filteredSuggestions = suggestions;
+    } else if (sortBy.startsWith('category:')) {
         const cat = sortBy.split(':')[1];
         filteredSuggestions = suggestions.filter(s => s.category === cat);
     } else if (sortBy.startsWith('priorityLevel:')) {
@@ -344,364 +350,391 @@ export default function RoadmapPage() {
     const paginatedSuggestions = filteredSuggestions.slice((currentPage - 1) * SUGGESTIONS_PER_PAGE, currentPage * SUGGESTIONS_PER_PAGE);
 
     return (
-        <div className="container mx-auto max-w-6xl py-10 px-4 relative flex flex-col md:flex-row gap-8">
-            {/* Main Content */}
-            <div className="flex-1 min-w-0">
-                {/* Animated Background */}
-                <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0">
-                    <svg width="100%" height="100%" viewBox="0 0 600 600" fill="none" xmlns="http://www.w3.org/2000/svg" className="absolute left-0 top-0 w-full h-full opacity-30 dark:opacity-20">
-                        <defs>
-                            <radialGradient id="roadmap-bg1" cx="50%" cy="50%" r="50%" fx="50%" fy="50%" gradientTransform="rotate(45)">
-                                <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.5" />
-                                <stop offset="100%" stopColor="#f0abfc" stopOpacity="0" />
-                            </radialGradient>
-                            <radialGradient id="roadmap-bg2" cx="50%" cy="50%" r="50%" fx="50%" fy="50%" gradientTransform="rotate(-30)">
-                                <stop offset="0%" stopColor="#f472b6" stopOpacity="0.4" />
-                                <stop offset="100%" stopColor="#f0abfc" stopOpacity="0" />
-                            </radialGradient>
-                        </defs>
-                        <circle cx="150" cy="120" r="180" fill="url(#roadmap-bg1)" />
-                        <circle cx="500" cy="400" r="200" fill="url(#roadmap-bg2)" />
-                    </svg>
-                </div>
-                {/* Sticky Nav Bar, Search, Roadmap, etc. */}
-                <nav className="sticky top-0 z-30 bg-background/80 backdrop-blur border-b border-border mb-6 flex overflow-x-auto gap-2 py-2 px-1 rounded-b-none shadow-sm">
-                    {parsed.phases.map(phase => (
-                        <button
-                            key={phase.title}
-                            onClick={() => scrollToPhase(phase.title)}
-                            className={`px-3 py-1 rounded-none font-bold whitespace-nowrap transition-colors text-sm font-heading tracking-tight ${activePhase === phase.title
-                                ? "bg-primary text-primary-foreground shadow"
-                                : "bg-muted text-foreground hover:bg-accent"
-                                }`}
-                            style={{ fontFamily: 'Space Grotesk, sans-serif' }}
-                        >
-                            <span className="mr-1">{phase.emoji}</span>{phase.title}
-                        </button>
-                    ))}
-                </nav>
-                {/* Search Bar */}
-                <div className="flex items-center gap-2 mb-6 sticky top-[56px] z-20 bg-background/80 backdrop-blur px-2 py-2 rounded-none shadow-sm border-b border-muted">
-                    <MagnifyingGlass className="w-5 h-5 text-muted-foreground ml-2" />
-                    <input
-                        type="text"
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                        placeholder="Search roadmap and suggestions..."
-                        className="w-full bg-transparent outline-none border-0 text-base placeholder:text-muted-foreground font-mono px-2 py-2 focus:ring-2 focus:ring-purple-400 rounded-none"
-                        style={{ fontFamily: 'JetBrains Mono, monospace', borderRadius: 0 }}
-                        aria-label="Search roadmap and suggestions"
-                    />
-                </div>
-                {/* No filter/sort controls on the main screen */}
-                <h1 className="text-2xl md:text-3xl font-bold mb-6 flex items-center gap-2 font-heading tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                    <Rocket className="w-7 h-7 text-fuchsia-500" /> Product Roadmap
-                </h1>
-                <div className="bg-card/80 dark:bg-card/80 backdrop-blur rounded-none shadow-sm border-0 p-6">
-                    <div className="prose max-w-none">
-                        {filteredPhases.map(phase => {
-                            if (!phase) return null
-                            const total = phase.items.length
-                            const completed = phase.items.filter(i => i.checked).length
-                            const percent = total > 0 ? Math.round((completed / total) * 100) : 0
-                            return (
-                                <div
-                                    key={phase.title}
-                                    ref={el => { phaseRefs.current[phase.title] = el; }}
-                                    className="mb-8"
-                                >
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <span className="text-lg font-bold font-heading tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>{phase.emoji} {highlight(phase.title)}</span>
-                                    </div>
-                                    {/* Progress Bar */}
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <div className="w-full h-3 bg-muted rounded-none overflow-hidden">
-                                            <div
-                                                className="h-3 bg-primary transition-all duration-500 rounded-none"
-                                                style={{ width: `${percent}%` }}
-                                                aria-valuenow={percent}
-                                                aria-valuemin={0}
-                                                aria-valuemax={100}
-                                                role="progressbar"
-                                                aria-label={`${phase.emoji} ${phase.title} progress`}
-                                            />
-                                        </div>
-                                        <span className="text-xs font-mono font-medium text-muted-foreground min-w-[40px] text-right" style={{ fontFamily: 'JetBrains Mono, monospace' }}>{percent}%</span>
-                                    </div>
-                                    {/* Animated Checklist */}
-                                    <ul className="ml-2 mb-4 space-y-1">
-                                        {phase.items.map((item, idx) => {
-                                            const text = item.text.toLowerCase()
-                                            const featureIcon = Object.entries(featureIcons).find(([k]) => text.includes(k))?.[1]
-                                            const lucideIcon = featureIcon ? null : Object.entries(lucideIcons).find(([k]) => text.includes(k))?.[1]
-                                            const fallbackIcon = (!featureIcon && !lucideIcon) ? <Dot className="inline w-4 h-4 text-gray-400 mr-2" /> : null
-                                            const iconLabel = featureIcon ? Object.keys(featureIcons).find(k => text.includes(k)) : lucideIcon ? Object.keys(lucideIcons).find(k => text.includes(k)) : "feature"
-                                            return (
-                                                <motion.li
-                                                    key={item.text}
-                                                    initial={{ opacity: 0, y: 20 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    transition={{ delay: idx * 0.07, duration: 0.4, type: "spring" }}
-                                                    className="flex items-center gap-2 text-base font-body tracking-normal" style={{ fontFamily: 'Manrope, sans-serif' }}
-                                                >
-                                                    {/* Status Icon */}
-                                                    {item.checked ? <CheckCircle className="inline w-4 h-4 text-green-800 mr-1" /> : <Clock className="inline w-4 h-4 text-gray-400 mr-1" />}
-                                                    {/* Feature Icon with Tooltip */}
-                                                    <Tooltip>
-                                                        <TooltipTrigger asChild>
-                                                            <span>
-                                                                {featureIcon}
-                                                                {lucideIcon}
-                                                                {fallbackIcon}
-                                                            </span>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent side="top">{iconLabel}</TooltipContent>
-                                                    </Tooltip>
-                                                    <span>{highlight(item.text)}</span>
-                                                </motion.li>
-                                            )
-                                        })}
-                                    </ul>
-                                </div>
-                            )
-                        })}
-                        {/* Gaps Table */}
-                        <h2 className="text-xl font-bold mt-10 mb-2 font-heading tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>MVP Gaps & Priorities</h2>
-                        <div className="overflow-x-auto rounded-none">
-                            <table className="min-w-full text-sm font-mono border-collapse" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                                <thead>
-                                    <tr className="bg-muted text-gray-700 dark:text-gray-300">
-                                        <th className="px-3 py-2 text-left font-bold">Feature</th>
-                                        <th className="px-3 py-2 text-left font-bold">Priority</th>
-                                        <th className="px-3 py-2 text-left font-bold">Status/Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {parsed.gaps.map((gap: any) => (
-                                        <tr key={gap.feature} className="border-b border-muted last:border-0">
-                                            <td className="px-3 py-2">{gap.feature}</td>
-                                            <td className="px-3 py-2">
-                                                <span className={`inline-block px-2 py-0.5 rounded-none font-mono text-xs font-bold ${gap.priority === 'High' ? 'bg-yellow-200 text-yellow-800' : gap.priority === 'Medium' ? 'bg-blue-100 text-blue-800' : 'bg-gray-200 text-gray-700'}`}>{gap.priority}</span>
-                                            </td>
-                                            <td className="px-3 py-2">{gap.status}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                        {/*  */}
+        <div className="min-h-screen bg-background" role="main" aria-label="Product Roadmap">
+            {/* Dashboard-style Header (solid background, no gradient) */}
+            <div className="w-full bg-background border-b border-border shadow-sm mb-0">
+                <div className="container mx-auto px-4 py-6 max-w-7xl flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <Rocket className="w-8 h-8 text-primary" />
+                        <h1 className="text-2xl md:text-3xl font-bold font-heading tracking-tight text-foreground" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                            Product Roadmap
+                        </h1>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">Share your ideas and help shape the future!</span>
                     </div>
                 </div>
-                {/* Floating Back to Top Button */}
-                <motion.button
-                    type="button"
-                    aria-label="Back to top"
-                    onClick={scrollToTop}
-                    initial={{ opacity: 0, y: 40 }}
-                    animate={showTopBtn ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
-                    transition={{ duration: 0.3 }}
-                    className="fixed right-4 bottom-10 z-40 bg-black text-white hover:bg-gray-900 dark:bg-purple-600 dark:hover:bg-purple-700 rounded-none shadow-sm w-11 h-11 min-w-[44px] min-h-[44px] p-0 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 transition-all"
-                    style={{ pointerEvents: showTopBtn ? 'auto' : 'none', borderRadius: 0 }}
-                >
-                    <ArrowUpCircle className="w-6 h-6" />
-                </motion.button>
             </div>
-            {/* Sidebar */}
-            <aside className="w-full md:w-[380px] flex-shrink-0 z-30">
-                <div
-                    className="bg-card/80 dark:bg-card/80 backdrop-blur shadow-sm border-0 p-6 mb-6"
-                    style={{
-                        position: 'sticky',
-                        top: '4rem',
-                        zIndex: 30,
-                        maxHeight: 'calc(100vh - 2rem)',
-                        overflowY: 'auto',
-                    }}
-                >
-                    <h2 className="text-lg font-bold mb-4 font-heading tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                        <Star className="w-5 h-5 text-yellow-500" /> Community Suggestions
-                    </h2>
-                    {/* Suggest a Feature button remains at the top */}
-                    <button
-                        className="w-full inline-flex items-center gap-2 bg-purple-600 text-white hover:bg-purple-700 font-bold text-sm font-heading px-4 py-2 shadow transition-colors focus-visible:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 mb-4 rounded-none min-h-[44px]"
-                        aria-label="Suggest a feature"
-                        onClick={() => { setShowForm(true); setSubmitMsg(null); }}
-                        style={{ fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '0.01em' }}
-                    >
-                        <PlusCircle className="w-5 h-5" />
-                        <span className="font-heading" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                            Suggest a Feature
-                        </span>
-                    </button>
-                    {/* Suggestion Modal */}
-                    <Dialog open={showForm} onOpenChange={setShowForm}>
-                        <DialogContent className="w-screen h-screen max-w-full max-h-full p-0 rounded-none flex items-center justify-center bg-background">
-                            <div className="w-full h-full flex flex-col items-center justify-center">
-                                <div className="w-full max-w-2xl mx-auto bg-card/90 border border-muted p-8 shadow-xl rounded-none relative flex flex-col" style={{ minHeight: '70vh', maxHeight: '90vh' }}>
-                                    <h3 className="text-lg font-bold mb-4 font-heading tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                                        <PlusCircle className="w-5 h-5 mr-1 inline" /> Suggest a Feature
-                                    </h3>
-                                    <form onSubmit={handleSubmit} className="space-y-4 flex flex-col flex-1">
-                                        <input
-                                            type="text"
-                                            value={title}
-                                            onChange={e => setTitle(e.target.value)}
-                                            placeholder="Title (at least 5 words)"
-                                            className="w-full border border-input bg-background px-3 py-2 focus:border-purple-400 text-sm font-heading rounded-none mb-1"
-                                            style={{ fontFamily: 'Space Grotesk, sans-serif', borderRadius: 0 }}
-                                            required
-                                        />
-                                        <div className="flex flex-col flex-1">
-                                            <ReactQuill
-                                                value={description}
-                                                onChange={setDescription}
-                                                placeholder="Describe your suggestion (at least 15 words)"
-                                                className="bg-background rounded-none mb-1 flex-1"
-                                                style={{ fontFamily: 'Manrope, sans-serif', borderRadius: 0, minHeight: 320, maxHeight: 480, height: 400 }}
-                                                theme="snow"
-                                            />
-                                            <div className="text-xs text-muted-foreground font-mono mt-1 mb-2" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                                                {description.replace(/<[^>]+>/g, '').length}/500
-                                            </div>
-                                        </div>
-                                        <div className="flex flex-wrap gap-2 items-center">
-                                            <label className="text-xs font-bold font-mono">Category:</label>
-                                            <select value={category} onChange={e => setCategory(e.target.value)} className="border px-2 py-1 rounded-none text-xs font-mono">
-                                                <option value="Feature">Feature</option>
-                                                <option value="Bug">Bug</option>
-                                                <option value="Improvement">Improvement</option>
-                                                <option value="Other">Other</option>
-                                            </select>
-                                            <label className="text-xs font-bold font-mono ml-2">Priority:</label>
-                                            <select value={priority} onChange={e => setPriority(e.target.value)} className="border px-2 py-1 rounded-none text-xs font-mono">
-                                                <option value="Not important">Not important</option>
-                                                <option value="Nice to have">Nice to have</option>
-                                                <option value="Important">Important</option>
-                                                <option value="Critical">Critical</option>
-                                            </select>
-                                        </div>
-                                        <div className="flex items-center justify-between mb-1 text-xs text-muted-foreground font-mono" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                                            {formError && <span className="text-red-600">{formError}</span>}
-                                            {submitMsg && <span className="text-green-600">{submitMsg}</span>}
-                                        </div>
-                                        <button
-                                            type="submit"
-                                            className="w-full flex items-center justify-center gap-2 bg-purple-600 text-white hover:bg-purple-700 text-sm font-bold py-2 rounded-none min-h-[40px] focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2"
-                                            disabled={submitting || !title.trim() || !description.trim()}
-                                            style={{ fontFamily: 'Space Grotesk, sans-serif', borderRadius: 0 }}
-                                        >
-                                            <Pencil weight="duotone" className="w-4 h-4 mr-1" />
-                                            {submitting ? "Submitting..." : "Submit Suggestion"}
-                                        </button>
-                                    </form>
-                                </div>
+            <div className="container mx-auto px-4 py-8 max-w-7xl flex flex-col md:flex-row gap-8">
+                {/* Main Content as Card */}
+                <div className="flex-1 min-w-0">
+                    <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur mb-8">
+                        <CardContent className="pt-6">
+                            {/* Sticky Nav Bar, Search, Roadmap, etc. */}
+                            <nav className="sticky top-0 z-30 bg-background/80 backdrop-blur border-b border-border mb-6 flex overflow-x-auto gap-2 py-2 px-1 rounded-b-none shadow-sm">
+                                {parsed.phases.map(phase => (
+                                    <button
+                                        key={phase.title}
+                                        onClick={() => scrollToPhase(phase.title)}
+                                        className={`px-3 py-1 rounded-none font-bold whitespace-nowrap transition-colors text-sm font-heading tracking-tight ${activePhase === phase.title
+                                            ? "bg-primary text-primary-foreground shadow"
+                                            : "bg-muted text-foreground hover:bg-accent"
+                                            }`}
+                                        style={{ fontFamily: 'Space Grotesk, sans-serif' }}
+                                    >
+                                        <span className="mr-1">{phase.emoji}</span>{phase.title}
+                                    </button>
+                                ))}
+                            </nav>
+                            {/* Search Bar */}
+                            <div className="flex items-center gap-2 mb-6 sticky top-[56px] z-20 bg-background/80 backdrop-blur px-2 py-2 rounded-none shadow-sm border-b border-muted">
+                                <MagnifyingGlass className="w-5 h-5 text-muted-foreground ml-2" />
+                                <input
+                                    type="text"
+                                    value={search}
+                                    onChange={e => setSearch(e.target.value)}
+                                    placeholder="Search roadmap and suggestions..."
+                                    className="w-full bg-transparent outline-none border-0 text-base placeholder:text-muted-foreground font-mono px-2 py-2 focus:ring-2 focus:ring-purple-400 rounded-none"
+                                    style={{ fontFamily: 'JetBrains Mono, monospace', borderRadius: 0 }}
+                                    aria-label="Search roadmap and suggestions"
+                                />
                             </div>
-                        </DialogContent>
-                    </Dialog>
-                    {/* Sort dropdown moved below the suggest button */}
-                    <div className="flex items-center gap-1 mb-4">
-                        <span className="text-xs font-mono">Sort:</span>
-                        <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="border px-2 py-1 rounded-none text-xs font-mono bg-background">
-                            <option value="newest">Newest</option>
-                            <option value="oldest">Oldest</option>
-                            <option value="priority">Priority</option>
-                            <option disabled>──────────</option>
-                            <option value="category:Feature">Category: Feature</option>
-                            <option value="category:Bug">Category: Bug</option>
-                            <option value="category:Improvement">Category: Improvement</option>
-                            <option value="category:Other">Category: Other</option>
-                            <option disabled>──────────</option>
-                            <option value="priorityLevel:Not important">Priority: Not important</option>
-                            <option value="priorityLevel:Nice to have">Priority: Nice to have</option>
-                            <option value="priorityLevel:Important">Priority: Important</option>
-                            <option value="priorityLevel:Critical">Priority: Critical</option>
-                            <option disabled>──────────</option>
-                            <option value="status:pending">Status: Pending</option>
-                            <option value="status:accepted">Status: Accepted</option>
-                            <option value="status:reviewed">Status: Reviewed</option>
-                            <option value="status:rejected">Status: Rejected</option>
-                        </select>
-                    </div>
-                    {loadingSuggestions ? (
-                        <div className="text-muted-foreground text-sm font-body" style={{ fontFamily: 'Manrope, sans-serif' }}>Loading suggestions...</div>
-                    ) : suggestions.length === 0 ? (
-                        <div className="text-muted-foreground text-sm font-body" style={{ fontFamily: 'Manrope, sans-serif' }}>No suggestions yet. Be the first to suggest a feature!</div>
-                    ) : (
-                        <ul className="space-y-4">
-                            {paginatedSuggestions.map((s, idx) => (
-                                <li key={s.id} className="relative bg-card/80 border border-muted p-5 flex flex-col gap-3 font-body text-sm font-medium text-foreground rounded-none" style={{ fontFamily: 'Manrope, sans-serif', borderRadius: 0 }}>
-                                    {/* Simple bullet instead of numbering */}
-                                    <span className="absolute left-0 top-7 flex items-center justify-center w-4 h-4 bg-primary text-white font-bold font-mono text-xs rounded-full shadow-sm" style={{ borderRadius: '50%' }}>
-                                        •
-                                    </span>
-                                    {/* Title row */}
-                                    <div className="flex items-center gap-2 cursor-pointer select-none pl-7" onClick={() => setExpandedId(expandedId === s.id ? null : s.id)}>
-                                        <span className="font-heading text-base font-bold" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>{s.title}</span>
-                                        <CaretDown weight="duotone" className={`w-4 h-4 transition-transform ${expandedId === s.id ? 'rotate-180' : ''}`} />
-                                    </div>
-                                    {/* Inline tags */}
-                                    <div className="flex flex-wrap gap-2 pl-7">
-                                        {s.status && (
-                                            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 font-mono text-xs font-medium rounded-none
-                                                ${s.status === 'pending' ? 'bg-warning text-yellow-900' :
-                                                    s.status === 'accepted' ? 'bg-success text-green-900' :
-                                                        s.status === 'reviewed' ? 'bg-muted text-gray-700' :
-                                                            s.status === 'rejected' ? 'bg-accent text-red-900' :
-                                                                'bg-muted text-muted-foreground'}`}
-                                                style={{ fontFamily: 'JetBrains Mono, monospace', borderRadius: 0 }}
-                                            >
-                                                {s.status === 'pending' && <Clock weight="duotone" className="w-3 h-3 mr-0.5" />}
-                                                {s.status === 'accepted' && <CheckCircle weight="duotone" className="w-3 h-3 mr-0.5" />}
-                                                {s.status === 'reviewed' && <Eye weight="duotone" className="w-3 h-3 mr-0.5" />}
-                                                {s.status === 'rejected' && <XCircle weight="duotone" className="w-3 h-3 mr-0.5" />}
-                                                {s.status.charAt(0).toUpperCase() + s.status.slice(1)}
-                                            </span>
-                                        )}
-                                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 font-mono text-xs font-medium rounded-none bg-blue-100 text-blue-800">
-                                            <TagIcon weight="duotone" className="w-3 h-3 mr-0.5" />{s.category}
-                                        </span>
-                                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 font-mono text-xs font-medium rounded-none bg-purple-100 text-purple-800">
-                                            <FlagIcon weight="duotone" className="w-3 h-3 mr-0.5" />{s.priority}
-                                        </span>
-                                    </div>
-                                    {/* Description (expandable) */}
-                                    {expandedId === s.id && (
-                                        <div className="animate-slide-down mt-2 prose prose-sm max-w-none pl-7" style={{ fontFamily: 'Manrope, sans-serif', maxHeight: 380, overflowY: 'auto' }} dangerouslySetInnerHTML={{ __html: s.description }} />
-                                    )}
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                    {/* Pagination controls */}
-                    {totalPages > 1 && (
-                        <div className="flex justify-center items-center gap-2 mt-4">
+                            {/* Phases as Section Cards */}
+                            <div className="space-y-8">
+                                {filteredPhases.map(phase => {
+                                    if (!phase) return null
+                                    const total = phase.items.length
+                                    const completed = phase.items.filter(i => i.checked).length
+                                    const percent = total > 0 ? Math.round((completed / total) * 100) : 0
+                                    return (
+                                        <Card key={phase.title} className="bg-card/80 dark:bg-card/80 backdrop-blur border-0 shadow-sm p-6" ref={el => { phaseRefs.current[phase.title] = el; }}>
+                                            <CardHeader className="flex flex-row items-center gap-2 mb-2 p-0">
+                                                <span className="text-lg font-bold font-heading tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>{phase.emoji} {highlight(phase.title)}</span>
+                                            </CardHeader>
+                                            {/* Progress Bar */}
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <div className="w-full h-3 bg-muted rounded-none overflow-hidden">
+                                                    <div
+                                                        className="h-3 bg-primary transition-all duration-500 rounded-none"
+                                                        style={{ width: `${percent}%` }}
+                                                        aria-valuenow={percent}
+                                                        aria-valuemin={0}
+                                                        aria-valuemax={100}
+                                                        role="progressbar"
+                                                        aria-label={`${phase.emoji} ${phase.title} progress`}
+                                                    />
+                                                </div>
+                                                <span className="text-xs font-mono font-medium text-muted-foreground min-w-[40px] text-right" style={{ fontFamily: 'JetBrains Mono, monospace' }}>{percent}%</span>
+                                            </div>
+                                            {/* Animated Checklist */}
+                                            <ul className="ml-2 mb-4 space-y-1">
+                                                {phase.items.map((item, idx) => {
+                                                    const text = item.text.toLowerCase()
+                                                    const featureIcon = Object.entries(featureIcons).find(([k]) => text.includes(k))?.[1]
+                                                    const lucideIcon = featureIcon ? null : Object.entries(lucideIcons).find(([k]) => text.includes(k))?.[1]
+                                                    const fallbackIcon = (!featureIcon && !lucideIcon) ? <Dot className="inline w-4 h-4 text-gray-400 mr-2" /> : null
+                                                    const iconLabel = featureIcon ? Object.keys(featureIcons).find(k => text.includes(k)) : lucideIcon ? Object.keys(lucideIcons).find(k => text.includes(k)) : "feature"
+                                                    return (
+                                                        <motion.li
+                                                            key={item.text}
+                                                            initial={{ opacity: 0, y: 20 }}
+                                                            animate={{ opacity: 1, y: 0 }}
+                                                            transition={{ delay: idx * 0.07, duration: 0.4, type: "spring" }}
+                                                            className="flex items-center gap-2 text-base font-body tracking-normal"
+                                                            style={{ fontFamily: 'Manrope, sans-serif' }}
+                                                        >
+                                                            {/* Status Icon */}
+                                                            {item.checked ? <CheckCircle className="inline w-4 h-4 text-green-800 mr-1" /> : <Clock className="inline w-4 h-4 text-gray-400 mr-1" />}
+                                                            {/* Feature Icon with Tooltip */}
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <span>
+                                                                        {featureIcon}
+                                                                        {lucideIcon}
+                                                                        {fallbackIcon}
+                                                                    </span>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent side="top">{iconLabel}</TooltipContent>
+                                                            </Tooltip>
+                                                            <span>{highlight(item.text)}</span>
+                                                        </motion.li>
+                                                    )
+                                                })}
+                                            </ul>
+                                        </Card>
+                                    )
+                                })}
+                            </div>
+                            {/* MVP Gaps Table as Card */}
+                            <Card className="bg-card/80 dark:bg-card/80 backdrop-blur border-0 shadow-sm p-6 mt-10">
+                                <CardHeader className="p-0 mb-2">
+                                    <h2 className="text-xl font-bold font-heading tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>MVP Gaps & Priorities</h2>
+                                </CardHeader>
+                                <div className="overflow-x-auto rounded-none">
+                                    <table className="min-w-full text-sm font-mono border-collapse" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                                        <thead>
+                                            <tr className="bg-muted text-gray-700 dark:text-gray-300">
+                                                <th className="px-3 py-2 text-left font-bold">Feature</th>
+                                                <th className="px-3 py-2 text-left font-bold">Priority</th>
+                                                <th className="px-3 py-2 text-left font-bold">Status/Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {parsed.gaps.map((gap: any) => (
+                                                <tr key={gap.feature} className="border-b border-muted last:border-0">
+                                                    <td className="px-3 py-2">{gap.feature}</td>
+                                                    <td className="px-3 py-2">
+                                                        <span className={`inline-block px-2 py-0.5 rounded-none font-mono text-xs font-bold ${gap.priority === 'High' ? 'bg-yellow-200 text-yellow-800' : gap.priority === 'Medium' ? 'bg-blue-100 text-blue-800' : 'bg-gray-200 text-gray-700'}`}>{gap.priority}</span>
+                                                    </td>
+                                                    <td className="px-3 py-2">{gap.status}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </Card>
+                        </CardContent>
+                    </Card>
+                    {/* Floating Back to Top Button */}
+                    <motion.button
+                        type="button"
+                        aria-label="Back to top"
+                        onClick={scrollToTop}
+                        initial={{ opacity: 0, y: 40 }}
+                        animate={showTopBtn ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+                        transition={{ duration: 0.3 }}
+                        className="fixed right-4 bottom-10 z-40 bg-black text-white hover:bg-gray-900 dark:bg-purple-600 dark:hover:bg-purple-700 rounded-none shadow-sm w-11 h-11 min-w-[44px] min-h-[44px] p-0 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 transition-all"
+                        style={{ pointerEvents: showTopBtn ? 'auto' : 'none', borderRadius: 0 }}
+                    >
+                        <ArrowUpCircle className="w-6 h-6" />
+                    </motion.button>
+                </div>
+                {/* Sidebar as Card */}
+                <aside className="w-full md:w-[380px] flex-shrink-0 z-30">
+                    <Card className="bg-card/80 dark:bg-card/80 backdrop-blur shadow-sm border-0 p-6 mb-6">
+                        <CardHeader className="p-0 mb-4">
+                            <h2 className="text-lg font-bold font-heading tracking-tight flex items-center gap-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                                <Star className="w-5 h-5 text-yellow-500" /> Community Suggestions
+                            </h2>
+                        </CardHeader>
+                        {/* Admin toggle button */}
+                        <div className="flex items-center gap-2 mb-2">
                             <button
-                                className="px-2 py-1 text-xs font-mono bg-muted text-foreground rounded-none border border-muted disabled:opacity-50"
-                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                disabled={currentPage === 1}
+                                className={`px-3 py-1 text-xs font-mono border ${isAdmin ? 'bg-primary text-white' : 'bg-muted text-foreground'} rounded-none focus:outline-none focus:ring-2 focus:ring-primary`}
+                                onClick={() => setIsAdmin(v => !v)}
+                                aria-pressed={isAdmin}
                             >
-                                Previous
-                            </button>
-                            {Array.from({ length: totalPages }, (_, i) => (
-                                <button
-                                    key={i}
-                                    className={`px-2 py-1 text-xs font-mono rounded-none border ${currentPage === i + 1 ? 'bg-primary text-white border-primary' : 'bg-muted text-foreground border-muted'}`}
-                                    onClick={() => setCurrentPage(i + 1)}
-                                >
-                                    {i + 1}
-                                </button>
-                            ))}
-                            <button
-                                className="px-2 py-1 text-xs font-mono bg-muted text-foreground rounded-none border border-muted disabled:opacity-50"
-                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                disabled={currentPage === totalPages}
-                            >
-                                Next
+                                {isAdmin ? 'Admin Mode: ON' : 'Admin Mode: OFF'}
                             </button>
                         </div>
-                    )}
-                </div>
-            </aside>
+                        {/* Total suggestions count */}
+                        <div className="mb-2 text-xs font-mono text-muted-foreground">Total suggestions: {suggestions.length}</div>
+                        {/* Suggest a Feature button remains at the top */}
+                        <button
+                            className="w-full inline-flex items-center gap-2 bg-purple-600 text-white hover:bg-purple-700 font-bold text-sm font-heading px-4 py-2 shadow transition-colors focus-visible:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 mb-4 rounded-none min-h-[44px]"
+                            aria-label="Suggest a feature"
+                            onClick={() => { setShowForm(true); setSubmitMsg(null); }}
+                            style={{ fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '0.01em' }}
+                        >
+                            <PlusCircle className="w-5 h-5" />
+                            <span className="font-heading" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                                Suggest a Feature
+                            </span>
+                        </button>
+                        {/* Suggestion Modal */}
+                        <Dialog open={showForm} onOpenChange={setShowForm}>
+                            <DialogContent className="w-screen h-screen max-w-full max-h-full p-0 rounded-none flex items-center justify-center bg-background">
+                                <div className="w-full h-full flex flex-col items-center justify-center">
+                                    <div className="w-full max-w-2xl mx-auto bg-card/90 border border-muted p-8 shadow-xl rounded-none relative flex flex-col" style={{ minHeight: '70vh', maxHeight: '90vh' }}>
+                                        <h3 className="text-lg font-bold mb-4 font-heading tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                                            <PlusCircle className="w-5 h-5 mr-1 inline" /> Suggest a Feature
+                                        </h3>
+                                        <form onSubmit={handleSubmit} className="space-y-4 flex flex-col flex-1">
+                                            <input
+                                                type="text"
+                                                value={title}
+                                                onChange={e => setTitle(e.target.value)}
+                                                placeholder="Title (at least 5 words)"
+                                                className="w-full border border-input bg-background px-3 py-2 focus:border-purple-400 text-sm font-heading rounded-none mb-1"
+                                                style={{ fontFamily: 'Space Grotesk, sans-serif', borderRadius: 0 }}
+                                                required
+                                            />
+                                            <div className="flex flex-col flex-1">
+                                                <ReactQuill
+                                                    value={description}
+                                                    onChange={setDescription}
+                                                    placeholder="Describe your suggestion (at least 15 words)"
+                                                    className="bg-background rounded-none mb-1 flex-1"
+                                                    style={{ fontFamily: 'Manrope, sans-serif', borderRadius: 0, minHeight: 320, maxHeight: 480, height: 400 }}
+                                                    theme="snow"
+                                                />
+                                                <div className="text-xs text-muted-foreground font-mono mt-1 mb-2" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                                                    {description.replace(/<[^>]+>/g, '').length}/500
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-wrap gap-2 items-center">
+                                                <label className="text-xs font-bold font-mono">Category:</label>
+                                                <select value={category} onChange={e => setCategory(e.target.value)} className="border px-2 py-1 rounded-none text-xs font-mono">
+                                                    <option value="Feature">Feature</option>
+                                                    <option value="Bug">Bug</option>
+                                                    <option value="Improvement">Improvement</option>
+                                                    <option value="Other">Other</option>
+                                                </select>
+                                                <label className="text-xs font-bold font-mono ml-2">Priority:</label>
+                                                <select value={priority} onChange={e => setPriority(e.target.value)} className="border px-2 py-1 rounded-none text-xs font-mono">
+                                                    <option value="Not important">Not important</option>
+                                                    <option value="Nice to have">Nice to have</option>
+                                                    <option value="Important">Important</option>
+                                                    <option value="Critical">Critical</option>
+                                                </select>
+                                            </div>
+                                            <div className="flex items-center justify-between mb-1 text-xs text-muted-foreground font-mono" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                                                {formError && <span className="text-red-600">{formError}</span>}
+                                                {submitMsg && <span className="text-green-600">{submitMsg}</span>}
+                                            </div>
+                                            <button
+                                                type="submit"
+                                                className="w-full flex items-center justify-center gap-2 bg-purple-600 text-white hover:bg-purple-700 text-sm font-bold py-2 rounded-none min-h-[40px] focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2"
+                                                disabled={submitting || !title.trim() || !description.trim()}
+                                                style={{ fontFamily: 'Space Grotesk, sans-serif', borderRadius: 0 }}
+                                            >
+                                                <Pencil weight="duotone" className="w-4 h-4 mr-1" />
+                                                {submitting ? "Submitting..." : "Submit Suggestion"}
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                        {/* Sort dropdown moved below the suggest button */}
+                        <div className="flex items-center gap-1 mb-4">
+                            <span className="text-xs font-mono">Sort:</span>
+                            <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="border px-2 py-1 rounded-none text-xs font-mono bg-background">
+                                <option value="all">All</option>
+                                <option value="newest">Newest</option>
+                                <option value="oldest">Oldest</option>
+                                <option value="priority">Priority</option>
+                                <option disabled>──────────</option>
+                                <option value="category:Feature">Category: Feature</option>
+                                <option value="category:Bug">Category: Bug</option>
+                                <option value="category:Improvement">Category: Improvement</option>
+                                <option value="category:Other">Category: Other</option>
+                                <option disabled>──────────</option>
+                                <option value="priorityLevel:Not important">Priority: Not important</option>
+                                <option value="priorityLevel:Nice to have">Priority: Nice to have</option>
+                                <option value="priorityLevel:Important">Priority: Important</option>
+                                <option value="priorityLevel:Critical">Priority: Critical</option>
+                                <option disabled>──────────</option>
+                                <option value="status:pending">Status: Pending</option>
+                                <option value="status:accepted">Status: Accepted</option>
+                                <option value="status:reviewed">Status: Reviewed</option>
+                                <option value="status:rejected">Status: Rejected</option>
+                            </select>
+                        </div>
+                        {loadingSuggestions ? (
+                            <div className="text-muted-foreground text-sm font-body" style={{ fontFamily: 'Manrope, sans-serif' }}>Loading suggestions...</div>
+                        ) : suggestions.length === 0 ? (
+                            <div className="text-muted-foreground text-sm font-body" style={{ fontFamily: 'Manrope, sans-serif' }}>No suggestions yet. Be the first to suggest a feature!</div>
+                        ) : (
+                            <ul className="space-y-4">
+                                {paginatedSuggestions.map((s, idx) => (
+                                    <li key={s.id} className="relative bg-card/80 border border-muted p-5 flex flex-col gap-3 font-body text-sm font-medium text-foreground rounded-none" style={{ fontFamily: 'Manrope, sans-serif', borderRadius: 0 }}>
+                                        {/* Simple bullet instead of numbering */}
+                                        <span className="absolute left-0 top-7 flex items-center justify-center w-4 h-4 bg-primary text-white font-bold font-mono text-xs rounded-full shadow-sm" style={{ borderRadius: '50%' }}>
+                                            •
+                                        </span>
+                                        {/* Title row */}
+                                        <div className="flex items-center gap-2 cursor-pointer select-none pl-7" onClick={() => setExpandedId(expandedId === s.id ? null : s.id)}>
+                                            <span className="font-heading text-base font-bold" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>{s.title}</span>
+                                            <CaretDown weight="duotone" className={`w-4 h-4 transition-transform ${expandedId === s.id ? 'rotate-180' : ''}`} />
+                                        </div>
+                                        {/* Inline tags */}
+                                        <div className="flex flex-wrap gap-2 pl-7">
+                                            {s.status && (
+                                                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 font-mono text-xs font-medium rounded-none
+                                                    ${s.status === 'pending' ? 'bg-warning text-yellow-900' :
+                                                        s.status === 'accepted' ? 'bg-success text-green-900' :
+                                                            s.status === 'reviewed' ? 'bg-muted text-gray-700' :
+                                                                s.status === 'rejected' ? 'bg-accent text-red-900' :
+                                                                    'bg-muted text-muted-foreground'}`}
+                                                    style={{ fontFamily: 'JetBrains Mono, monospace', borderRadius: 0 }}
+                                                >
+                                                    {s.status === 'pending' && <Clock weight="duotone" className="w-3 h-3 mr-0.5" />}
+                                                    {s.status === 'accepted' && <CheckCircle weight="duotone" className="w-3 h-3 mr-0.5" />}
+                                                    {s.status === 'reviewed' && <Eye weight="duotone" className="w-3 h-3 mr-0.5" />}
+                                                    {s.status === 'rejected' && <XCircle weight="duotone" className="w-3 h-3 mr-0.5" />}
+                                                    {s.status.charAt(0).toUpperCase() + s.status.slice(1)}
+                                                </span>
+                                            )}
+                                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 font-mono text-xs font-medium rounded-none bg-blue-100 text-blue-800">
+                                                <TagIcon weight="duotone" className="w-3 h-3 mr-0.5" />{s.category}
+                                            </span>
+                                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 font-mono text-xs font-medium rounded-none bg-purple-100 text-purple-800">
+                                                <FlagIcon weight="duotone" className="w-3 h-3 mr-0.5" />{s.priority}
+                                            </span>
+                                        </div>
+                                        {/* Description (expandable) */}
+                                        {expandedId === s.id && (
+                                            <div className="animate-slide-down mt-2 prose prose-sm max-w-none pl-7" style={{ fontFamily: 'Manrope, sans-serif', maxHeight: 380, overflowY: 'auto' }} dangerouslySetInnerHTML={{ __html: s.description }} />
+                                        )}
+                                        {/* Admin status dropdown */}
+                                        {isAdmin && (
+                                            <div className="flex items-center gap-2 pl-7 mt-2">
+                                                <label htmlFor={`status-select-${s.id}`} className="text-xs font-mono">Status:</label>
+                                                <select
+                                                    id={`status-select-${s.id}`}
+                                                    value={s.status || 'pending'}
+                                                    onChange={async (e) => {
+                                                        const newStatus = e.target.value;
+                                                        // Update status in Supabase
+                                                        setSuggestions(prev => prev.map(sug => sug.id === s.id ? { ...sug, status: newStatus } : sug));
+                                                        await supabase.from('suggestions').update({ status: newStatus }).eq('id', s.id);
+                                                        fetchSuggestions();
+                                                    }}
+                                                    className="border px-2 py-1 rounded-none text-xs font-mono bg-background"
+                                                >
+                                                    <option value="pending">Pending</option>
+                                                    <option value="accepted">Accepted</option>
+                                                    <option value="reviewed">Reviewed</option>
+                                                    <option value="rejected">Rejected</option>
+                                                </select>
+                                            </div>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                        {/* Pagination controls */}
+                        {totalPages > 1 && (
+                            <div className="flex justify-center items-center gap-2 mt-4">
+                                <button
+                                    className="px-2 py-1 text-xs font-mono bg-muted text-foreground rounded-none border border-muted disabled:opacity-50"
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                >
+                                    Previous
+                                </button>
+                                {Array.from({ length: totalPages }, (_, i) => (
+                                    <button
+                                        key={i}
+                                        className={`px-2 py-1 text-xs font-mono rounded-none border ${currentPage === i + 1 ? 'bg-primary text-white border-primary' : 'bg-muted text-foreground border-muted'}`}
+                                        onClick={() => setCurrentPage(i + 1)}
+                                    >
+                                        {i + 1}
+                                    </button>
+                                ))}
+                                <button
+                                    className="px-2 py-1 text-xs font-mono bg-muted text-foreground rounded-none border border-muted disabled:opacity-50"
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        )}
+                    </Card>
+                </aside>
+            </div>
         </div>
     )
 }

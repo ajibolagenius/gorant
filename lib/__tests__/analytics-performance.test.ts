@@ -1,289 +1,190 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals'
-import { analyticsPerformance, getCachedData, invalidateAnalyticsCache, addBackgroundTask, optimizeQuery, getPerformanceMetrics } from '../analytics-performance'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { analyticsPerformance } from '../analytics-performance'
+import { analyticsCache } from '../analytics-cache'
 
-describe('AnalyticsPerformanceService', () => {
+// Mock the supabase client
+vi.mock('../supabaseClient', () => ({
+    supabase: {
+        from: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        gte: vi.fn().mockReturnThis(),
+        lte: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        neq: vi.fn().mockReturnThis(),
+        rpc: vi.fn().mockReturnThis(),
+    }
+}))
+
+// Mock the analytics cache
+vi.mock('../analytics-cache', () => ({
+    analyticsCache: {
+        get: vi.fn(),
+        set: vi.fn(),
+        getOrSet: vi.fn(),
+        clear: vi.fn(),
+        clearByPrefix: vi.fn(),
+        getStats: vi.fn(),
+    },
+    cacheKeys: {
+        getMetricsCacheKey: (startDate?: Date, endDate?: Date) => {
+            const start = startDate ? startDate.toISOString().split('T')[0] : 'all'
+            const end = endDate ? endDate.toISOString().split('T')[0] : 'now'
+            return `metrics:${start}:${end}`
+        },
+        getTopPagesCacheKey: (limit: number, startDate?: Date, endDate?: Date) => {
+            const start = startDate ? startDate.toISOString().split('T')[0] : 'all'
+            const end = endDate ? endDate.toISOString().split('T')[0] : 'now'
+            return `top-pages:${limit}:${start}:${end}`
+        },
+        getEventCountsCacheKey: (startDate?: Date, endDate?: Date) => {
+            const start = startDate ? startDate.toISOString().split('T')[0] : 'all'
+            const end = endDate ? endDate.toISOString().split('T')[0] : 'now'
+            return `event-counts:${start}:${end}`
+        },
+        getTimeSeriesCacheKey: (intervalType: string, startDate?: Date, endDate?: Date) => {
+            const start = startDate ? startDate.toISOString().split('T')[0] : 'all'
+            const end = endDate ? endDate.toISOString().split('T')[0] : 'now'
+            return `time-series:${intervalType}:${start}:${end}`
+        },
+        getContentPerformanceCacheKey: (startDate?: Date, endDate?: Date) => {
+            const start = startDate ? startDate.toISOString().split('T')[0] : 'all'
+            const end = endDate ? endDate.toISOString().split('T')[0] : 'now'
+            return `content-performance:${start}:${end}`
+        }
+    }
+}))
+
+describe('Analytics Performance', () => {
     beforeEach(() => {
-        jest.clearAllMocks()
-        analyticsPerformance.resetMetrics()
-        analyticsPerformance.invalidateCache()
+        vi.clearAllMocks()
     })
 
     afterEach(() => {
-        jest.clearAllMocks()
+        vi.resetAllMocks()
     })
 
-    describe('Caching', () => {
-        it('should cache and retrieve data', async () => {
-            const mockFetchFunction = jest.fn().mockResolvedValue({ data: 'test' })
-
-            // First call should fetch data
-            const result1 = await getCachedData('test-key', mockFetchFunction)
-            expect(result1).toEqual({ data: 'test' })
-            expect(mockFetchFunction).toHaveBeenCalledTimes(1)
-
-            // Second call should use cache
-            const result2 = await getCachedData('test-key', mockFetchFunction)
-            expect(result2).toEqual({ data: 'test' })
-            expect(mockFetchFunction).toHaveBeenCalledTimes(1) // Still only called once
-        })
-
-        it('should respect custom TTL', async () => {
-            const mockFetchFunction = jest.fn()
-                .mockResolvedValueOnce({ data: 'first' })
-                .mockResolvedValueOnce({ data: 'second' })
-
-            // Cache with very short TTL
-            const result1 = await getCachedData('test-key', mockFetchFunction, 10)
-            expect(result1).toEqual({ data: 'first' })
-
-            // Wait for cache to expire
-            await new Promise(resolve => setTimeout(resolve, 15))
-
-            // Should fetch new data
-            const result2 = await getCachedData('test-key', mockFetchFunction, 10)
-            expect(result2).toEqual({ data: 'second' })
-            expect(mockFetchFunction).toHaveBeenCalledTimes(2)
-        })
-
-        it('should generate consistent cache keys', () => {
-            const key1 = analyticsPerformance.generateCacheKey('metrics', {
-                startDate: '2024-01-01',
-                endDate: '2024-01-31'
-            })
-            const key2 = analyticsPerformance.generateCacheKey('metrics', {
-                endDate: '2024-01-31',
-                startDate: '2024-01-01'  // Different order
-            })
-
-            expect(key1).toBe(key2)
-        })
-
-        it('should invalidate cache by pattern', async () => {
-            const mockFetchFunction = jest.fn()
-                .mockResolvedValueOnce({ data: 'metrics1' })
-                .mockResolvedValueOnce({ data: 'metrics2' })
-                .mockResolvedValueOnce({ data: 'other' })
-
-            // Cache some data
-            await getCachedData('analytics:metrics:1', mockFetchFunction)
-            await getCachedData('analytics:metrics:2', mockFetchFunction)
-            await getCachedData('analytics:other:1', mockFetchFunction)
-
-            // Invalidate metrics cache
-            invalidateAnalyticsCache('metrics')
-
-            // Metrics should be refetched, other should use cache
-            mockFetchFunction.mockResolvedValueOnce({ data: 'metrics1-new' })
-            const result1 = await getCachedData('analytics:metrics:1', mockFetchFunction)
-            const result2 = await getCachedData('analytics:other:1', mockFetchFunction)
-
-            expect(result1).toEqual({ data: 'metrics1-new' })
-            expect(result2).toEqual({ data: 'other' }) // From cache
-            expect(mockFetchFunction).toHaveBeenCalledTimes(4) // 3 initial + 1 refetch
-        })
-
-        it('should handle cache size limits', async () => {
-            // Update config to small cache size for testing
-            analyticsPerformance.updateConfig({ maxSize: 3 })
-
-            const mockFetchFunction = jest.fn()
-                .mockResolvedValue({ data: 'test' })
-
-            // Fill cache beyond limit
-            await getCachedData('key1', mockFetchFunction)
-            await getCachedData('key2', mockFetchFunction)
-            await getCachedData('key3', mockFetchFunction)
-            await getCachedData('key4', mockFetchFunction) // Should trigger cleanup
-
-            const stats = analyticsPerformance.getCacheStats()
-            expect(stats.size).toBeLessThanOrEqual(3)
-        })
-    })
-
-    describe('Background Processing', () => {
-        it('should process background tasks', async () => {
-            const task1 = jest.fn().mockResolvedValue(undefined)
-            const task2 = jest.fn().mockResolvedValue(undefined)
-
-            addBackgroundTask(task1)
-            addBackgroundTask(task2)
-
-            // Wait for tasks to process
-            await new Promise(resolve => setTimeout(resolve, 10))
-
-            expect(task1).toHaveBeenCalled()
-            expect(task2).toHaveBeenCalled()
-        })
-
-        it('should handle background task errors gracefully', async () => {
-            const consoleSpy = jest.spyOn(console, 'warn').mockImplementation()
-            const failingTask = jest.fn().mockRejectedValue(new Error('Task failed'))
-            const successTask = jest.fn().mockResolvedValue(undefined)
-
-            addBackgroundTask(failingTask)
-            addBackgroundTask(successTask)
-
-            // Wait for tasks to process
-            await new Promise(resolve => setTimeout(resolve, 10))
-
-            expect(failingTask).toHaveBeenCalled()
-            expect(successTask).toHaveBeenCalled()
-            expect(consoleSpy).toHaveBeenCalledWith('Background task failed:', expect.any(Error))
-
-            consoleSpy.mockRestore()
-        })
-    })
-
-    describe('Query Optimization', () => {
-        it('should optimize query parameters', () => {
-            const params = {
-                limit: 5000, // Too high
-                offset: -10, // Invalid
-                startDate: new Date('2020-01-01'),
-                endDate: new Date('2024-01-01'), // 4 years - too long
-                customParam: 'test'
+    describe('getMetrics', () => {
+        it('should use cache when available', async () => {
+            const mockMetrics = {
+                totalPageViews: 100,
+                uniqueSessions: 50,
+                totalEvents: 200,
+                avgSessionDuration: '5m'
             }
 
-            const optimized = optimizeQuery(params)
+            // Mock cache hit
+            vi.mocked(analyticsCache.getOrSet).mockResolvedValueOnce(mockMetrics)
 
-            expect(optimized.limit).toBe(1000) // Capped at max
-            expect(optimized.offset).toBe(0) // Fixed negative
-            expect(optimized.startDate).toBeInstanceOf(Date)
-            expect(optimized.endDate).toBeInstanceOf(Date)
-            expect(optimized.customParam).toBe('test')
+            const result = await analyticsPerformance.getMetrics()
 
-            // Date range should be limited to 1 year
-            const daysDiff = (optimized.endDate!.getTime() - optimized.startDate!.getTime()) / (1000 * 60 * 60 * 24)
-            expect(daysDiff).toBeLessThanOrEqual(365)
+            expect(analyticsCache.getOrSet).toHaveBeenCalledTimes(1)
+            expect(result).toEqual(mockMetrics)
         })
 
-        it('should provide recommended database indexes', () => {
-            const indexes = analyticsPerformance.getRecommendedIndexes()
+        it('should handle date ranges correctly', async () => {
+            const startDate = new Date('2025-01-01')
+            const endDate = new Date('2025-01-31')
 
-            expect(indexes).toBeInstanceOf(Array)
-            expect(indexes.length).toBeGreaterThan(0)
-            expect(indexes.every(index => index.includes('CREATE INDEX'))).toBe(true)
+            await analyticsPerformance.getMetrics(startDate, endDate)
+
+            expect(analyticsCache.getOrSet).toHaveBeenCalledWith(
+                expect.stringContaining('metrics:2025-01-01:2025-01-31'),
+                expect.any(Function),
+                expect.objectContaining({ ttl: expect.any(Number) })
+            )
         })
     })
 
-    describe('Batch Operations', () => {
-        it('should batch operations efficiently', async () => {
-            const operations = Array.from({ length: 25 }, (_, i) =>
-                jest.fn().mockResolvedValue(`result-${i}`)
+    describe('getTopPages', () => {
+        it('should use cache when available', async () => {
+            const mockTopPages = [
+                { page: '/', pageViews: 100, uniqueSessions: 50 },
+                { page: '/about', pageViews: 50, uniqueSessions: 25 }
+            ]
+
+            // Mock cache hit
+            vi.mocked(analyticsCache.getOrSet).mockResolvedValueOnce(mockTopPages)
+
+            const result = await analyticsPerformance.getTopPages(10)
+
+            expect(analyticsCache.getOrSet).toHaveBeenCalledTimes(1)
+            expect(result).toEqual(mockTopPages)
+        })
+
+        it('should respect limit parameter', async () => {
+            const limit = 5
+
+            await analyticsPerformance.getTopPages(limit)
+
+            expect(analyticsCache.getOrSet).toHaveBeenCalledWith(
+                expect.stringContaining(`top-pages:${limit}`),
+                expect.any(Function),
+                expect.objectContaining({ ttl: expect.any(Number) })
+            )
+        })
+    })
+
+    describe('getTimeSeriesData', () => {
+        it('should handle different interval types', async () => {
+            await analyticsPerformance.getTimeSeriesData('hour')
+
+            expect(analyticsCache.getOrSet).toHaveBeenCalledWith(
+                expect.stringContaining('time-series:hour'),
+                expect.any(Function),
+                expect.objectContaining({ ttl: expect.any(Number) })
             )
 
-            const results = await analyticsPerformance.batchOperations(operations, 10)
+            vi.clearAllMocks()
 
-            expect(results).toHaveLength(25)
-            expect(results[0]).toBe('result-0')
-            expect(results[24]).toBe('result-24')
+            await analyticsPerformance.getTimeSeriesData('day')
 
-            // All operations should have been called
-            operations.forEach(op => {
-                expect(op).toHaveBeenCalled()
-            })
-        })
-    })
-
-    describe('Utility Functions', () => {
-        it('should debounce function calls', (done) => {
-            const mockFn = jest.fn()
-            const debouncedFn = analyticsPerformance.debounce(mockFn, 50)
-
-            // Call multiple times quickly
-            debouncedFn('arg1')
-            debouncedFn('arg2')
-            debouncedFn('arg3')
-
-            // Should not be called immediately
-            expect(mockFn).not.toHaveBeenCalled()
-
-            // Should be called once after delay with last arguments
-            setTimeout(() => {
-                expect(mockFn).toHaveBeenCalledTimes(1)
-                expect(mockFn).toHaveBeenCalledWith('arg3')
-                done()
-            }, 60)
-        })
-
-        it('should throttle function calls', (done) => {
-            const mockFn = jest.fn()
-            const throttledFn = analyticsPerformance.throttle(mockFn, 50)
-
-            // Call multiple times quickly
-            throttledFn('arg1')
-            throttledFn('arg2')
-            throttledFn('arg3')
-
-            // Should be called immediately with first arguments
-            expect(mockFn).toHaveBeenCalledTimes(1)
-            expect(mockFn).toHaveBeenCalledWith('arg1')
-
-            // Should not be called again until throttle period ends
-            setTimeout(() => {
-                throttledFn('arg4')
-                expect(mockFn).toHaveBeenCalledTimes(2)
-                expect(mockFn).toHaveBeenLastCalledWith('arg4')
-                done()
-            }, 60)
-        })
-    })
-
-    describe('Performance Metrics', () => {
-        it('should track cache hit rate', async () => {
-            const mockFetchFunction = jest.fn().mockResolvedValue({ data: 'test' })
-
-            // Generate cache miss
-            await getCachedData('test-key', mockFetchFunction)
-
-            // Generate cache hit
-            await getCachedData('test-key', mockFetchFunction)
-
-            const metrics = getPerformanceMetrics()
-            expect(metrics.cacheHitRate).toBe(0.5) // 1 hit out of 2 total
-        })
-
-        it('should track average query time', async () => {
-            const slowFetchFunction = jest.fn().mockImplementation(() =>
-                new Promise(resolve => setTimeout(() => resolve({ data: 'test' }), 10))
+            expect(analyticsCache.getOrSet).toHaveBeenCalledWith(
+                expect.stringContaining('time-series:day'),
+                expect.any(Function),
+                expect.objectContaining({ ttl: expect.any(Number) })
             )
 
-            await getCachedData('test-key-1', slowFetchFunction)
-            await getCachedData('test-key-2', slowFetchFunction)
+            vi.clearAllMocks()
 
-            const metrics = getPerformanceMetrics()
-            expect(metrics.averageQueryTime).toBeGreaterThan(0)
+            await analyticsPerformance.getTimeSeriesData('week')
+
+            expect(analyticsCache.getOrSet).toHaveBeenCalledWith(
+                expect.stringContaining('time-series:week'),
+                expect.any(Function),
+                expect.objectContaining({ ttl: expect.any(Number) })
+            )
+        })
+    })
+
+    describe('Cache management', () => {
+        it('should clear all caches', () => {
+            analyticsPerformance.clearAllCaches()
+
+            expect(analyticsCache.clear).toHaveBeenCalledTimes(1)
         })
 
-        it('should provide cache statistics', async () => {
-            const mockFetchFunction = jest.fn().mockResolvedValue({ data: 'test' })
+        it('should clear specific cache types', () => {
+            analyticsPerformance.clearCacheByType('metrics')
 
-            await getCachedData('test-key-1', mockFetchFunction)
-            await getCachedData('test-key-2', mockFetchFunction)
+            expect(analyticsCache.clearByPrefix).toHaveBeenCalledWith('metrics:')
+
+            vi.clearAllMocks()
+
+            analyticsPerformance.clearCacheByType('top-pages')
+
+            expect(analyticsCache.clearByPrefix).toHaveBeenCalledWith('top-pages:')
+        })
+
+        it('should get cache statistics', () => {
+            const mockStats = { size: 10, keys: ['metrics:all:now', 'top-pages:10:all:now'] }
+            vi.mocked(analyticsCache.getStats).mockReturnValueOnce(mockStats)
 
             const stats = analyticsPerformance.getCacheStats()
-            expect(stats.size).toBe(2)
-            expect(stats.hitRate).toBeGreaterThanOrEqual(0)
-            expect(stats.oldestEntry).toBeGreaterThan(0)
-            expect(stats.newestEntry).toBeGreaterThan(0)
-        })
-    })
 
-    describe('Configuration', () => {
-        it('should update cache configuration', async () => {
-            analyticsPerformance.updateConfig({ enabled: false })
-
-            const mockFetchFunction = jest.fn()
-                .mockResolvedValueOnce({ data: 'first' })
-                .mockResolvedValueOnce({ data: 'second' })
-
-            // With caching disabled, should always fetch
-            const result1 = await getCachedData('test-key', mockFetchFunction)
-            const result2 = await getCachedData('test-key', mockFetchFunction)
-
-            expect(result1).toEqual({ data: 'first' })
-            expect(result2).toEqual({ data: 'second' })
-            expect(mockFetchFunction).toHaveBeenCalledTimes(2)
+            expect(analyticsCache.getStats).toHaveBeenCalledTimes(1)
+            expect(stats).toEqual(mockStats)
         })
     })
 })
