@@ -92,7 +92,7 @@
   - Add analytics toggle controls to settings page with privacy explanations
   - _Requirements: 2.1, 5.4, 5.5, 7.5_
 
-- [ ] 14. Restrict access to admin and analytics pages to real admins only
+- [x] 14. Restrict access to admin and analytics pages to real admins only
   - Implement authentication (e.g., Supabase Auth, NextAuth, Auth0) if not already present
   - Add an `admin` role or `is_admin` flag to the users table or user metadata (add this as a feature in the roadmap)
   - Assign admin role to appropriate users
@@ -102,7 +102,7 @@
   - Test with both admin and non-admin accounts to ensure only admins can access and interact with admin features
   - _Requirements: 2.1, 5.4, 7.5, [Roadmap: Admin Role]_
 
-- [ ] 15. Move admin suggestion status management to a standalone admin page
+- [x] 15. Move admin suggestion status management to a standalone admin page
   - Create `app/admin/suggestions/page.tsx` for managing suggestions and their statuses
   - Extract suggestions fetching, status update, and admin-only UI logic from `app/roadmap/page.tsx`
   - Restrict access to the new page to admin users only
