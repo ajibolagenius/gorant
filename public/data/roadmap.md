@@ -13,7 +13,7 @@
 - [x] WYSIWYG editor, keyboard shortcuts
 - [x] Animations, user preferences
 - [x] Hambugger navigation for mobile screen
-- [ ] Self Analytics integration, Heatmaps & User Flow, Retention and Growth
+- [x] Self Analytics integration, Heatmaps & User Flow, Retention and Growth
 , admin dashboard, advanced filtering
 - [x] Anonymous feature suggestion form on roadmap page
 
@@ -22,6 +22,7 @@
 # 🛠️ Phase 3: Backend & Ops
 - [ ] Supabase, authentication/user management, database, API, serverless functions
 - [ ] Deployment, CI/CD, monitoring, security, performance, scalability, backup
+- [ ] Dynamic Open Graph Image Generation and Meta Tags.
 
 ---
 

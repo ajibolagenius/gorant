@@ -19,7 +19,7 @@ import {
 import { useNotifications, notificationHelpers } from "@/hooks/use-notifications"
 import { formatDistanceToNow } from "date-fns"
 
-export default function NotificationList() {
+export default function NotificationList({ unreadOnly = false }: { unreadOnly?: boolean }) {
     const {
         notifications,
         unreadCount,
@@ -28,6 +28,10 @@ export default function NotificationList() {
         removeNotification,
         clearAll
     } = useNotifications()
+
+    const filteredNotifications = unreadOnly
+        ? notifications.filter(n => !n.read)
+        : notifications
 
     const getNotificationIcon = (type: string) => {
         switch (type) {
@@ -67,11 +71,6 @@ export default function NotificationList() {
         <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 flex-wrap">
                 <div className="flex items-center gap-2 flex-shrink-0">
-                    {unreadCount > 0 && (
-                        <Badge variant="secondary" className="ml-2">
-                        {unreadCount}
-                        </Badge>
-                    )}
                 </div>
                 <div className="flex flex-wrap gap-2 justify-start sm:justify-end">
                     {unreadCount > 0 && (
@@ -94,12 +93,12 @@ export default function NotificationList() {
                         >
                             <Trash2 className="w-4 h-4 mr-1" />
                             Clear all
-                </Button>
+                        </Button>
                     )}
                 </div>
             </div>
 
-            {notifications.length === 0 ? (
+            {filteredNotifications.length === 0 ? (
                 <div className="text-muted-foreground text-center py-8">
                     <Bell className="w-12 h-12 mx-auto mb-3 opacity-50" />
                     <p>No notifications yet.</p>
@@ -107,7 +106,7 @@ export default function NotificationList() {
                 </div>
             ) : (
                 <ul className="divide-y divide-border">
-                    {notifications.map((notification) => (
+                    {filteredNotifications.map((notification) => (
                         <li
                             key={notification.id}
                             className={`flex items-start gap-3 p-4 transition-colors hover:bg-muted/50 ${!notification.read ? 'bg-muted/30' : ''
@@ -138,8 +137,8 @@ export default function NotificationList() {
                                                 className="h-6 w-6 p-0"
                                             >
                                                 <Check className="w-3 h-3" />
-                                </Button>
-                            )}
+                                            </Button>
+                                        )}
                                         <Button
                                             variant="ghost"
                                             size="sm"
