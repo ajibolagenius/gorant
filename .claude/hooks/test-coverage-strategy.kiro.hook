@@ -1,0 +1,20 @@
+{
+  "enabled": true,
+  "name": "Test Coverage & Strategy",
+  "description": "Monitors new components, API routes, and services to ensure proper test coverage, automatically creates test scaffolding, and suggests mock data generation for TypeScript-based APIs",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "components/**/*.tsx",
+      "app/api/**/*.ts",
+      "services/**/*.ts",
+      "hooks/**/*.ts",
+      "lib/**/*.ts"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A new file has been created or modified that may need test coverage. Please analyze the file and:\n\n1. **Coverage Assessment**: Check if there's a corresponding test file. If not, flag this as needing test coverage.\n\n2. **Test Scaffolding**: If it's a new component (*.tsx), API route (app/api/**/route.ts), service (services/**/*.ts), hook (hooks/**/*.ts), or utility (lib/**/*.ts) without tests, create a corresponding test file with:\n   - Proper imports and setup\n   - Basic test structure following the project's patterns\n   - Test cases for main functionality\n   - For React components: render tests, prop validation, user interaction tests\n   - For API routes: request/response validation, error handling\n   - For hooks: state changes and side effects\n   - For services/utilities: input/output validation and edge cases\n\n3. **Mock Data Generation**: For API routes, analyze the TypeScript types used in request/response and suggest appropriate mock data structures that match the type definitions.\n\n4. **Coverage Standards**: Ensure the suggested tests would meet a minimum coverage threshold by testing:\n   - All exported functions/components\n   - Main user flows and edge cases\n   - Error handling paths\n   - TypeScript type compliance\n\nFocus on creating practical, maintainable tests that follow the project's Next.js 14 + TypeScript + React Testing Library patterns."
+  }
+}

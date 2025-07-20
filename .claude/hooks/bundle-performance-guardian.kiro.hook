@@ -1,0 +1,25 @@
+{
+  "enabled": true,
+  "name": "Performance & Bundle Size Guardian",
+  "description": "Analyzes Next.js build output for bundle size changes, performance metrics, and unused code detection to maintain optimal application performance",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      ".next/static/**/*.js",
+      ".next/static/**/*.css",
+      ".next/build-manifest.json",
+      ".next/server/pages-manifest.json",
+      "package.json",
+      "next.config.mjs",
+      "app/**/*.tsx",
+      "app/**/*.ts",
+      "components/**/*.tsx",
+      "components/**/*.ts"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Analyze the Next.js application's build output and performance metrics. Focus on:\n\n1. **Bundle Size Analysis**: \n   - Compare current bundle sizes against previous builds\n   - Flag any significant increases (>10%) in JavaScript bundle size\n   - Identify which pages/routes have the largest bundles\n   - Check for duplicate dependencies or large libraries\n\n2. **Performance Audit**:\n   - Run Lighthouse performance analysis if possible\n   - Report on key metrics: LCP, CLS, FID, TTI\n   - Identify performance bottlenecks in the build output\n   - Check for unoptimized images or assets\n\n3. **Unused Code Detection**:\n   - Scan for unused exports in components and utilities\n   - Identify dead code that can be safely removed\n   - Check for unused dependencies in package.json\n   - Look for redundant CSS or JavaScript\n\n4. **Recommendations**:\n   - Suggest code splitting opportunities\n   - Recommend lazy loading for heavy components\n   - Identify opportunities for tree shaking\n   - Suggest performance optimizations\n\nProvide a detailed report with specific file paths, size comparisons, and actionable recommendations to maintain optimal performance."
+  }
+}

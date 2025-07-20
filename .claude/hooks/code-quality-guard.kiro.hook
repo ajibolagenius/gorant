@@ -1,0 +1,22 @@
+{
+  "enabled": true,
+  "name": "Code Quality Guardian",
+  "description": "Monitors code changes to ensure modifications are minimal, well-reasoned, and preserve existing functionality. Enforces high confidence requirements before making changes.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "app/**/*.tsx",
+      "app/**/*.ts",
+      "components/**/*.tsx",
+      "components/**/*.ts",
+      "hooks/**/*.ts",
+      "lib/**/*.ts",
+      "services/**/*.ts"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "CRITICAL: Code files have been modified. Before proceeding with any changes, you must:\n\n1. ANALYZE the application architecture and user flow thoroughly\n2. IDENTIFY 5+ possible root causes or missing components for any issues\n3. NARROW DOWN through logical reasoning and validate assumptions\n4. ENSURE 98% confidence in understanding what needs to be built/fixed\n5. If confidence is below 95%, PAUSE and ask clarifying questions\n\nCONSTRAINTS:\n- DO NOT add/remove UI/logic without confirmation\n- ONLY modify files affected by the specific changes needed\n- DO NOT alter code beyond the scope of the prompt\n- DO NOT modify or refactor existing functional code unless explicitly instructed\n- ALL updates must preserve current behavior and functionality\n- If changes are necessary, isolate them and explain rationale clearly\n\nFollow Next.js 14 + TypeScript best practices, maintain component architecture patterns, and ensure all modifications align with the existing codebase structure."
+  }
+}

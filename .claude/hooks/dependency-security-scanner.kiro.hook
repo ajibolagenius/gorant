@@ -1,0 +1,19 @@
+{
+  "enabled": true,
+  "name": "Dependency Vulnerability Scanner",
+  "description": "A security-focused hook that monitors your project's third-party dependencies for vulnerabilities, license compliance issues, and provides automated update suggestions",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "package.json",
+      "package-lock.json",
+      "yarn.lock",
+      "pnpm-lock.yaml"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A dependency file has been modified. Please perform a comprehensive security audit of the project dependencies:\n\n1. **Vulnerability Scanning**: Run npm audit or equivalent security scan to identify known vulnerabilities in dependencies\n2. **License Compliance Check**: Scan all dependencies for license compatibility and flag any restrictive or incompatible licenses\n3. **Dependency Analysis**: \n   - Check for outdated packages with available security updates\n   - Identify direct vs transitive vulnerabilities\n   - Assess severity levels (critical, high, moderate, low)\n4. **Automated Remediation**: \n   - Suggest specific version updates to resolve vulnerabilities\n   - Provide commands to fix issues automatically where possible\n   - Consider creating a branch with security updates if critical issues are found\n5. **Report Generation**: Create a summary report including:\n   - Total vulnerabilities found by severity\n   - License compliance status\n   - Recommended actions with priority levels\n   - Any breaking changes to consider\n\nFocus on actionable security improvements and provide clear next steps for the development team."
+  }
+}
