@@ -15,6 +15,14 @@ inclusion: always
 - **React Hook Form** + **Zod** for forms, **react-window** for virtualization
 - **canvas-confetti** for celebrations, **howler** for audio feedback
 - **date-fns** for dates, **Lenis** for smooth scrolling
+- **Recharts** for analytics charts and data visualization
+- **React Quill** for rich text editing (WYSIWYG editor)
+- **Sonner** for toast notifications
+- **Vaul** for drawer components
+- **Embla Carousel** for carousel components
+- **Lucide React** + **Phosphor Icons** for iconography
+- **React Markdown** + **remark-gfm** for markdown rendering
+- **Next MDX Remote** for MDX content processing
 
 ## Code Style Rules
 - Use **TypeScript** strictly - no `any` types
@@ -32,7 +40,9 @@ inclusion: always
 ## Build Configuration Notes
 - Images unoptimized (`unoptimized: true`)
 - TypeScript/ESLint errors ignored during builds
-- Tailwind scans: `app/`, `components/`, root files
+- Tailwind scans: `app/`, `components/`, root files, and all `.{js,ts,jsx,tsx,mdx}` files
+- DaisyUI plugin included for additional UI components
+- Custom CSS variables for theming in `globals.css`
 
 ## Development Commands
 ```bash
