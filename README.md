@@ -51,7 +51,7 @@ A modern, anonymous social platform where users can express their thoughts, frus
 - Comprehensive keyboard shortcuts support
 - Local storage for offline functionality
 - Advanced content moderation and filtering
-- Self-hosted analytics system with privacy controls, admin dashboard, and comprehensive testing utilities
+- Self-hosted analytics system with privacy controls, admin dashboard, heatmaps, user flow visualization, retention metrics, and comprehensive testing utilities
 
 ## 🚀 Getting Started
 
@@ -121,6 +121,11 @@ node test-analytics.js  # Test analytics database functionality
 - **Framer Motion** - Animation library
 - **GSAP** - Advanced animations
 - **Lenis** - Smooth scrolling
+
+### Analytics & Monitoring
+- **Self Analytics** - Privacy-first analytics system with heatmaps and user flow visualization
+- **Performance Monitoring** - Optimized database queries and caching for analytics
+- **Real-time Metrics** - Live dashboard with user engagement data
 
 ### State & Data Management
 - **Zustand** - Lightweight state management
