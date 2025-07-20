@@ -49,31 +49,45 @@ export default function SettingsPage() {
 
     // Load from localStorage
     useEffect(() => {
-        setPrivateAccount(localStorage.getItem("privateAccount") === "true")
-        setHideFromSearch(localStorage.getItem("hideFromSearch") === "true")
-        setAllowMentions(localStorage.getItem("allowMentions") !== "false")
-        setHideSensitive(localStorage.getItem("hideSensitive") === "true")
-        setFilterNegative(localStorage.getItem("filterNegative") === "true")
-        setBlockedKeywords(localStorage.getItem("blockedKeywords") || "")
+        if (typeof window !== 'undefined') {
+            setPrivateAccount(localStorage.getItem("privateAccount") === "true")
+            setHideFromSearch(localStorage.getItem("hideFromSearch") === "true")
+            setAllowMentions(localStorage.getItem("allowMentions") !== "false")
+            setHideSensitive(localStorage.getItem("hideSensitive") === "true")
+            setFilterNegative(localStorage.getItem("filterNegative") === "true")
+            setBlockedKeywords(localStorage.getItem("blockedKeywords") || "")
+        }
     }, [])
     // Save to localStorage
     useEffect(() => {
-        localStorage.setItem("privateAccount", privateAccount.toString())
+        if (typeof window !== 'undefined') {
+            localStorage.setItem("privateAccount", privateAccount.toString())
+        }
     }, [privateAccount])
     useEffect(() => {
-        localStorage.setItem("hideFromSearch", hideFromSearch.toString())
+        if (typeof window !== 'undefined') {
+            localStorage.setItem("hideFromSearch", hideFromSearch.toString())
+        }
     }, [hideFromSearch])
     useEffect(() => {
-        localStorage.setItem("allowMentions", allowMentions.toString())
+        if (typeof window !== 'undefined') {
+            localStorage.setItem("allowMentions", allowMentions.toString())
+        }
     }, [allowMentions])
     useEffect(() => {
-        localStorage.setItem("hideSensitive", hideSensitive.toString())
+        if (typeof window !== 'undefined') {
+            localStorage.setItem("hideSensitive", hideSensitive.toString())
+        }
     }, [hideSensitive])
     useEffect(() => {
-        localStorage.setItem("filterNegative", filterNegative.toString())
+        if (typeof window !== 'undefined') {
+            localStorage.setItem("filterNegative", filterNegative.toString())
+        }
     }, [filterNegative])
     useEffect(() => {
-        localStorage.setItem("blockedKeywords", blockedKeywords)
+        if (typeof window !== 'undefined') {
+            localStorage.setItem("blockedKeywords", blockedKeywords)
+        }
     }, [blockedKeywords])
 
     // Handler wrappers for switches
@@ -97,7 +111,9 @@ export default function SettingsPage() {
         setShowDeleteDialog(true)
     }
     const confirmDeleteAccount = () => {
-        localStorage.clear()
+        if (typeof window !== 'undefined') {
+            localStorage.clear()
+        }
         setShowDeleteDialog(false)
         toast.success("Your account and data have been deleted.")
         setTimeout(() => router.push("/"), 1000)
@@ -427,7 +443,7 @@ export default function SettingsPage() {
                                     </a>
                                 </Button>
                                 {/* Admin link - only visible to admins */}
-                                {localStorage?.getItem('user_is_admin') === 'true' && (
+                                {typeof window !== 'undefined' && localStorage?.getItem('user_is_admin') === 'true' && (
                                     <Button variant="outline" asChild className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50">
                                         <Link href="/admin">Admin Dashboard</Link>
                                     </Button>
