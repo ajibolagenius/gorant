@@ -78,7 +78,7 @@
   - Implement efficient data pagination for large datasets
   - _Requirements: 4.3, 4.4_
 
-- [ ] 12. Create comprehensive test suite for analytics system
+- [x] 12. Create comprehensive test suite for analytics system
   - Write unit tests for analytics hook, service, and API endpoints
   - Create integration tests for end-to-end event flow and dashboard data retrieval
   - Implement privacy compliance tests for DNT handling and user preferences
@@ -91,3 +91,13 @@
   - Implement role-based access control for analytics features
   - Add analytics toggle controls to settings page with privacy explanations
   - _Requirements: 2.1, 5.4, 5.5, 7.5_
+
+- [ ] 14. Restrict access to admin and analytics pages to real admins only
+  - Implement authentication (e.g., Supabase Auth, NextAuth, Auth0) if not already present
+  - Add an `admin` role or `is_admin` flag to the users table or user metadata (add this as a feature in the roadmap)
+  - Assign admin role to appropriate users
+  - Add server-side (preferred) or client-side checks to all admin/analytics pages to block non-admins (redirect or show error)
+  - Hide admin/analytics navigation links and UI elements for non-admins
+  - (Optional) Add backend enforcement (RLS or API validation) to ensure only admins can perform admin actions (e.g., update suggestion status)
+  - Test with both admin and non-admin accounts to ensure only admins can access and interact with admin features
+  - _Requirements: 2.1, 5.4, 7.5, [Roadmap: Admin Role]_

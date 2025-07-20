@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { EnhancedRantCard, Rant } from "@/components/enhanced-rant-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import Link from "next/link";
 import { storageGet, storageSet } from "@/lib/storage";
 import { FixedSizeList as VirtualizedList, ListChildComponentProps } from "react-window";
@@ -47,6 +48,12 @@ export default function BookmarksClient() {
     const [showFilters, setShowFilters] = useState(false);
     const [showOnlyLiked, setShowOnlyLiked] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+
+    // Refs for focus management
+    const filterButtonRef = useRef<HTMLButtonElement>(null);
+    const listRef = useRef<VirtualizedList>(null);
 
     // Load data on mount
     useEffect(() => {
@@ -157,12 +164,33 @@ export default function BookmarksClient() {
 
     // Clear all bookmarks
     const handleClearAllBookmarks = useCallback(() => {
-        if (window.confirm("Are you sure you want to remove all bookmarks? This action cannot be undone.")) {
-            setBookmarkedRants(new Set());
-            storageSet("bookmarked_rants", []);
-            toast.success("All bookmarks cleared");
-        }
+        setBookmarkedRants(new Set());
+        storageSet("bookmarked_rants", []);
+        toast.success("All bookmarks cleared");
+        setShowDeleteDialog(false);
     }, []);
+
+    // Toggle filters with focus management
+    const toggleFilters = useCallback(() => {
+        setShowFilters(!showFilters);
+        // After state update, focus should return to the button
+        setTimeout(() => filterButtonRef.current?.focus(), 0);
+    }, [showFilters]);
+
+    // Handle keyboard navigation for virtualized list
+    const handleListKeyDown = useCallback((e: React.KeyboardEvent) => {
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setFocusedIndex(prev =>
+                prev === null ? 0 : Math.min(prev + 1, filteredAndSortedBookmarks.length - 1)
+            );
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setFocusedIndex(prev =>
+                prev === null ? filteredAndSortedBookmarks.length - 1 : Math.max(prev - 1, 0)
+            );
+        }
+    }, [filteredAndSortedBookmarks.length]);
 
     // Virtualization threshold
     const VIRTUALIZATION_THRESHOLD = 30;
@@ -172,8 +200,16 @@ export default function BookmarksClient() {
         return (
             <div className="min-h-screen bg-background dark:bg-background py-8">
                 <div className="container mx-auto w-full max-w-full px-4 mb-safe-bottom wrap-screen overflow-x-auto">
-                    <div className="flex items-center justify-center h-64">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                    <div
+                        className="flex items-center justify-center h-64"
+                        aria-live="polite"
+                        aria-busy={loading}
+                    >
+                        <div
+                            className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"
+                            role="status"
+                        ></div>
+                        <span className="sr-only">Loading bookmarks...</span>
                     </div>
                 </div>
             </div>
@@ -182,157 +218,249 @@ export default function BookmarksClient() {
 
     return (
         <div className="min-h-screen bg-background dark:bg-background py-8">
-            <div className="container mx-auto w-full max-w-full px-4 mb-safe-bottom wrap-screen overflow-x-auto">
+            <main className="container mx-auto w-full max-w-full px-4 mb-safe-bottom wrap-screen overflow-x-auto">
                 {/* Enhanced Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-                    <div className="flex items-center gap-3">
-                        <div className="rounded-full bg-purple-100 dark:bg-purple-900/30 p-3">
-                            <BookmarkSimple weight="duotone" className="w-7 h-7 text-purple-600 dark:text-purple-300" />
+                <header className="mb-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="rounded-full bg-purple-100 dark:bg-purple-900/30 p-3">
+                                <BookmarkSimple weight="duotone" className="w-7 h-7 text-purple-600 dark:text-purple-300" />
+                            </div>
+                            <div>
+                                <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                                    Bookmarked Rants
+                                    <Badge variant="secondary" className="ml-2">
+                                        {filteredAndSortedBookmarks.length}
+                                    </Badge>
+                                </h1>
+                                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+                                    Your saved thoughts and expressions
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                                Bookmarked Rants
-                                <Badge variant="secondary" className="ml-2">
-                                    {filteredAndSortedBookmarks.length}
-                                </Badge>
-                            </h1>
-                            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-                                Your saved thoughts and expressions
-                            </p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Button variant="outline" asChild>
-                            <Link href="/" className="flex items-center gap-2">
-                                <ArrowLeft className="w-4 h-4" />
-                                Back to Feed
-                            </Link>
-                        </Button>
-                        {bookmarkedRants.size > 0 && (
-                            <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={handleClearAllBookmarks}
-                                className="flex items-center gap-2"
-                            >
-                                <Trash className="w-4 h-4" />
-                                Clear All
+                        <div className="flex items-center gap-2">
+                            <Button variant="outline" asChild>
+                                <Link href="/" className="flex items-center gap-2">
+                                    <ArrowLeft className="w-4 h-4" />
+                                    Back to Feed
+                                </Link>
                             </Button>
-                        )}
+                            {bookmarkedRants.size > 0 && (
+                                <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                                    <AlertDialogTrigger asChild>
+                                        <Button
+                                            variant="destructive"
+                                            size="sm"
+                                            className="flex items-center gap-2"
+                                        >
+                                            <Trash className="w-4 h-4" />
+                                            Clear All
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Clear all bookmarks?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This action cannot be undone. All your bookmarked rants will be removed.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={handleClearAllBookmarks}>
+                                                Clear All
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            )}
+                        </div>
                     </div>
-                </div>
+                </header>
                 <Separator className="mb-6" />
 
                 {/* Search and Filters */}
-                <Card className="shadow-sm border-0 bg-card/80 dark:bg-card/80 backdrop-blur mb-6">
-                    <CardContent className="pt-6">
-                        <div className="space-y-4">
-                            {/* Search Bar */}
-                            <div className="relative">
-                                <MagnifyingGlass className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
-                                <Input
-                                    placeholder="Search bookmarks by content, tags, or mood..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="pl-10"
-                                />
-                            </div>
-
-                            {/* Filter Controls */}
-                            <div className="flex flex-wrap gap-4 items-center">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setShowFilters(!showFilters)}
-                                    className="flex items-center gap-2"
-                                >
-                                    <Funnel className="w-4 h-4" />
-                                    Filters
-                                    {moodFilter !== "all" && (
-                                        <Badge variant="secondary" className="ml-1">
-                                            1
-                                        </Badge>
-                                    )}
-                                </Button>
-
-                                <Select value={sortBy} onValueChange={setSortBy}>
-                                    <SelectTrigger className="w-48">
-                                        <SortAscending className="w-4 h-4 mr-2" />
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="newest">Newest First</SelectItem>
-                                        <SelectItem value="oldest">Oldest First</SelectItem>
-                                        <SelectItem value="most_liked">Most Liked</SelectItem>
-                                        <SelectItem value="most_commented">Most Commented</SelectItem>
-                                        <SelectItem value="mood">By Mood</SelectItem>
-                                    </SelectContent>
-                                </Select>
-
-                                {showFilters && (
-                                    <div className="flex items-center gap-4 ml-4">
-                                        <Select value={moodFilter} onValueChange={setMoodFilter}>
-                                            <SelectTrigger className="w-32">
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="all">All Moods</SelectItem>
-                                                {MOODS.map((mood) => (
-                                                    <SelectItem key={mood.value} value={mood.value}>
-                                                        {mood.label}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Main Content */}
-                {filteredAndSortedBookmarks.length === 0 ? (
-                    <Card className="shadow-sm border-0 bg-card/80 dark:bg-card/80 backdrop-blur">
+                <section aria-label="Search and filters">
+                    <Card className="shadow-sm border-0 bg-card/80 dark:bg-card/80 backdrop-blur mb-6">
                         <CardContent className="pt-6">
-                            <div className="flex flex-col items-center justify-center py-16 text-center gap-4">
-                                <div className="rounded-full bg-purple-100 dark:bg-purple-900/30 p-4">
-                                    <BookmarkSimple weight="duotone" className="w-12 h-12 text-purple-600 dark:text-purple-300" />
+                            <div className="space-y-4">
+                                {/* Search Bar */}
+                                <div className="relative">
+                                    <label htmlFor="bookmark-search" className="sr-only">
+                                        Search bookmarks
+                                    </label>
+                                    <MagnifyingGlass className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
+                                    <Input
+                                        id="bookmark-search"
+                                        placeholder="Search bookmarks by content, tags, or mood..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="pl-10"
+                                        aria-label="Search bookmarks"
+                                    />
                                 </div>
-                                <div>
-                                    <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
-                                        {searchQuery || moodFilter !== "all" ? "No matching bookmarks" : "No bookmarks yet"}
-                                    </h2>
-                                    <p className="text-gray-500 dark:text-gray-400 mb-4">
-                                        {searchQuery || moodFilter !== "all"
-                                            ? "Try adjusting your search or filters to find what you're looking for."
-                                            : "When you bookmark rants, they'll appear here for easy access."
-                                        }
-                                    </p>
+
+                                {/* Filter Controls */}
+                                <div
+                                    className="flex flex-wrap gap-4 items-center"
+                                    role="region"
+                                    aria-label="Bookmark filters"
+                                >
+                                    <Button
+                                        ref={filterButtonRef}
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={toggleFilters}
+                                        className="flex items-center gap-2"
+                                        aria-expanded={showFilters}
+                                        aria-controls="filter-options"
+                                    >
+                                        <Funnel className="w-4 h-4" />
+                                        Filters
+                                        {moodFilter !== "all" && (
+                                            <Badge variant="secondary" className="ml-1">
+                                                1
+                                            </Badge>
+                                        )}
+                                    </Button>
+
+                                    <Select
+                                        value={sortBy}
+                                        onValueChange={setSortBy}
+                                        aria-label="Sort bookmarks by"
+                                    >
+                                        <SelectTrigger className="w-48">
+                                            <SortAscending className="w-4 h-4 mr-2" />
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="newest">Newest First</SelectItem>
+                                            <SelectItem value="oldest">Oldest First</SelectItem>
+                                            <SelectItem value="most_liked">Most Liked</SelectItem>
+                                            <SelectItem value="most_commented">Most Commented</SelectItem>
+                                            <SelectItem value="mood">By Mood</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+
+                                    {showFilters && (
+                                        <div
+                                            id="filter-options"
+                                            className="flex items-center gap-4 ml-4"
+                                        >
+                                            <Select
+                                                value={moodFilter}
+                                                onValueChange={setMoodFilter}
+                                                aria-label="Filter by mood"
+                                            >
+                                                <SelectTrigger className="w-32">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="all">All Moods</SelectItem>
+                                                    {MOODS.map((mood) => (
+                                                        <SelectItem key={mood.value} value={mood.value}>
+                                                            {mood.label}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    )}
                                 </div>
-                                <Button asChild>
-                                    <Link href="/" className="flex items-center gap-2">
-                                        <House className="w-4 h-4" />
-                                        Explore Feed
-                                    </Link>
-                                </Button>
                             </div>
                         </CardContent>
                     </Card>
-                ) : (
-                    <div className="space-y-6">
-                        {isVirtualized ? (
-                            <VirtualizedList
-                                height={800}
-                                itemCount={filteredAndSortedBookmarks.length}
-                                itemSize={340}
-                                width="100%"
-                                className="w-full"
-                            >
-                                {({ index, style }: ListChildComponentProps) => (
-                                    <div style={style} key={filteredAndSortedBookmarks[index].id}>
+
+                    {/* Main Content */}
+                    {filteredAndSortedBookmarks.length === 0 ? (
+                        <Card className="shadow-sm border-0 bg-card/80 dark:bg-card/80 backdrop-blur">
+                            <CardContent className="pt-6">
+                                <div
+                                    className="flex flex-col items-center justify-center py-16 text-center gap-4"
+                                    role="status"
+                                    aria-live="polite"
+                                >
+                                    <div
+                                        className="rounded-full bg-purple-100 dark:bg-purple-900/30 p-4"
+                                        aria-hidden="true"
+                                    >
+                                        <BookmarkSimple weight="duotone" className="w-12 h-12 text-purple-600 dark:text-purple-300" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
+                                            {searchQuery || moodFilter !== "all" ? "No matching bookmarks" : "No bookmarks yet"}
+                                        </h2>
+                                        <p className="text-gray-500 dark:text-gray-400 mb-4">
+                                            {searchQuery || moodFilter !== "all"
+                                                ? "Try adjusting your search or filters to find what you're looking for."
+                                                : "When you bookmark rants, they'll appear here for easy access."
+                                            }
+                                        </p>
+                                    </div>
+                                    <Button asChild>
+                                        <Link href="/" className="flex items-center gap-2">
+                                            <House className="w-4 h-4" aria-hidden="true" />
+                                            Explore Feed
+                                        </Link>
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ) : (
+                        <section aria-label="Bookmarked rants">
+                            <div className="space-y-6">
+                                {isVirtualized ? (
+                                    <div
+                                        role="region"
+                                        aria-label="Bookmarked rants list"
+                                        onKeyDown={handleListKeyDown}
+                                        tabIndex={0}
+                                    >
+                                        <VirtualizedList
+                                            ref={listRef}
+                                            height={800}
+                                            itemCount={filteredAndSortedBookmarks.length}
+                                            itemSize={340}
+                                            width="100%"
+                                            className="w-full"
+                                            tabIndex={-1} // Remove from tab order as parent handles focus
+                                        >
+                                            {({ index, style }: ListChildComponentProps) => (
+                                                <div
+                                                    style={style}
+                                                    key={filteredAndSortedBookmarks[index].id}
+                                                    tabIndex={focusedIndex === index ? 0 : -1}
+                                                    aria-selected={focusedIndex === index}
+                                                    role="listitem"
+                                                >
+                                                    <EnhancedRantCard
+                                                        rant={filteredAndSortedBookmarks[index]}
+                                                        onLike={() => { }}
+                                                        onBookmark={handleUnbookmark}
+                                                        onReport={() => { }}
+                                                        onShare={() => { }}
+                                                        onBlockUser={() => { }}
+                                                        onFollowTag={() => { }}
+                                                        onCommentPost={async () => null as any}
+                                                        onCommentLike={() => { }}
+                                                        isLiked={false}
+                                                        isBookmarked={true}
+                                                        isUserBlocked={false}
+                                                        followedTags={new Set()}
+                                                        getMoodColor={getMoodColor}
+                                                        formatTimeAgo={formatTimeAgo}
+                                                        moods={MOODS}
+                                                        showBookmark={true}
+                                                        getMoodIcon={getMoodIcon}
+                                                    />
+                                                </div>
+                                            )}
+                                        </VirtualizedList>
+                                    </div>
+                                ) : (
+                                    filteredAndSortedBookmarks.map((rant) => (
                                         <EnhancedRantCard
-                                            rant={filteredAndSortedBookmarks[index]}
+                                            key={rant.id}
+                                            rant={rant}
                                             onLike={() => { }}
                                             onBookmark={handleUnbookmark}
                                             onReport={() => { }}
@@ -351,37 +479,13 @@ export default function BookmarksClient() {
                                             showBookmark={true}
                                             getMoodIcon={getMoodIcon}
                                         />
-                                    </div>
+                                    ))
                                 )}
-                            </VirtualizedList>
-                        ) : (
-                            filteredAndSortedBookmarks.map((rant) => (
-                                <EnhancedRantCard
-                                    key={rant.id}
-                                    rant={rant}
-                                    onLike={() => { }}
-                                    onBookmark={handleUnbookmark}
-                                    onReport={() => { }}
-                                    onShare={() => { }}
-                                    onBlockUser={() => { }}
-                                    onFollowTag={() => { }}
-                                    onCommentPost={async () => null as any}
-                                    onCommentLike={() => { }}
-                                    isLiked={false}
-                                    isBookmarked={true}
-                                    isUserBlocked={false}
-                                    followedTags={new Set()}
-                                    getMoodColor={getMoodColor}
-                                    formatTimeAgo={formatTimeAgo}
-                                    moods={MOODS}
-                                    showBookmark={true}
-                                    getMoodIcon={getMoodIcon}
-                                />
-                            ))
-                        )}
-                    </div>
-                )}
-            </div>
+                            </div>
+                        </section>
+                    )}
+                </section>
+            </main>
         </div>
     );
 }

@@ -1,10 +1,10 @@
 import { renderHook, act } from '@testing-library/react'
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { useAnalytics, usePageViewTracking, useUserActionTracking, useComponentAnalytics } from '../use-analytics'
 
 // Mock the settings hook
-jest.mock('../use-settings', () => ({
-    useSettings: jest.fn(() => ({
+vi.mock('../use-settings', () => ({
+    useSettings: vi.fn(() => ({
         privacy: {
             shareAnalytics: true
         }
@@ -13,35 +13,38 @@ jest.mock('../use-settings', () => ({
 
 // Mock the analytics service
 const mockAnalyticsService = {
-    trackEvent: jest.fn().mockResolvedValue(undefined),
-    getSessionId: jest.fn().mockReturnValue('test-session-123'),
-    getUserId: jest.fn().mockReturnValue('test-user-456'),
-    getQueueSize: jest.fn().mockReturnValue(0),
-    isEnabled: jest.fn().mockReturnValue(true),
-    setEnabled: jest.fn()
+    trackEvent: vi.fn().mockResolvedValue(undefined),
+    getSessionId: vi.fn().mockReturnValue('test-session-123'),
+    getUserId: vi.fn().mockReturnValue('test-user-456'),
+    getQueueSize: vi.fn().mockReturnValue(0),
+    isEnabled: vi.fn().mockReturnValue(true),
+    setEnabled: vi.fn()
 }
 
-jest.mock('@/lib/self-analytics', () => ({
+vi.mock('@/lib/self-analytics', () => ({
     analyticsService: mockAnalyticsService
 }))
 
 // Mock the analytics validator
 const mockValidator = {
-    validateEventType: jest.fn().mockReturnValue({ isValid: true }),
-    sanitizeDetails: jest.fn().mockImplementation((details) => details)
+    validateEventType: vi.fn().mockReturnValue({ isValid: true }),
+    sanitizeDetails: vi.fn().mockImplementation((details) => details)
 }
 
-jest.mock('@/lib/analytics-validation', () => ({
+vi.mock('@/lib/analytics-validation', () => ({
     AnalyticsValidator: mockValidator
 }))
 
 describe('useAnalytics', () => {
     beforeEach(() => {
-        jest.clearAllMocks()
+        vi.clearAllMocks()
+        vi.useFakeTimers()
+        vi.setSystemTime(new Date('2025-01-01T12:00:00Z'))
     })
 
     afterEach(() => {
-        jest.clearAllMocks()
+        vi.clearAllMocks()
+        vi.useRealTimers()
     })
 
     it('should initialize with correct session and user IDs', () => {
@@ -83,7 +86,7 @@ describe('useAnalytics', () => {
 
     it('should not track events with invalid event types', async () => {
         mockValidator.validateEventType.mockReturnValue({ isValid: false, error: 'Invalid event type' })
-        const consoleSpy = jest.spyOn(console, 'warn').mockImplementation()
+        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => { })
 
         const { result } = renderHook(() => useAnalytics())
 
@@ -99,7 +102,7 @@ describe('useAnalytics', () => {
 
     it('should handle tracking errors gracefully', async () => {
         mockAnalyticsService.trackEvent.mockRejectedValue(new Error('Network error'))
-        const consoleSpy = jest.spyOn(console, 'warn').mockImplementation()
+        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => { })
 
         const { result } = renderHook(() => useAnalytics())
 
@@ -171,7 +174,7 @@ describe('useAnalytics', () => {
 
 describe('usePageViewTracking', () => {
     beforeEach(() => {
-        jest.clearAllMocks()
+        vi.clearAllMocks()
         // Mock window.location
         Object.defineProperty(window, 'location', {
             value: { pathname: '/test-page' },
@@ -187,11 +190,24 @@ describe('usePageViewTracking', () => {
             timestamp: expect.any(Number)
         })
     })
+
+    it('should not track page view when analytics is disabled', () => {
+        const { useSettings } = require('../use-settings')
+        useSettings.mockReturnValue({
+            privacy: {
+                shareAnalytics: false
+            }
+        })
+
+        renderHook(() => usePageViewTracking())
+
+        expect(mockAnalyticsService.trackEvent).not.toHaveBeenCalled()
+    })
 })
 
 describe('useUserActionTracking', () => {
     beforeEach(() => {
-        jest.clearAllMocks()
+        vi.clearAllMocks()
     })
 
     it('should return a function that tracks user actions', async () => {
@@ -207,11 +223,28 @@ describe('useUserActionTracking', () => {
             timestamp: expect.any(Number)
         })
     })
+
+    it('should not track actions when analytics is disabled', async () => {
+        const { useSettings } = require('../use-settings')
+        useSettings.mockReturnValue({
+            privacy: {
+                shareAnalytics: false
+            }
+        })
+
+        const { result } = renderHook(() => useUserActionTracking())
+
+        await act(async () => {
+            result.current('like_rant', { rantId: '123' })
+        })
+
+        expect(mockAnalyticsService.trackEvent).not.toHaveBeenCalled()
+    })
 })
 
 describe('useComponentAnalytics', () => {
     beforeEach(() => {
-        jest.clearAllMocks()
+        vi.clearAllMocks()
     })
 
     it('should track component mount and unmount', () => {
@@ -232,5 +265,22 @@ describe('useComponentAnalytics', () => {
         const { result } = renderHook(() => useComponentAnalytics('TestComponent'))
 
         expect(result.current.trackEvent).toBe(mockAnalyticsService.trackEvent)
+    })
+
+    it('should not track component lifecycle when analytics is disabled', () => {
+        const { useSettings } = require('../use-settings')
+        useSettings.mockReturnValue({
+            privacy: {
+                shareAnalytics: false
+            }
+        })
+
+        const { unmount } = renderHook(() => useComponentAnalytics('TestComponent'))
+
+        expect(mockAnalyticsService.trackEvent).not.toHaveBeenCalled()
+
+        unmount()
+
+        expect(mockAnalyticsService.trackEvent).not.toHaveBeenCalled()
     })
 })
