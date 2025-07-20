@@ -1,9 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
   <path fill="none" d="M0 0h256v256H0z"/>
-  <rect x="48" y="56" width="160" height="144" opacity=".2"/>
-  <rect x="88" y="100" width="24" height="24" fill="#a259ff"/>
-  <rect x="144" y="100" width="24" height="24" fill="#a259ff"/>
-  <path d="M156 152a53 53 0 0 1-56 0" fill="none" stroke="#a259ff" stroke-linecap="butt" stroke-linejoin="butt" stroke-width="16"/>
+  <!-- Main robot head with subtle background -->
+  <rect x="48" y="56" width="160" height="144" opacity=".1" fill="#a259ff"/>
+  <!-- Robot head outline -->
   <rect x="48" y="56" width="160" height="144" fill="none" stroke="#a259ff" stroke-linecap="butt" stroke-linejoin="butt" stroke-width="16"/>
-  <path d="M96 56V24h64v32M72 200v32h112v-32" fill="none" stroke="#a259ff" stroke-linecap="butt" stroke-linejoin="miter" stroke-width="16"/>
+  <!-- Angled eyebrows for expression -->
+  <path d="M84 92 l12 8" stroke="#a259ff" stroke-linecap="butt" stroke-width="4"/>
+  <path d="M172 92 l-12 8" stroke="#a259ff" stroke-linecap="butt" stroke-width="4"/>
+  <!-- Eyes (slightly larger and more expressive) -->
+  <rect x="86" y="108" width="28" height="20" rx="0" fill="#a259ff"/>
+  <rect x="142" y="108" width="28" height="20" rx="0" fill="#a259ff"/>
+  <!-- More expressive open mouth -->
+  <path d="M156 152a53 53 0 0 1-56 0" fill="none" stroke="#a259ff" stroke-linecap="butt" stroke-linejoin="butt" stroke-width="16"/>
+  <!-- Bottom base (simplified) -->
+  <path d="M80 200v24h96v-24" fill="none" stroke="#a259ff" stroke-linecap="butt" stroke-linejoin="butt" stroke-width="12"/>
 </svg>
