@@ -326,10 +326,26 @@ export default function SettingsPage() {
                                 <div>
                                     <h4 className="font-medium text-card-foreground">Share Analytics</h4>
                                     <p className="text-sm text-muted-foreground">Help improve the platform by sharing anonymous usage analytics. No personal data is collected.</p>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        We use privacy-first analytics that respects Do Not Track settings and never collects personally identifiable information.
+                                    </p>
                                 </div>
                                 <Switch
                                     checked={privacy.shareAnalytics}
                                     onCheckedChange={(checked) => handlePrivacyChange('shareAnalytics', checked)}
+                                />
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h4 className="font-medium text-card-foreground">Detailed Analytics</h4>
+                                    <p className="text-sm text-muted-foreground">Allow collection of more detailed usage data to help improve user experience.</p>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Includes interaction patterns and feature usage. All data remains anonymous and aggregated.
+                                    </p>
+                                </div>
+                                <Switch
+                                    checked={privacy.detailedAnalytics}
+                                    onCheckedChange={(checked) => handlePrivacyChange('detailedAnalytics', checked)}
                                 />
                             </div>
                         </CardContent>
@@ -410,6 +426,12 @@ export default function SettingsPage() {
                                         Uptime status
                                     </a>
                                 </Button>
+                                {/* Admin link - only visible to admins */}
+                                {localStorage?.getItem('user_is_admin') === 'true' && (
+                                    <Button variant="outline" asChild className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50">
+                                        <Link href="/admin">Admin Dashboard</Link>
+                                    </Button>
+                                )}
                                 <Button variant="destructive" onClick={handleDeleteAccount} className="w-full">Delete Account</Button>
                             </div>
                         </CardContent>

@@ -93,6 +93,15 @@ export function useAnalytics(): AnalyticsHook {
             return
         }
 
+        // Skip detailed tracking if user hasn't opted in
+        if (!privacy.detailedAnalytics) {
+            // Only track basic actions even if detailed analytics is disabled
+            const basicActions = ['post', 'like', 'bookmark', 'comment', 'view']
+            if (!basicActions.some(basic => action.includes(basic))) {
+                return
+            }
+        }
+
         // Validate action name
         if (!validateEventType(action)) {
             return
@@ -110,7 +119,7 @@ export function useAnalytics(): AnalyticsHook {
                 console.warn('User action tracking failed:', error)
             }
         }
-    }, [privacy.shareAnalytics, validateEventType, sanitizeDetails])
+    }, [privacy.shareAnalytics, privacy.detailedAnalytics, validateEventType, sanitizeDetails])
 
     const isEnabled = useCallback((): boolean => {
         return privacy.shareAnalytics && analyticsService.isEnabled()

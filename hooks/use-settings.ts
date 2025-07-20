@@ -13,6 +13,7 @@ export interface PrivacySettings {
     showInLeaderboard: boolean
     allowDirectMessages: boolean
     shareAnalytics: boolean
+    detailedAnalytics: boolean
 }
 
 export interface ContentFilterSettings {
@@ -36,6 +37,7 @@ export function useSettings() {
         showInLeaderboard: true,
         allowDirectMessages: false,
         shareAnalytics: true,
+        detailedAnalytics: false,
     })
     const [contentFilters, setContentFilters] = useState<ContentFilterSettings>({
         hideNegativeSentiment: false,

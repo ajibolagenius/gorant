@@ -159,6 +159,22 @@ class AnalyticsService {
         return this.config.enabled
     }
 
+    private allowsDetailedAnalytics(): boolean {
+        if (!this.respectsPrivacy()) return false
+
+        try {
+            const settings = localStorage.getItem('settings_privacy')
+            if (settings) {
+                const privacySettings = JSON.parse(settings)
+                return privacySettings.detailedAnalytics === true
+            }
+        } catch (err) {
+            return false
+        }
+
+        return false
+    }
+
     private sanitizeDetails(details: Record<string, unknown>): Record<string, string | number | boolean> {
         const sanitized: Record<string, string | number | boolean> = {}
 
@@ -252,6 +268,17 @@ class AnalyticsService {
     public async trackEvent(type: string, details: Record<string, unknown> = {}): Promise<void> {
         if (!this.respectsPrivacy() || typeof window === 'undefined') {
             return
+        }
+
+        // Check if this is a detailed analytics event
+        const isDetailedEvent = type.startsWith('detailed_') ||
+            type === 'user_action' ||
+            type === 'component_mount' ||
+            type === 'component_unmount';
+
+        // Skip detailed events if user hasn't opted in
+        if (isDetailedEvent && !this.allowsDetailedAnalytics()) {
+            return;
         }
 
         const event: AnalyticsEvent = {

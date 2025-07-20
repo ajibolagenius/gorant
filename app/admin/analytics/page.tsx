@@ -1,9 +1,12 @@
 "use client"
 
-import React, { useState, useCallback, useMemo, memo } from 'react'
+import React, { useState, useCallback, useMemo, memo, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartBar, Eye, Users, Lightning, TrendUp } from "@phosphor-icons/react/dist/ssr"
+import { AdminNavigation } from "@/components/analytics/admin-navigation"
+import { useRouter } from 'next/navigation'
+import { useAdminProtection } from '@/lib/admin-auth'
 import { subDays } from "date-fns"
 import { useDashboardData } from "@/hooks/use-dashboard-data"
 import { useAnalyticsMetrics } from "@/hooks/use-analytics-metrics"
@@ -94,10 +97,17 @@ const ErrorBoundary = memo(function ErrorBoundary({
 })
 
 export default function AnalyticsDashboard() {
+    const router = useRouter()
+    const isAuthorized = useAdminProtection(router)
+
     const [dateRange, setDateRange] = useState<DateRange>({
         from: subDays(new Date(), 7),
         to: new Date()
     })
+
+    if (!isAuthorized) {
+        return null // Will redirect via useAdminProtection
+    }
     const [filters, setFilters] = useState<AnalyticsFilters>({
         dateRange: {
             from: subDays(new Date(), 7),
@@ -133,6 +143,9 @@ export default function AnalyticsDashboard() {
 
     return (
         <div className="min-h-screen bg-background" role="main" aria-label="Analytics Dashboard">
+            {/* Admin Navigation */}
+            <AdminNavigation />
+
             <DashboardHeader
                 dateRange={dateRange}
                 onDateRangeChange={handleDateRangeChange}

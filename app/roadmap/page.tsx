@@ -518,17 +518,7 @@ export default function RoadmapPage() {
                             </h2>
                         </CardHeader>
                         {/* Admin toggle button */}
-                        <div className="flex items-center gap-2 mb-2">
-                            <button
-                                className={`px-3 py-1 text-xs font-mono border ${isAdmin ? 'bg-primary text-white' : 'bg-muted text-foreground'} rounded-none focus:outline-none focus:ring-2 focus:ring-primary`}
-                                onClick={() => setIsAdmin(v => !v)}
-                                aria-pressed={isAdmin}
-                            >
-                                {isAdmin ? 'Admin Mode: ON' : 'Admin Mode: OFF'}
-                            </button>
-                        </div>
-                        {/* Total suggestions count */}
-                        <div className="mb-2 text-xs font-mono text-muted-foreground">Total suggestions: {suggestions.length}</div>
+                        {/* Removed Admin Mode toggle button */}
                         {/* Suggest a Feature button remains at the top */}
                         <button
                             className="w-full inline-flex items-center gap-2 bg-purple-600 text-white hover:bg-purple-700 font-bold text-sm font-heading px-4 py-2 shadow transition-colors focus-visible:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 mb-4 rounded-none min-h-[44px]"
@@ -639,10 +629,8 @@ export default function RoadmapPage() {
                             <ul className="space-y-4">
                                 {paginatedSuggestions.map((s, idx) => (
                                     <li key={s.id} className="relative bg-card/80 border border-muted p-5 flex flex-col gap-3 font-body text-sm font-medium text-foreground rounded-none" style={{ fontFamily: 'Manrope, sans-serif', borderRadius: 0 }}>
-                                        {/* Simple bullet instead of numbering */}
-                                        <span className="absolute left-0 top-7 flex items-center justify-center w-4 h-4 bg-primary text-white font-bold font-mono text-xs rounded-full shadow-sm" style={{ borderRadius: '50%' }}>
-                                            •
-                                        </span>
+                                        {/* Numbered badge using design system */}
+                                        <Badge variant="default" size="sm" className="absolute left-0 top-7 font-mono select-none" style={{ fontFamily: 'JetBrains Mono, monospace' }}>{idx + 1}</Badge>
                                         {/* Title row */}
                                         <div className="flex items-center gap-2 cursor-pointer select-none pl-7" onClick={() => setExpandedId(expandedId === s.id ? null : s.id)}>
                                             <span className="font-heading text-base font-bold" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>{s.title}</span>
