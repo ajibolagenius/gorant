@@ -101,3 +101,12 @@
   - (Optional) Add backend enforcement (RLS or API validation) to ensure only admins can perform admin actions (e.g., update suggestion status)
   - Test with both admin and non-admin accounts to ensure only admins can access and interact with admin features
   - _Requirements: 2.1, 5.4, 7.5, [Roadmap: Admin Role]_
+
+- [ ] 15. Move admin suggestion status management to a standalone admin page
+  - Create `app/admin/suggestions/page.tsx` for managing suggestions and their statuses
+  - Extract suggestions fetching, status update, and admin-only UI logic from `app/roadmap/page.tsx`
+  - Restrict access to the new page to admin users only
+  - Remove status-changing controls from the Roadmap page (keep it read-only for non-admins)
+  - (Optional) Create a reusable suggestions management component in `components/`
+  - Add navigation link to the new admin suggestions page for admins
+  - _Requirements: 2.1, 5.4, 7.5, [Roadmap: Admin Role]_
