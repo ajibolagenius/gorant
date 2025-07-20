@@ -37,6 +37,7 @@ export default function SettingsPage() {
     const { addNotification } = useNotifications()
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
     const router = useRouter()
+    const [isAdmin, setIsAdmin] = useState(false)
 
     // Privacy state
     const [privateAccount, setPrivateAccount] = useState(false)
@@ -56,6 +57,7 @@ export default function SettingsPage() {
             setHideSensitive(localStorage.getItem("hideSensitive") === "true")
             setFilterNegative(localStorage.getItem("filterNegative") === "true")
             setBlockedKeywords(localStorage.getItem("blockedKeywords") || "")
+            setIsAdmin(localStorage.getItem("user_is_admin") === "true")
         }
     }, [])
     // Save to localStorage
@@ -159,9 +161,13 @@ export default function SettingsPage() {
                         <CardContent className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Font Size</label>
-                                    <Select value={fontSize} onValueChange={(value) => updateAccessibility("fontSize", value)}>
-                                        <SelectTrigger>
+                                    <label id="font-size-label" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Font Size</label>
+                                    <Select
+                                        value={fontSize}
+                                        onValueChange={(value) => updateAccessibility("fontSize", value)}
+                                        aria-labelledby="font-size-label"
+                                    >
+                                        <SelectTrigger aria-label="Select font size">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -174,9 +180,13 @@ export default function SettingsPage() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Contrast</label>
-                                    <Select value={contrast} onValueChange={(value) => updateAccessibility("contrast", value)}>
-                                        <SelectTrigger>
+                                    <label id="contrast-label" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Contrast</label>
+                                    <Select
+                                        value={contrast}
+                                        onValueChange={(value) => updateAccessibility("contrast", value)}
+                                        aria-labelledby="contrast-label"
+                                    >
+                                        <SelectTrigger aria-label="Select contrast level">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -188,26 +198,32 @@ export default function SettingsPage() {
                             </div>
 
                             <div className="flex items-center justify-between">
-                                <div>
+                                <div id="screen-reader-label">
                                     <div className="font-medium text-gray-800 dark:text-white">Screen Reader Mode</div>
-                                    <div className="text-sm text-gray-600 dark:text-gray-300">
+                                    <div id="screen-reader-description" className="text-sm text-gray-600 dark:text-gray-300">
                                         Enhanced compatibility with screen readers
                                     </div>
                                 </div>
                                 <Switch
+                                    id="screen-reader-switch"
                                     checked={screenReaderMode}
                                     onCheckedChange={(checked) => updateAccessibility("screenReader", checked)}
+                                    aria-labelledby="screen-reader-label"
+                                    aria-describedby="screen-reader-description"
                                 />
                             </div>
 
                             <div className="flex items-center justify-between">
-                                <div>
+                                <div id="reduced-motion-label">
                                     <div className="font-medium text-gray-800 dark:text-white">Reduced Motion</div>
-                                    <div className="text-sm text-gray-600 dark:text-gray-300">Minimize animations and transitions</div>
+                                    <div id="reduced-motion-description" className="text-sm text-gray-600 dark:text-gray-300">Minimize animations and transitions</div>
                                 </div>
                                 <Switch
+                                    id="reduced-motion-switch"
                                     checked={reducedMotion}
                                     onCheckedChange={(checked) => updateAccessibility("reducedMotion", checked)}
+                                    aria-labelledby="reduced-motion-label"
+                                    aria-describedby="reduced-motion-description"
                                 />
                             </div>
                         </CardContent>
@@ -227,9 +243,9 @@ export default function SettingsPage() {
                         <CardContent className="space-y-6">
                             <div className="flex flex-col md:flex-row gap-6">
                                 <div className="flex-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Feed Layout</label>
-                                    <Select value={feedLayout} onValueChange={v => setFeedLayout(v as any)}>
-                                        <SelectTrigger>
+                                    <label id="feed-layout-label" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Feed Layout</label>
+                                    <Select value={feedLayout} onValueChange={v => setFeedLayout(v as any)} aria-labelledby="feed-layout-label">
+                                        <SelectTrigger aria-label="Select feed layout">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -239,9 +255,9 @@ export default function SettingsPage() {
                                     </Select>
                                 </div>
                                 <div className="flex-1">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Default Sort</label>
-                                    <Select value={defaultSort} onValueChange={v => setDefaultSort(v as any)}>
-                                        <SelectTrigger>
+                                    <label id="default-sort-label" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Default Sort</label>
+                                    <Select value={defaultSort} onValueChange={v => setDefaultSort(v as unknown)} aria-labelledby="default-sort-label">
+                                        <SelectTrigger aria-label="Select default sort order">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -252,9 +268,15 @@ export default function SettingsPage() {
                                     </Select>
                                 </div>
                                 <div className="flex-1 flex flex-col justify-center">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Keyboard Shortcuts</label>
-                                    <Switch checked={keyboardShortcuts} onCheckedChange={setKeyboardShortcuts} />
-                                    <span className="text-xs text-muted-foreground mt-1">Enable or disable keyboard shortcuts for navigation and actions.</span>
+                                    <label id="keyboard-shortcuts-label" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Keyboard Shortcuts</label>
+                                    <Switch
+                                        id="keyboard-shortcuts-switch"
+                                        checked={keyboardShortcuts}
+                                        onCheckedChange={setKeyboardShortcuts}
+                                        aria-labelledby="keyboard-shortcuts-label"
+                                        aria-describedby="keyboard-shortcuts-description"
+                                    />
+                                    <span id="keyboard-shortcuts-description" className="text-xs text-muted-foreground mt-1">Enable or disable keyboard shortcuts for navigation and actions.</span>
                                 </div>
                             </div>
                         </CardContent>
@@ -296,12 +318,18 @@ export default function SettingsPage() {
                             <Separator />
 
                             <div>
-                                <h4 className="font-medium text-card-foreground mb-3">Test Notifications</h4>
-                                <Button onClick={testNotifications} variant="outline" className="w-full">
-                                    <Bell className="w-4 h-4 mr-2" />
+                                <h4 id="test-notifications-label" className="font-medium text-card-foreground mb-3">Test Notifications</h4>
+                                <Button
+                                    onClick={testNotifications}
+                                    variant="outline"
+                                    className="w-full"
+                                    aria-labelledby="test-notifications-label"
+                                    aria-describedby="test-notifications-description"
+                                >
+                                    <Bell className="w-4 h-4 mr-2" aria-hidden="true" />
                                     Send Test Notifications
                                 </Button>
-                                <p className="text-xs text-muted-foreground mt-2">
+                                <p id="test-notifications-description" className="text-xs text-muted-foreground mt-2">
                                     This will send sample notifications to test the system
                                 </p>
                             </div>
@@ -392,16 +420,19 @@ export default function SettingsPage() {
                             </div>
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h4 className="font-medium text-card-foreground">Blocked Keywords/Tags</h4>
-                                    <p className="text-sm text-muted-foreground">Hide posts containing these keywords or tags (comma separated).</p>
+                                    <h4 id="blocked-keywords-label" className="font-medium text-card-foreground">Blocked Keywords/Tags</h4>
+                                    <p id="blocked-keywords-description" className="text-sm text-muted-foreground">Hide posts containing these keywords or tags (comma separated).</p>
                                 </div>
                             </div>
                             <input
+                                id="blocked-keywords-input"
                                 type="text"
                                 className="w-full mt-1 rounded border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
                                 placeholder="e.g. politics, spoilers, nsfw"
                                 value={blockedKeywords}
                                 onChange={e => setBlockedKeywords(e.target.value)}
+                                aria-labelledby="blocked-keywords-label"
+                                aria-describedby="blocked-keywords-description"
                             />
                         </CardContent>
                     </Card>
@@ -434,8 +465,9 @@ export default function SettingsPage() {
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="flex items-center justify-center w-full h-full text-green-800"
+                                        aria-label="View system uptime status (opens in new tab)"
                                     >
-                                        <span className="relative flex h-3 w-3 mr-2">
+                                        <span className="relative flex h-3 w-3 mr-2" aria-hidden="true">
                                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-600 opacity-75"></span>
                                             <span className="relative inline-flex rounded-full h-3 w-3 bg-green-600"></span>
                                         </span>
@@ -443,19 +475,35 @@ export default function SettingsPage() {
                                     </a>
                                 </Button>
                                 {/* Admin link - only visible to admins */}
-                                {typeof window !== 'undefined' && localStorage?.getItem('user_is_admin') === 'true' && (
-                                    <Button variant="outline" asChild className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50">
+                                {isAdmin && (
+                                    <Button
+                                        variant="outline"
+                                        asChild
+                                        className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50"
+                                        aria-label="Access admin dashboard"
+                                    >
                                         <Link href="/admin">Admin Dashboard</Link>
                                     </Button>
                                 )}
-                                <Button variant="destructive" onClick={handleDeleteAccount} className="w-full">Delete Account</Button>
+                                <Button
+                                    variant="destructive"
+                                    onClick={handleDeleteAccount}
+                                    className="w-full"
+                                    aria-label="Delete your account permanently"
+                                >
+                                    Delete Account
+                                </Button>
                             </div>
                         </CardContent>
                     </Card>
 
                     {/* Save All Settings Button */}
                     <div className="flex justify-center pt-4">
-                        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-2 rounded" onClick={handleSaveAll}>
+                        <Button
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-2 rounded"
+                            onClick={handleSaveAll}
+                            aria-label="Save all settings"
+                        >
                             Save All Settings
                         </Button>
                     </div>
@@ -463,13 +511,31 @@ export default function SettingsPage() {
             </div>
             {/* Delete Account Confirmation Dialog */}
             {showDeleteDialog && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/40">
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-background/40"
+                    role="dialog"
+                    aria-labelledby="delete-account-title"
+                    aria-describedby="delete-account-description"
+                    aria-modal="true"
+                >
                     <div className="bg-card dark:bg-card rounded-lg shadow-lg p-8 max-w-sm w-full">
-                        <h3 className="text-lg font-semibold mb-4 text-card-foreground">Delete Account</h3>
-                        <p className="mb-6 text-muted-foreground">Are you sure you want to delete your account and all associated data? This action cannot be undone.</p>
+                        <h3 id="delete-account-title" className="text-lg font-semibold mb-4 text-card-foreground">Delete Account</h3>
+                        <p id="delete-account-description" className="mb-6 text-muted-foreground">Are you sure you want to delete your account and all associated data? This action cannot be undone.</p>
                         <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>Cancel</Button>
-                            <Button variant="destructive" onClick={confirmDeleteAccount}>Delete</Button>
+                            <Button
+                                variant="outline"
+                                onClick={() => setShowDeleteDialog(false)}
+                                aria-label="Cancel account deletion"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                onClick={confirmDeleteAccount}
+                                aria-label="Confirm account deletion"
+                            >
+                                Delete
+                            </Button>
                         </div>
                     </div>
                 </div>

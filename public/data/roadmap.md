@@ -20,9 +20,11 @@
 ---
 
 # 🛠️ Phase 3: Backend & Ops
-- [ ] Supabase, authentication/user management, database, API, serverless functions
+- [ ] Supabase, authentication, database
+- [ ] API, serverless functions
 - [ ] Deployment, CI/CD, monitoring, security, performance, scalability, backup
-- [ ] Dynamic Open Graph Image Generation and Meta Tags.
+- [ ] Dynamic Open Graphs (and Image), Meta Tags, SEO, Sitemap, RSS Feeds, Twitter Cards, Schema.org
+- [ ] Admin Super User Creation
 
 ---
 
