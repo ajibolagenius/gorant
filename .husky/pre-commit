@@ -1,0 +1,12 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Run ESLint to check for JSX style syntax errors
+echo "Running ESLint to check for JSX style syntax errors..."
+npm run lint:jsx-styles || (
+  echo "❌ JSX style syntax errors found. Please fix them before committing."
+  exit 1
+)
+
+# Continue with other checks
+npm run lint

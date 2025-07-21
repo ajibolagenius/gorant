@@ -231,7 +231,7 @@ function parseRoadmapMarkdown(markdown: string) {
 
     const phases: Array<{ emoji: string; title: string; items: Array<{ text: string; checked: boolean }> }> = []
     let match: RegExpExecArray | null
-    let lastIndex = 0
+    const lastIndex = 0
     const lines = markdown.split('\n')
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i]

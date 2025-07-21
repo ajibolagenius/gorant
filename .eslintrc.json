@@ -1,6 +1,51 @@
 {
   "extends": [
     "next/core-web-vitals",
-    "next/typescript"
+    "next/typescript",
+    "plugin:react/recommended"
+  ],
+  "plugins": [
+    "react"
+  ],
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    }
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  },
+  "rules": {
+    "react/jsx-curly-spacing": ["error", {
+      "when": "never",
+      "attributes": { "allowMultiline": true },
+      "children": true
+    }],
+    "react/jsx-equals-spacing": ["error", "never"],
+    "react/jsx-tag-spacing": ["error", {
+      "closingSlash": "never",
+      "beforeSelfClosing": "always",
+      "afterOpening": "never",
+      "beforeClosing": "never"
+    }],
+    "react/jsx-curly-brace-presence": ["error", {
+      "props": "never",
+      "children": "never"
+    }]
+  },
+  "overrides": [
+    {
+      "files": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+      "rules": {
+        "react/jsx-curly-spacing": ["error", {
+          "when": "never",
+          "attributes": { "allowMultiline": true },
+          "children": true
+        }],
+        "react/jsx-equals-spacing": ["error", "never"]
+      }
+    }
   ]
 }

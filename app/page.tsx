@@ -1204,7 +1204,7 @@ export default function RantApp() {
                                     height={800}
                                     itemCount={filteredRants.length}
                                     itemSize={340}
-                                    width={"100%"}
+                                    width="100%"
                                     className="w-full overflow-x-auto"
                                 >
                                     {({ index, style }: ListChildComponentProps) => (

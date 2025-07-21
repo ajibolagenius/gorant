@@ -401,7 +401,7 @@ export function TrendingClient() {
                                     height={800}
                                     itemCount={topTrendingRants.length}
                                     itemSize={340}
-                                    width={"100%"}
+                                    width="100%"
                                     className="w-full"
                                 >
                                     {({ index, style }: ListChildComponentProps) => (

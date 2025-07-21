@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { NextRequest } from 'next/server';
-import { createOgImage, OgTemplateType } from '@/lib/seo/og-templates';
+import { generateOgImage as createOgImage, OgTemplateType } from '@/lib/seo/og-templates-new';
 import { OgTemplateData } from '@/types/seo';
 import {
     addCacheHeaders,

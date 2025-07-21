@@ -2,6 +2,9 @@ import React from 'react';
 import { ImageResponse } from 'next/og';
 import { OgTemplateData } from '@/types/og-template';
 
+// Define the template types
+export type OgTemplateType = 'default' | 'home' | 'rant' | 'challenge' | 'leaderboard' | 'profile' | 'trending' | 'about' | 'roadmap';
+
 // Sanitize template data to prevent XSS and ensure valid values
 const sanitizeTemplateData = (data: any): OgTemplateData => {
     return {
@@ -49,7 +52,7 @@ const DefaultTemplate: React.FC<{ data: OgTemplateData }> = ({ data }) => (
         <p style={ { color: '#a259ff', fontSize: '24px', textAlign: 'center' } }>
             { data.description }
             </p>
-        )
+            )
 }
 </div>
 );
@@ -71,7 +74,8 @@ const RantTemplate: React.FC<{ data: OgTemplateData }> = ({ data }) => (
         <div style={ { fontSize: '32px', marginBottom: '20px' } }>
             { data.mood }
             </div>
-        )}
+            )
+        }
 <h1 style={ { color: '#fff', fontSize: '48px', marginBottom: '20px' } }>
     { data.title }
     </h1>
@@ -83,7 +87,7 @@ const RantTemplate: React.FC<{ data: OgTemplateData }> = ({ data }) => (
         <p style={ { color: '#666', fontSize: '20px', marginTop: 'auto' } }>
             Posted by { data.author }
     </p>
-        )
+            )
 }
 </div>
 );
@@ -112,8 +116,8 @@ const ChallengeTemplate: React.FC<{ data: OgTemplateData }> = ({ data }) => (
         {
             data.tags.map((tag, index) => (
                 <span
-                        key= { index }
-                        style = {{
+                                key= { index }
+                                style = {{
                 backgroundColor: '#333',
                 color: '#fff',
                 padding: '8px 16px',
@@ -123,10 +127,11 @@ const ChallengeTemplate: React.FC<{ data: OgTemplateData }> = ({ data }) => (
             >
             { tag }
             </span>
-                ))
+                        ))
 }
 </div>
-        )}
+            )
+        }
 </div>
 );
 
