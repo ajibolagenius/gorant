@@ -1,103 +1,199 @@
-'use client';
+import { Metadata } from 'next';
+import { OgTemplateData, OgTemplateType } from '@/lib/seo/og-templates';
+import { generateOgImageUrl } from '@/lib/seo/og-url-generator';
 
-import { useEffect } from 'react';
-import { usePathname } from 'next/navigation';
-import Script from 'next/script';
-import { getSocialStructuredData } from '@/lib/seo/social-metadata';
-import { PageMetadata } from '@/types/seo';
+/**
+ * Generate Open Graph metadata for a page
+ *
+ * @param type - The type of OG image to generate
+ * @param data - The data to use for the image
+ * @param baseMetadata - Additional metadata to include
+ * @returns Metadata object for Next.js
+ */
+export function generateOpenGraphMetadata(
+    type: OgTemplateType,
+    data: Partial<OgTemplateData>,
+    baseMetadata: Partial<Metadata> = {}
+): Metadata {
+    // Generate OG image URL
+    const ogImageUrl = generateOgImageUrl(type, data);
 
-interface DynamicMetadataProps {
-    metadata: PageMetadata;
-    url?: string;
+    // Default title and description
+    const title = data.title || 'Rant - Express Yourself Anonymously';
+    const description = data.description || 'Share your thoughts anonymously with the world';
+
+    // Map OG template types to Open Graph types
+    const ogTypeMap: Record<OgTemplateType, string> = {
+        'default': 'website',
+        'home': 'website',
+        'rant': 'article',
+        'challenge': 'article',
+        'leaderboard': 'website',
+        'profile': 'profile',
+        'trending': 'website',
+        'about': 'website',
+        'roadmap': 'website',
+    };
+
+    // Get Open Graph type
+    const ogType = ogTypeMap[type] || 'website';
+
+    // Build metadata object
+    return {
+        // Base metadata
+        title,
+        description,
+
+        // Open Graph metadata
+        openGraph: {
+            title,
+            description,
+            type: ogType,
+            images: [
+                {
+                    url: ogImageUrl,
+                    width: 1200,
+                    height: 630,
+                    alt: title,
+                }
+            ],
+            ...(data.author && { authors: [data.author] }),
+            ...(data.date && { publishedTime: data.date }),
+            ...(data.tags && { tags: data.tags }),
+        },
+
+        // Twitter metadata
+        twitter: {
+            card: 'summary_large_image',
+            title,
+            description,
+            images: [ogImageUrl],
+            creator: '@rantplatform',
+        },
+
+        // Merge with base metadata
+        ...baseMetadata,
+    };
 }
 
 /**
- * Component for dynamically updating metadata in client components
- * This is useful for pages that need to update their metadata based on client-side state
+ * Generate metadata for a rant page
  *
- * Note: This component should be used only when metadata needs to be updated based on
- * client-side state. For static or server-rendered metadata, use the Next.js Metadata API
- * with the getPageMetadata function from lib/seo/metadata.ts
+ * @param rantId - The ID of the rant
+ * @param data - The rant data
+ * @param baseMetadata - Additional metadata to include
+ * @returns Metadata object for Next.js
  */
-export default function DynamicMetadata({ metadata, url }: DynamicMetadataProps) {
-    const pathname = usePathname();
-    const currentUrl = url || pathname || '';
-
-    // Generate structured data
-    const structuredData = getSocialStructuredData(metadata, currentUrl);
-
-    // Update document title and meta tags
-    useEffect(() => {
-        if (metadata.title) {
-            document.title = metadata.title;
+export function generateRantMetadata(
+    rantId: string,
+    data: Partial<OgTemplateData>,
+    baseMetadata: Partial<Metadata> = {}
+): Metadata {
+    return generateOpenGraphMetadata(
+        'rant',
+        {
+            ...data,
+            title: data.title || `Rant #${rantId}`,
+        },
+        {
+            ...baseMetadata,
+            alternates: {
+                canonical: `/rant/${rantId}`,
+            },
         }
+    );
+}
 
-        // Update meta description
-        let descriptionMeta = document.querySelector('meta[name="description"]');
-        if (descriptionMeta) {
-            descriptionMeta.setAttribute('content', metadata.description);
-        } else {
-            descriptionMeta = document.createElement('meta');
-            descriptionMeta.setAttribute('name', 'description');
-            descriptionMeta.setAttribute('content', metadata.description);
-            document.head.appendChild(descriptionMeta);
+/**
+ * Generate metadata for a profile page
+ *
+ * @param userId - The ID of the user
+ * @param data - The profile data
+ * @param baseMetadata - Additional metadata to include
+ * @returns Metadata object for Next.js
+ */
+export function generateProfileMetadata(
+    userId: string,
+    data: Partial<OgTemplateData>,
+    baseMetadata: Partial<Metadata> = {}
+): Metadata {
+    return generateOpenGraphMetadata(
+        'profile',
+        {
+            ...data,
+            title: data.title || `User Profile #${userId}`,
+        },
+        {
+            ...baseMetadata,
+            alternates: {
+                canonical: `/profile/${userId}`,
+            },
         }
+    );
+}
 
-        // Update Open Graph meta tags
-        updateMetaTag('property', 'og:title', metadata.title);
-        updateMetaTag('property', 'og:description', metadata.description);
-        updateMetaTag('property', 'og:type', metadata.ogType || 'website');
-        updateMetaTag('property', 'og:url', currentUrl);
-        if (metadata.ogImage) {
-            updateMetaTag('property', 'og:image', metadata.ogImage);
+/**
+ * Generate metadata for a challenge page
+ *
+ * @param challengeId - The ID of the challenge
+ * @param data - The challenge data
+ * @param baseMetadata - Additional metadata to include
+ * @returns Metadata object for Next.js
+ */
+export function generateChallengeMetadata(
+    challengeId: string,
+    data: Partial<OgTemplateData>,
+    baseMetadata: Partial<Metadata> = {}
+): Metadata {
+    return generateOpenGraphMetadata(
+        'challenge',
+        {
+            ...data,
+            title: data.title || `Challenge #${challengeId}`,
+        },
+        {
+            ...baseMetadata,
+            alternates: {
+                canonical: `/challenge/${challengeId}`,
+            },
         }
+    );
+}
 
-        // Update Twitter Card meta tags
-        updateMetaTag('name', 'twitter:card', metadata.twitterCard || 'summary_large_image');
-        updateMetaTag('name', 'twitter:title', metadata.title);
-        updateMetaTag('name', 'twitter:description', metadata.description);
-        if (metadata.ogImage) {
-            updateMetaTag('name', 'twitter:image', metadata.ogImage);
+/**
+ * Generate metadata for a static page
+ *
+ * @param pagePath - The path of the page
+ * @param data - The page data
+ * @param baseMetadata - Additional metadata to include
+ * @returns Metadata object for Next.js
+ */
+export function generatePageMetadata(
+    pagePath: string,
+    data: Partial<OgTemplateData>,
+    baseMetadata: Partial<Metadata> = {}
+): Metadata {
+    // Map page paths to template types
+    const pageTypeMap: Record<string, OgTemplateType> = {
+        '/': 'home',
+        '/about': 'about',
+        '/trending': 'trending',
+        '/leaderboard': 'leaderboard',
+        '/roadmap': 'roadmap',
+        '/challenges': 'challenge',
+    };
+
+    // Get the template type based on the page path or default to 'default'
+    const type = pageTypeMap[pagePath] || 'default';
+
+    return generateOpenGraphMetadata(
+        type,
+        data,
+        {
+            ...baseMetadata,
+            alternates: {
+                canonical: pagePath,
+            },
         }
-
-        // Update canonical URL
-        let canonicalLink = document.querySelector('link[rel="canonical"]');
-        if (metadata.canonical) {
-            if (canonicalLink) {
-                canonicalLink.setAttribute('href', metadata.canonical);
-            } else {
-                canonicalLink = document.createElement('link');
-                canonicalLink.setAttribute('rel', 'canonical');
-                canonicalLink.setAttribute('href', metadata.canonical);
-                document.head.appendChild(canonicalLink);
-            }
-        }
-
-        // Update robots meta tag
-        if (metadata.noindex) {
-            updateMetaTag('name', 'robots', `noindex, ${metadata.nofollow ? 'nofollow' : 'follow'}`);
-        }
-
-        // Helper function to update meta tags
-        function updateMetaTag(attrName: string, attrValue: string, content: string) {
-            let metaTag = document.querySelector(`meta[${attrName}="${attrValue}"]`);
-            if (metaTag) {
-                metaTag.setAttribute('content', content);
-            } else {
-                metaTag = document.createElement('meta');
-                metaTag.setAttribute(attrName, attrValue);
-                metaTag.setAttribute('content', content);
-                document.head.appendChild(metaTag);
-            }
-        }
-    }, [metadata, currentUrl]);
-
-    return (
-        <Script
-            id="structured-data"
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: structuredData }}
-            strategy="afterInteractive"
-        />
     );
 }

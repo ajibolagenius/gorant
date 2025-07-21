@@ -52,7 +52,31 @@ A modern, anonymous social platform where users can express their thoughts, frus
 - Local storage for offline functionality
 - Advanced content moderation and filtering
 - Self-hosted analytics system with privacy controls, admin dashboard, heatmaps, user flow visualization, retention metrics, and comprehensive testing utilities
-- SEO optimization with dynamic metadata, Open Graph images, structured data, sitemaps, and RSS feeds
+- SEO optimization with:
+  - Dynamic metadata generation for all page types
+  - Custom Open Graph images with caching and performance optimization
+  - Environment-aware robots.txt and sitemap generation
+  - Social media sharing optimization
+  - Metadata validation and best practices enforcement
+
+## 🔍 SEO Features
+
+The platform includes comprehensive SEO optimization:
+
+- **Dynamic Metadata** - Page-specific metadata generation with Next.js Metadata API
+- **Open Graph Images** - Custom image generation for social media sharing with:
+  - Template-based design for different content types
+  - Caching mechanism for performance
+  - Rate limiting to prevent abuse
+  - Fallback images for error cases
+- **Sitemap Generation** - Automatic sitemap creation with:
+  - Static route definitions
+  - Proper change frequency and priority settings
+  - Environment-aware configuration
+- **Robots.txt** - Dynamic robots.txt generation based on environment
+- **Performance Optimization** - Caching and monitoring for SEO-related components
+
+For detailed documentation, see [SEO Metadata Documentation](data/docs/SEO_METADATA.md).
 
 ## 🚀 Getting Started
 
@@ -182,6 +206,7 @@ node test-analytics.js  # Test analytics database functionality
 │   ├── page.tsx           # Main feed page
 │   ├── admin/analytics/   # Analytics dashboard
 │   ├── api/og/           # Open Graph image generation API
+│   │   └── warm-cache/   # Cache warming endpoint
 │   ├── sitemap.ts        # Dynamic sitemap generation
 │   ├── robots.ts         # Robots.txt configuration
 │   └── [feature]/         # Feature-based routes
@@ -189,13 +214,24 @@ node test-analytics.js  # Test analytics database functionality
 │   ├── ui/               # shadcn/ui components
 │   ├── analytics/        # Analytics dashboard components
 │   ├── seo/              # SEO-related components
+│   │   ├── dynamic-metadata.tsx    # Dynamic metadata component
+│   │   ├── og-image-preloader.tsx  # Image preloading component
+│   │   └── social-share-buttons.tsx # Social sharing component
 │   └── [feature].tsx     # Feature components
 ├── hooks/                # Custom React hooks
 ├── lib/                  # Utility functions and analytics
 │   ├── seo/              # SEO utilities and metadata
+│   │   ├── config.ts     # SEO configuration
+│   │   ├── metadata.ts   # Metadata generation
+│   │   ├── og-templates.ts # OG image templates
+│   │   ├── og-cache.ts   # OG image caching
+│   │   ├── og-templates/ # Template components
+│   │   └── og-url-generator.ts # URL generation
 │   └── analytics/        # Analytics utilities
 ├── services/             # Business logic services
 ├── data/                 # Static data and docs
+│   └── docs/             # Documentation files
+│       └── SEO_METADATA.md # SEO implementation docs
 ├── scripts/              # Database and setup scripts
 ├── types/                # TypeScript type definitions
 │   ├── analytics.ts      # Analytics type definitions
