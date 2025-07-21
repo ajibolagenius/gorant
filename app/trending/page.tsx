@@ -1,11 +1,9 @@
 import { TrendingClient } from "./TrendingClient"
+import { Metadata } from "next"
+import { getPageMetadata } from "@/lib/seo/metadata"
 
-export const metadata = {
-    title: "Trending Rants | Rant",
-    description: "See what's trending in the Rant community. Discover the most popular and engaging rants right now.",
-    alternates: {
-        canonical: "https://gorant.live/trending"
-    }
+export const generateMetadata = async (): Promise<Metadata> {
+    return getPageMetadata('trending');
 }
 
 export default function TrendingPage() {

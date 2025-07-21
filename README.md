@@ -52,6 +52,7 @@ A modern, anonymous social platform where users can express their thoughts, frus
 - Local storage for offline functionality
 - Advanced content moderation and filtering
 - Self-hosted analytics system with privacy controls, admin dashboard, heatmaps, user flow visualization, retention metrics, and comprehensive testing utilities
+- SEO optimization with dynamic metadata, Open Graph images, structured data, sitemaps, and RSS feeds
 
 ## 🚀 Getting Started
 
@@ -180,16 +181,25 @@ node test-analytics.js  # Test analytics database functionality
 │   ├── layout.tsx         # Root layout with providers
 │   ├── page.tsx           # Main feed page
 │   ├── admin/analytics/   # Analytics dashboard
+│   ├── api/og/           # Open Graph image generation API
+│   ├── sitemap.ts        # Dynamic sitemap generation
+│   ├── robots.ts         # Robots.txt configuration
 │   └── [feature]/         # Feature-based routes
 ├── components/            # React components
 │   ├── ui/               # shadcn/ui components
 │   ├── analytics/        # Analytics dashboard components
+│   ├── seo/              # SEO-related components
 │   └── [feature].tsx     # Feature components
 ├── hooks/                # Custom React hooks
 ├── lib/                  # Utility functions and analytics
+│   ├── seo/              # SEO utilities and metadata
+│   └── analytics/        # Analytics utilities
 ├── services/             # Business logic services
 ├── data/                 # Static data and docs
 ├── scripts/              # Database and setup scripts
+├── types/                # TypeScript type definitions
+│   ├── analytics.ts      # Analytics type definitions
+│   └── seo.ts           # SEO type definitions
 └── test-analytics.js     # Analytics testing utility
 ```
 
