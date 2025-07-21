@@ -45,6 +45,7 @@ import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts"
 import { useAnalytics } from "@/hooks/use-analytics"
 
 import { audioService } from "@/services/audio-service"
+import { LogoIcon } from "@/components/ui/logo-icon";
 
 const MOODS = [
     { icon: SmileySad, emoji: "", label: "Sad", value: "sad", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300" },
@@ -975,7 +976,7 @@ export default function RantApp() {
                             {/* Modern Feed Header */}
                             <div className="flex items-center justify-between rounded-none bg-purple-100/80 dark:bg-purple-900/40 backdrop-blur px-6 py-4 mb-2 shadow border-0">
                                 <div className="flex flex-1 items-center gap-3">
-                                    <LegoSmiley className="w-8 h-8 text-purple-600 dark:text-purple-300" weight="duotone" />
+                                    <LogoIcon className="w-8 h-8 text-purple-600 dark:text-purple-300" weight="duotone" />
                                     <Badge
                                         variant="secondary"
                                         className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"

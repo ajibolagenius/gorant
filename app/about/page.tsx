@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
-import { Info, ChatCircleDots, CheckCircle, WarningCircle, XCircle, LegoSmiley } from "@phosphor-icons/react"
+import { Info, ChatCircleDots, CheckCircle, WarningCircle, XCircle } from "@phosphor-icons/react"
+import { LogoIcon } from "@/components/ui/logo-icon";
 
 // Move components definition above Callout
 const components: any = {
@@ -92,7 +93,7 @@ export default function AboutPage() {
     return (
         <div className="container mx-auto max-w-3xl py-12 px-4">
             <div className="flex items-center gap-3 mb-10">
-                <LegoSmiley className="w-9 h-9 text-purple-600" weight="duotone" />
+                <LogoIcon className="w-9 h-9 text-purple-600" weight="duotone" />
                 <h1 className="text-3xl md:text-4xl font-bold font-heading tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                     About Rant
                 </h1>
