@@ -33,104 +33,96 @@ const getOgTemplate = (type: string): React.FC<{ data: OgTemplateData }> => {
 // Default template for general content
 const DefaultTemplate: React.FC<{ data: OgTemplateData }> = ({ data }) => (
     <div
-        style= {{
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#1a1a1a',
-        padding: '40px'
+        style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#1a1a1a',
+            padding: '40px'
         }}
     >
-    <h1 style={ { color: '#fff', fontSize: '48px', marginBottom: '20px' } }>
-        { data.title }
+        <h1 style={{ color: '#fff', fontSize: '48px', marginBottom: '20px' }}>
+            {data.title}
         </h1>
-{
-    data.description && (
-        <p style={ { color: '#a259ff', fontSize: '24px', textAlign: 'center' } }>
-            { data.description }
+        {data.description && (
+            <p style={{ color: '#a259ff', fontSize: '24px', textAlign: 'center' }}>
+                {data.description}
             </p>
-        )
-}
-</div>
+        )}
+    </div>
 );
 
 // Template for rants
 const RantTemplate: React.FC<{ data: OgTemplateData }> = ({ data }) => (
     <div
-        style= {{
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        backgroundColor: '#1a1a1a',
-        padding: '40px'
+        style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            backgroundColor: '#1a1a1a',
+            padding: '40px'
         }}
     >
-{
-    data.mood && (
-        <div style={ { fontSize: '32px', marginBottom: '20px' } }>
-            { data.mood }
+        {data.mood && (
+            <div style={{ fontSize: '32px', marginBottom: '20px' }}>
+                {data.mood}
             </div>
         )}
-<h1 style={ { color: '#fff', fontSize: '48px', marginBottom: '20px' } }>
-    { data.title }
-    </h1>
-    < p style = {{ color: '#a259ff', fontSize: '24px' }}>
-        { data.description }
+        <h1 style={{ color: '#fff', fontSize: '48px', marginBottom: '20px' }}>
+            {data.title}
+        </h1>
+        <p style={{ color: '#a259ff', fontSize: '24px' }}>
+            {data.description}
         </p>
-{
-    data.author && (
-        <p style={ { color: '#666', fontSize: '20px', marginTop: 'auto' } }>
-            Posted by { data.author }
-    </p>
-        )
-}
-</div>
+        {data.author && (
+            <p style={{ color: '#666', fontSize: '20px', marginTop: 'auto' }}>
+                Posted by {data.author}
+            </p>
+        )}
+    </div>
 );
 
 // Template for challenges
 const ChallengeTemplate: React.FC<{ data: OgTemplateData }> = ({ data }) => (
     <div
-        style= {{
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        backgroundColor: '#1a1a1a',
-        padding: '40px'
+        style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            backgroundColor: '#1a1a1a',
+            padding: '40px'
         }}
     >
-    <h1 style={ { color: '#fff', fontSize: '48px', marginBottom: '20px' } }>
-        { data.title }
+        <h1 style={{ color: '#fff', fontSize: '48px', marginBottom: '20px' }}>
+            {data.title}
         </h1>
-        < p style = {{ color: '#a259ff', fontSize: '24px' }}>
-            { data.description }
-            </p>
-{
-    data.tags && data.tags.length > 0 && (
-        <div style={ { marginTop: '20px', display: 'flex', gap: '10px' } }>
-        {
-            data.tags.map((tag, index) => (
-                <span
-                        key= { index }
-                        style = {{
-                backgroundColor: '#333',
-                color: '#fff',
-                padding: '8px 16px',
-                borderRadius: '20px',
-                fontSize: '18px'
-            }}
-            >
-            { tag }
-            </span>
-                ))
-}
-</div>
+        <p style={{ color: '#a259ff', fontSize: '24px' }}>
+            {data.description}
+        </p>
+        {data.tags && data.tags.length > 0 && (
+            <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
+                {data.tags.map((tag, index) => (
+                    <span
+                        key={index}
+                        style={{
+                            backgroundColor: '#333',
+                            color: '#fff',
+                            padding: '8px 16px',
+                            borderRadius: '20px',
+                            fontSize: '18px'
+                        }}
+                    >
+                        {tag}
+                    </span>
+                ))}
+            </div>
         )}
-</div>
+    </div>
 );
 
 // Generate OG image based on type and data
@@ -139,7 +131,7 @@ export const generateOgImage = (type: string, data: any): ImageResponse => {
     const sanitizedData = sanitizeTemplateData(data);
 
     return new ImageResponse(
-        <Template data={ sanitizedData } />,
+        <Template data={sanitizedData} />,
         {
             width: 1200,
             height: 630

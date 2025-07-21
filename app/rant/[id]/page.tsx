@@ -1,8 +1,5 @@
 import React from 'react';
 import { Metadata } from 'next';
-import { RantSchema } from '@/components/seo/schema-components';
-import { generateRantSchema } from '@/lib/seo/dynamic-schema';
-import { serializeSchema } from '@/lib/seo/schema';
 
 // Mock function to fetch rant data (would be replaced with actual implementation)
 async function fetchRant(id: string) {
@@ -40,14 +37,6 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     };
 }
 
-// Generate JSON-LD schema for the page
-export async function generateJsonLd({ params }: { params: { id: string } }) {
-    const schemas = await generateRantSchema(params);
-    return schemas.map(schema => ({
-        __html: serializeSchema(schema)
-    }));
-}
-
 // Rant page component
 export default async function RantPage({ params }: { params: { id: string } }) {
     const rant = await fetchRant(params.id);
@@ -57,9 +46,6 @@ export default async function RantPage({ params }: { params: { id: string } }) {
         <div>
             <h1>{rant.title}</h1>
             <p>{rant.content}</p>
-
-            {/* Include schema component */}
-            <RantSchema rant={rant} baseUrl={baseUrl} />
         </div>
     );
 }

@@ -1,8 +1,5 @@
 import React from 'react';
 import { Metadata } from 'next';
-import { ProfileSchema } from '@/components/seo/schema-components';
-import { generateProfileSchema } from '@/lib/seo/dynamic-schema';
-import { serializeSchema } from '@/lib/seo/schema';
 
 // Mock function to fetch profile data (would be replaced with actual implementation)
 async function fetchProfile(username: string) {
@@ -37,14 +34,6 @@ export async function generateMetadata({ params }: { params: { username: string 
     };
 }
 
-// Generate JSON-LD schema for the page
-export async function generateJsonLd({ params }: { params: { username: string } }) {
-    const schemas = await generateProfileSchema(params);
-    return schemas.map(schema => ({
-        __html: serializeSchema(schema)
-    }));
-}
-
 // Profile page component
 export default async function ProfilePage({ params }: { params: { username: string } }) {
     const profile = await fetchProfile(params.username);
@@ -55,9 +44,6 @@ export default async function ProfilePage({ params }: { params: { username: stri
             <h1>{profile.displayName}'s Profile</h1>
             <p>{profile.bio}</p>
             <p>Joined: {new Date(profile.joinedAt).toLocaleDateString()}</p>
-
-            {/* Include schema component */}
-            <ProfileSchema profile={profile} baseUrl={baseUrl} />
         </div>
     );
 }
