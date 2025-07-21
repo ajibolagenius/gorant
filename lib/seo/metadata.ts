@@ -45,7 +45,7 @@ export const getDefaultMetadata = (): Metadata => {
             canonical: '/',
             languages: config.alternateLocales?.reduce((acc, locale) => {
                 acc[locale] = `/${locale}`;
-eturn acc;
+                return acc;
             }, {} as Record<string, string>) || {},
         },
         openGraph: {
@@ -56,7 +56,7 @@ eturn acc;
             url: config.siteUrl,
             images: [
                 {
-                    url: getOgImageUrl({ type: 'defau}),
+                    url: getOgImageUrl({ type: 'default' }),
                     width: 1200,
                     height: 630,
                     alt: config.defaultTitle,
@@ -161,14 +161,26 @@ interface PageDataTypes {
     rant: RantData;
     challenge: ChallengeData;
     profile: ProfileData;
-    // Other page types can use any for now
-    [key: string]: any;
+    // Other page types with specific data structures
+    home?: Record<string, unknown>;
+    trending?: Record<string, unknown>;
+    leaderboard?: Record<string, unknown>;
+    bookmarks?: Record<string, unknown>;
+    settings?: Record<string, unknown>;
+    notifications?: Record<string, unknown>;
+    about?: Record<string, unknown>;
+    privacy?: Record<string, unknown>;
+    terms?: Record<string, unknown>;
+    roadmap?: Record<string, unknown>;
+    guidelines?: Record<string, unknown>;
+    admin?: Record<string, unknown>;
+    [key: string]: Record<string, unknown> | RantData | ChallengeData | ProfileData | undefined;
 }
 
 /**
  * Define a map of page types to their metadata
  */
-const PAGE_METADATA_MAP: Record<PageType, (data?: any) => Partial<PageMetadata>> = {
+const PAGE_METADATA_MAP: Record<PageType, (data?: Record<string, unknown>) => Partial<PageMetadata>> = {
     home: () => ({
         title: 'Rant - Express Yourself Anonymously',
         description: 'Share your thoughts and feelings anonymously with the world.',
@@ -176,8 +188,9 @@ const PAGE_METADATA_MAP: Record<PageType, (data?: any) => Partial<PageMetadata>>
         ogImage: getOgImageUrl({ type: 'home' }),
     }),
 
-    rant: (data: RantData) => {
-        if (!data) {
+    rant: (data?: Record<string, unknown>) => {
+        const rantData = data as RantData | undefined;
+        if (!rantData) {
             throw new Error('Data is required for rant page metadata');
         }
 
@@ -203,8 +216,9 @@ const PAGE_METADATA_MAP: Record<PageType, (data?: any) => Partial<PageMetadata>>
         };
     },
 
-    challenge: (data: ChallengeData) => {
-        if (!data) {
+    challenge: (data?: Record<string, unknown>) => {
+        const challengeData = data as ChallengeData | undefined;
+        if (!challengeData) {
             throw new Error('Data is required for challenge page metadata');
         }
 
@@ -227,8 +241,9 @@ const PAGE_METADATA_MAP: Record<PageType, (data?: any) => Partial<PageMetadata>>
         ogImage: getOgImageUrl({ type: 'leaderboard' }),
     }),
 
-    profile: (data: ProfileData) => {
-        if (!data) {
+    profile: (data?: Record<string, unknown>) => {
+        const profileData = data as ProfileData | undefined;
+        if (!profileData) {
             throw new Error('Data is required for profile page metadata');
         }
 
@@ -319,7 +334,7 @@ const PAGE_METADATA_MAP: Record<PageType, (data?: any) => Partial<PageMetadata>>
  */
 export const getPageMetadata = <T extends PageType>(
     pageType: T,
-    data?: T extends keyof PageDataTypes ? PageDataTypes[T] : any
+    data?: T extends keyof PageDataTypes ? PageDataTypes[T] : Record<string, unknown>
 ): Metadata => {
     const config = getSeoConfig();
     const defaultMetadata = getDefaultMetadata();
@@ -422,7 +437,7 @@ const createSocialMetadata = (
     description: string,
     imageUrl: string,
     config: ReturnType<typeof getSeoConfig>,
-    type: 'website' | 'article' | 'profile' = 'website',
+    type: 'website' | 'article' | 'profile' | 'book' | 'music' | 'video' = 'website',
     twitterCard: 'summary' | 'summary_large_image' | 'app' | 'player' = 'summary_large_image'
 ) => {
     return {
@@ -472,6 +487,14 @@ export const getFallbackMetadata = (): Metadata => {
 };
 
 /**
+ * Get metadata specifically for the home page
+ * This is used by the root layout
+ */
+export const getHomePageMetadata = (): Metadata => {
+    return getPageMetadata('home');
+};
+
+/**
  * Helper to normalize URLs
  */
 const normalizeUrl = (baseUrl: string, path?: string): string => {
@@ -492,9 +515,31 @@ export const getSocialSharingMetadata = (
     description: string,
     imageUrl?: string,
     url?: string,
-    type: 'website' | 'article' | 'profile' = 'website',
+    type: 'website' | 'article' | 'profile' | 'book' | 'music' | 'video' = 'website',
     twitterCard: 'summary' | 'summary_large_image' | 'app' | 'player' = 'summary_large_image'
-): { openGraph: any, twitter: any } => {
+): {
+    openGraph: {
+        title: string;
+        description: string;
+        type: string;
+        siteName: string;
+        url: string;
+        images: Array<{
+            url: string;
+            width: number;
+            height: number;
+            alt: string;
+        }>;
+    },
+    twitter: {
+        card: string;
+        site: string;
+        creator: string;
+        title: string;
+        description: string;
+        images: string;
+    }
+} => {
     const config = getSeoConfig();
     const fullUrl = normalizeUrl(config.siteUrl, url);
     const image = imageUrl || getOgImageUrl({ type: 'default' });
