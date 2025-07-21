@@ -51,6 +51,6 @@ We welcome suggestions for enhancements! Please create an issue with:
 3. Set up the development environment
 
 ```bash
-git clone https://github.com/username/project.git
+git clone https://github.com/ajibolagenius/gorant.git
 cd project
 npm install  # or equivalent for your project
