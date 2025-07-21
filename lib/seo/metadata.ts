@@ -1,6 +1,20 @@
 import { Metadata } from 'next';
-import { getSeoConfig, getCanonicalUrl, getRobotsMetaContent, getOgImageUrl } from './config';
+import { getSeoConfig as getOriginalSeoConfig, getCanonicalUrl, getRobotsMetaContent, getOgImageUrl } from './config';
 import { PageMetadata } from '@/types/seo';
+
+// Memoized config
+let cachedConfig: ReturnType<typeof getOriginalSeoConfig> | null = null;
+
+/**
+ * Get SEO configuration with memoization for better performance
+ */
+export const getSeoConfig = (): ReturnType<typeof getOriginalSeoConfig> => {
+    if (cachedConfig) return cachedConfig;
+
+    const config = getOriginalSeoConfig();
+    cachedConfig = config;
+    return config;
+};
 
 /**
  * Generate default metadata for the application
@@ -31,7 +45,7 @@ export const getDefaultMetadata = (): Metadata => {
             canonical: '/',
             languages: config.alternateLocales?.reduce((acc, locale) => {
                 acc[locale] = `/${locale}`;
-                return acc;
+eturn acc;
             }, {} as Record<string, string>) || {},
         },
         openGraph: {
@@ -42,7 +56,7 @@ export const getDefaultMetadata = (): Metadata => {
             url: config.siteUrl,
             images: [
                 {
-                    url: getOgImageUrl({ type: 'default' }),
+                    url: getOgImageUrl({ type: 'defau}),
                     width: 1200,
                     height: 630,
                     alt: config.defaultTitle,
@@ -115,192 +129,208 @@ export type PageType =
     | 'guidelines'
     | 'admin';
 
+// Type definitions for page-specific data
+interface RantData {
+    id: string;
+    title?: string;
+    content?: string;
+    mood?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    authorName?: string;
+    tags?: string[];
+    slug?: string;
+}
+
+interface ChallengeData {
+    id: string;
+    title?: string;
+    description?: string;
+    slug?: string;
+}
+
+interface ProfileData {
+    id: string;
+    displayName?: string;
+    bio?: string;
+    slug?: string;
+}
+
+// Type map for different page data
+interface PageDataTypes {
+    rant: RantData;
+    challenge: ChallengeData;
+    profile: ProfileData;
+    // Other page types can use any for now
+    [key: string]: any;
+}
+
+/**
+ * Define a map of page types to their metadata
+ */
+const PAGE_METADATA_MAP: Record<PageType, (data?: any) => Partial<PageMetadata>> = {
+    home: () => ({
+        title: 'Rant - Express Yourself Anonymously',
+        description: 'Share your thoughts and feelings anonymously with the world.',
+        ogType: 'website',
+        ogImage: getOgImageUrl({ type: 'home' }),
+    }),
+
+    rant: (data: RantData) => {
+        if (!data) {
+            throw new Error('Data is required for rant page metadata');
+        }
+
+        const rantTitle = data.title || `${data.mood || 'Anonymous'} Rant`;
+        const rantDescription = data.content
+            ? data.content.substring(0, 160).replace(/\s+/g, ' ').trim() + (data.content.length > 160 ? '...' : '')
+            : getSeoConfig().defaultDescription;
+
+        return {
+            title: rantTitle,
+            description: rantDescription,
+            ogType: 'article',
+            publishedTime: data.createdAt,
+            modifiedTime: data.updatedAt,
+            authors: data.authorName ? [data.authorName] : undefined,
+            tags: data.tags || [],
+            ogImage: getOgImageUrl({
+                type: 'rant',
+                id: data.id,
+                title: encodeURIComponent(rantTitle),
+                mood: data.mood || 'neutral'
+            }),
+        };
+    },
+
+    challenge: (data: ChallengeData) => {
+        if (!data) {
+            throw new Error('Data is required for challenge page metadata');
+        }
+
+        return {
+            title: `${data.title || 'Challenge'} | Rant Challenges`,
+            description: data.description || 'Take part in our community challenges and earn rewards!',
+            ogType: 'article',
+            ogImage: getOgImageUrl({
+                type: 'challenge',
+                id: data.id,
+                title: encodeURIComponent(data.title || 'Challenge')
+            }),
+        };
+    },
+
+    leaderboard: () => ({
+        title: 'Leaderboard | Top Contributors',
+        description: 'See who\'s leading the pack in our community. Check out the top contributors and most active users.',
+        ogType: 'website',
+        ogImage: getOgImageUrl({ type: 'leaderboard' }),
+    }),
+
+    profile: (data: ProfileData) => {
+        if (!data) {
+            throw new Error('Data is required for profile page metadata');
+        }
+
+        return {
+            title: `${data.displayName || 'Anonymous User'}'s Profile`,
+            description: data.bio || `Check out ${data.displayName || 'this user'}'s profile and activity on Rant.`,
+            ogType: 'profile',
+            ogImage: getOgImageUrl({
+                type: 'profile',
+                id: data.id,
+                name: encodeURIComponent(data.displayName || 'Anonymous User')
+            }),
+        };
+    },
+
+    trending: () => ({
+        title: 'Trending Rants | What\'s Hot Right Now',
+        description: 'Discover the most popular trending rants on the platform right now.',
+        ogType: 'website',
+        ogImage: getOgImageUrl({ type: 'trending' }),
+    }),
+
+    bookmarks: () => ({
+        title: 'Your Bookmarks | Saved Rants',
+        description: 'View all the rants you\'ve saved for later.',
+        ogType: 'website',
+        noindex: true, // Don't index personal bookmark pages
+    }),
+
+    settings: () => ({
+        title: 'Account Settings',
+        description: 'Manage your account settings, preferences, and privacy options.',
+        ogType: 'website',
+        noindex: true, // Don't index personal settings pages
+    }),
+
+    notifications: () => ({
+        title: 'Your Notifications',
+        description: 'View your latest notifications and activity updates.',
+        ogType: 'website',
+        noindex: true, // Don't index personal notification pages
+    }),
+
+    about: () => ({
+        title: 'About Rant',
+        description: 'Learn about Rant - the anonymous expression platform designed for sharing thoughts and connecting with others in a safe environment.',
+        ogType: 'website',
+        ogImage: getOgImageUrl({ type: 'about' }),
+    }),
+
+    privacy: () => ({
+        title: 'Privacy Policy',
+        description: 'Our privacy policy explains how we collect, use, and protect your information when you use the Rant platform.',
+        ogType: 'website',
+    }),
+
+    terms: () => ({
+        title: 'Terms of Service',
+        description: 'Our terms of service outline the rules and guidelines for using the Rant platform.',
+        ogType: 'website',
+    }),
+
+    roadmap: () => ({
+        title: 'Product Roadmap',
+        description: 'See what features and improvements are coming to Rant in the future.',
+        ogType: 'website',
+        ogImage: getOgImageUrl({ type: 'roadmap' }),
+    }),
+
+    guidelines: () => ({
+        title: 'Community Guidelines',
+        description: 'Our community guidelines help ensure Rant remains a safe and supportive environment for everyone.',
+        ogType: 'website',
+    }),
+
+    admin: () => ({
+        title: 'Admin Dashboard',
+        description: 'Rant platform administration and management.',
+        ogType: 'website',
+        noindex: true, // Don't index admin pages
+        nofollow: true,
+    }),
+};
+
 /**
  * Generate page-specific metadata
  * Merges page-specific metadata with default metadata
  */
-export const getPageMetadata = (
-    pageType: PageType,
-    data?: any
+export const getPageMetadata = <T extends PageType>(
+    pageType: T,
+    data?: T extends keyof PageDataTypes ? PageDataTypes[T] : any
 ): Metadata => {
     const config = getSeoConfig();
     const defaultMetadata = getDefaultMetadata();
-    let pageMetadata: PageMetadata;
 
-    // Generate page-specific metadata based on page type
-    switch (pageType) {
-        case 'home':
-            pageMetadata = {
-                title: config.defaultTitle,
-                description: config.defaultDescription,
-                ogType: 'website',
-            };
-            break;
-
-        case 'rant':
-            if (!data) {
-                throw new Error('Data is required for rant page metadata');
-            }
-
-            const rantTitle = data.title || `${data.mood || 'Anonymous'} Rant`;
-            const rantDescription = data.content
-                ? data.content.substring(0, 160).replace(/\s+/g, ' ').trim() + (data.content.length > 160 ? '...' : '')
-                : config.defaultDescription;
-
-            pageMetadata = {
-                title: rantTitle,
-                description: rantDescription,
-                ogType: 'article',
-                publishedTime: data.createdAt,
-                modifiedTime: data.updatedAt,
-                authors: data.authorName ? [data.authorName] : undefined,
-                tags: data.tags || [],
-                ogImage: getOgImageUrl({
-                    type: 'rant',
-                    id: data.id,
-                    title: encodeURIComponent(rantTitle),
-                    mood: data.mood || 'neutral'
-                }),
-            };
-            break;
-
-        case 'challenge':
-            if (!data) {
-                throw new Error('Data is required for challenge page metadata');
-            }
-
-            pageMetadata = {
-                title: `${data.title || 'Challenge'} | Rant Challenges`,
-                description: data.description || 'Take part in our community challenges and earn rewards!',
-                ogType: 'article',
-                ogImage: getOgImageUrl({
-                    type: 'challenge',
-                    id: data.id,
-                    title: encodeURIComponent(data.title || 'Challenge')
-                }),
-            };
-            break;
-
-        case 'leaderboard':
-            pageMetadata = {
-                title: 'Leaderboard | Top Contributors',
-                description: 'See who\'s leading the pack in our community. Check out the top contributors and most active users.',
-                ogType: 'website',
-                ogImage: getOgImageUrl({ type: 'leaderboard' }),
-            };
-            break;
-
-        case 'profile':
-            if (!data) {
-                throw new Error('Data is required for profile page metadata');
-            }
-
-            pageMetadata = {
-                title: `${data.displayName || 'Anonymous User'}'s Profile`,
-                description: data.bio || `Check out ${data.displayName || 'this user'}'s profile and activity on Rant.`,
-                ogType: 'profile',
-                ogImage: getOgImageUrl({
-                    type: 'profile',
-                    id: data.id,
-                    name: encodeURIComponent(data.displayName || 'Anonymous User')
-                }),
-            };
-            break;
-
-        case 'trending':
-            pageMetadata = {
-                title: 'Trending Rants | What\'s Hot Right Now',
-                description: 'Discover the most popular trending rants on the platform right now.',
-                ogType: 'website',
-                ogImage: getOgImageUrl({ type: 'trending' }),
-            };
-            break;
-
-        case 'bookmarks':
-            pageMetadata = {
-                title: 'Your Bookmarks | Saved Rants',
-                description: 'View all the rants you\'ve saved for later.',
-                ogType: 'website',
-                noindex: true, // Don't index personal bookmark pages
-            };
-            break;
-
-        case 'settings':
-            pageMetadata = {
-                title: 'Account Settings',
-                description: 'Manage your account settings, preferences, and privacy options.',
-                ogType: 'website',
-                noindex: true, // Don't index personal settings pages
-            };
-            break;
-
-        case 'notifications':
-            pageMetadata = {
-                title: 'Your Notifications',
-                description: 'View your latest notifications and activity updates.',
-                ogType: 'website',
-                noindex: true, // Don't index personal notification pages
-            };
-            break;
-
-        case 'about':
-            pageMetadata = {
-                title: 'About Rant',
-                description: 'Learn about Rant - the anonymous expression platform designed for sharing thoughts and connecting with others in a safe environment.',
-                ogType: 'website',
-                ogImage: getOgImageUrl({ type: 'about' }),
-            };
-            break;
-
-        case 'privacy':
-            pageMetadata = {
-                title: 'Privacy Policy',
-                description: 'Our privacy policy explains how we collect, use, and protect your information when you use the Rant platform.',
-                ogType: 'website',
-            };
-            break;
-
-        case 'terms':
-            pageMetadata = {
-                title: 'Terms of Service',
-                description: 'Our terms of service outline the rules and guidelines for using the Rant platform.',
-                ogType: 'website',
-            };
-            break;
-
-        case 'roadmap':
-            pageMetadata = {
-                title: 'Product Roadmap',
-                description: 'See what features and improvements are coming to Rant in the future.',
-                ogType: 'website',
-                ogImage: getOgImageUrl({ type: 'roadmap' }),
-            };
-            break;
-
-        case 'guidelines':
-            pageMetadata = {
-                title: 'Community Guidelines',
-                description: 'Our community guidelines help ensure Rant remains a safe and supportive environment for everyone.',
-                ogType: 'website',
-            };
-            break;
-
-        case 'admin':
-            pageMetadata = {
-                title: 'Admin Dashboard',
-                description: 'Rant platform administration and management.',
-                ogType: 'website',
-                noindex: true, // Don't index admin pages
-                nofollow: true,
-            };
-            break;
-
-        default:
-            pageMetadata = {
-                title: config.defaultTitle,
-                description: config.defaultDescription,
-            };
-    }
+    // Get page-specific metadata from the map
+    const pageMetadata = PAGE_METADATA_MAP[pageType]
+        ? PAGE_METADATA_MAP[pageType](data)
+        : {
+            title: config.defaultTitle,
+            description: config.defaultDescription,
+        };
 
     // Generate canonical URL if not provided
     if (!pageMetadata.canonical && data?.slug) {
@@ -384,36 +414,73 @@ export const validateMetadata = (metadata: PageMetadata): string[] => {
 };
 
 /**
+ * Helper function to create social metadata
+ * Reduces duplication between getFallbackMetadata and getSocialSharingMetadata
+ */
+const createSocialMetadata = (
+    title: string,
+    description: string,
+    imageUrl: string,
+    config: ReturnType<typeof getSeoConfig>,
+    type: 'website' | 'article' | 'profile' = 'website',
+    twitterCard: 'summary' | 'summary_large_image' | 'app' | 'player' = 'summary_large_image'
+) => {
+    return {
+        openGraph: {
+            title,
+            description,
+            type,
+            siteName: config.siteName,
+            images: [
+                {
+                    url: imageUrl,
+                    width: 1200,
+                    height: 630,
+                    alt: title,
+                }
+            ],
+        },
+        twitter: {
+            card: twitterCard,
+            site: config.twitterHandle,
+            creator: config.twitterHandle,
+            title,
+            description,
+            images: imageUrl,
+        },
+    };
+};
+
+/**
  * Get fallback metadata for when page-specific metadata is not available
  * This ensures we always have valid metadata even if there's an error
  */
 export const getFallbackMetadata = (): Metadata => {
     const config = getSeoConfig();
+    const imageUrl = getOgImageUrl({ type: 'default' });
 
     return {
         title: config.defaultTitle,
         description: config.defaultDescription,
-        openGraph: {
-            title: config.defaultTitle,
-            description: config.defaultDescription,
-            type: 'website',
-            siteName: config.siteName,
-            images: [
-                {
-                    url: getOgImageUrl({ type: 'default' }),
-                    width: 1200,
-                    height: 630,
-                    alt: config.defaultTitle,
-                }
-            ],
-        },
-        twitter: {
-            card: config.twitterCardType,
-            title: config.defaultTitle,
-            description: config.defaultDescription,
-            images: getOgImageUrl({ type: 'default' }),
-        },
+        ...createSocialMetadata(
+            config.defaultTitle,
+            config.defaultDescription,
+            imageUrl,
+            config
+        )
     };
+};
+
+/**
+ * Helper to normalize URLs
+ */
+const normalizeUrl = (baseUrl: string, path?: string): string => {
+    if (!path) return baseUrl.replace(/\/$/, '');
+    if (path.startsWith('http')) return path;
+
+    const normalizedBase = baseUrl.replace(/\/$/, '');
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    return `${normalizedBase}${normalizedPath}`;
 };
 
 /**
@@ -429,35 +496,51 @@ export const getSocialSharingMetadata = (
     twitterCard: 'summary' | 'summary_large_image' | 'app' | 'player' = 'summary_large_image'
 ): { openGraph: any, twitter: any } => {
     const config = getSeoConfig();
-    const baseUrl = config.siteUrl.replace(/\/$/, '');
-    const fullUrl = url ? (url.startsWith('http') ? url : `${baseUrl}${url.startsWith('/') ? url : `/${url}`}`) : baseUrl;
+    const fullUrl = normalizeUrl(config.siteUrl, url);
     const image = imageUrl || getOgImageUrl({ type: 'default' });
 
+    const socialMeta = createSocialMetadata(
+        title,
+        description,
+        image,
+        config,
+        type,
+        twitterCard
+    );
+
+    // Add URL to OpenGraph data (not needed in the helper function)
     return {
         openGraph: {
-            title,
-            description,
-            type,
+            ...socialMeta.openGraph,
             url: fullUrl,
-            siteName: config.siteName,
-            images: [
-                {
-                    url: image,
-                    width: 1200,
-                    height: 630,
-                    alt: title,
-                }
-            ],
         },
-        twitter: {
-            card: twitterCard,
-            site: config.twitterHandle,
-            creator: config.twitterHandle,
-            title,
-            description,
-            images: image,
-        },
+        twitter: socialMeta.twitter,
     };
+};
+
+/**
+ * Extract keywords from content
+ */
+const extractKeywords = (content: string, maxKeywords = 5): string[] => {
+    const stopWords = ['this', 'that', 'with', 'from', 'have', 'were', 'they', 'will', 'would', 'could', 'should', 'about'];
+
+    const words = content.toLowerCase()
+        .replace(/[^\w\s]/g, '')
+        .split(/\s+/)
+        .filter(word => word.length > 3) // Only words longer than 3 chars
+        .filter(word => !stopWords.includes(word));
+
+    // Count word frequency
+    const wordFrequency: Record<string, number> = {};
+    words.forEach(word => {
+        wordFrequency[word] = (wordFrequency[word] || 0) + 1;
+    });
+
+    // Get top keywords
+    return Object.entries(wordFrequency)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, maxKeywords)
+        .map(([word]) => word);
 };
 
 /**
@@ -504,24 +587,8 @@ export const extractMetadataFromContent = (
         }
     }
 
-    // Extract potential keywords (most frequent meaningful words)
-    const words = cleanContent.toLowerCase()
-        .replace(/[^\w\s]/g, '')
-        .split(/\s+/)
-        .filter(word => word.length > 3) // Only words longer than 3 chars
-        .filter(word => !['this', 'that', 'with', 'from', 'have', 'were', 'they', 'will', 'would', 'could', 'should', 'about'].includes(word));
-
-    // Count word frequency
-    const wordFrequency: Record<string, number> = {};
-    words.forEach(word => {
-        wordFrequency[word] = (wordFrequency[word] || 0) + 1;
-    });
-
-    // Get top keywords
-    const keywords = Object.entries(wordFrequency)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([word]) => word);
+    // Extract keywords
+    const keywords = extractKeywords(cleanContent);
 
     return {
         title: title.endsWith('.') || title.endsWith('!') || title.endsWith('?') ? title : `${title}...`,

@@ -44,11 +44,11 @@
     - Create performance monitoring for image generation
     - _Requirements: 2.4_
 
-- [ ] 4. Implement sitemap generation
-  - [ ] 4.1 Set up basic sitemap structure
-    - Create sitemap.ts file using Next.js sitemap support
-    - Implement static route definitions
-    - Add proper typing for sitemap entries
+- [x] 4. Implement sitemap generation
+  - [x] 4.1 Set up basic sitemap structure
+    - Create sitemap.ts file using Next.js sitemap support ✅
+    - Implement static route definitions ✅
+    - Add proper typing for sitemap entries ✅
     - _Requirements: 3.1, 3.2_
 
   - [ ] 4.2 Add dynamic content to sitemap

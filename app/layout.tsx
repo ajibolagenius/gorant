@@ -7,10 +7,10 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Analytics } from "@vercel/analytics/next"
 import Script from "next/script"
-import { getDefaultMetadata } from "@/lib/seo/metadata"
+import { getHomePageMetadata } from "@/lib/seo/metadata"
 
 export const generateMetadata = async (): Promise<Metadata> => {
-    return getDefaultMetadata();
+    return getHomePageMetadata();
 }
 
 export default function RootLayout({

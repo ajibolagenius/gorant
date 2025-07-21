@@ -37,7 +37,7 @@ export default function SocialShareButtons({
     useEffect(() => {
         const config = getSeoConfig();
         const baseUrl = config.siteUrl.replace(/\/$/, '');
-        const path = url || pathname;
+        const path = url || pathname || '';
         const fullUrl = path.startsWith('http') ? path : `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
         setShareUrl(fullUrl);
     }, [pathname, url]);
@@ -123,8 +123,8 @@ export default function SocialShareButtons({
     };
 
     return (
-        <div className={`flex flex-wrap gap-2 ${className}`}>
-            <TooltipProvider>
+        <div className={`flex flex-wrap gap-2 ${className}`} aria-label="Share content on social media">
+            <TooltipProvider delayDuration={300}>
                 {platforms.map((platform) => {
                     if (platform === 'copy') {
                         return (
@@ -135,12 +135,17 @@ export default function SocialShareButtons({
                                         size="sm"
                                         onClick={handleCopy}
                                         className="flex items-center gap-2"
+                                        aria-label={copied ? "Link copied to clipboard" : "Copy link to clipboard"}
                                     >
                                         {platformConfig[platform].icon}
-                                        {showLabels && <span>{platformConfig[platform].label}</span>}
+                                        {showLabels && (
+                                            <span className="sr-only md:not-sr-only">
+                                                {platformConfig[platform].label}
+                                            </span>
+                                        )}
                                     </Button>
                                 </TooltipTrigger>
-                                <TooltipContent>
+                                <TooltipContent side="bottom">
                                     <p>{platformConfig[platform].label}</p>
                                 </TooltipContent>
                             </Tooltip>
@@ -161,13 +166,24 @@ export default function SocialShareButtons({
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         aria-label={`Share on ${platformConfig[platform].label}`}
+                                        onClick={(e) => {
+                                            // Prevent default for mobile devices to avoid issues
+                                            if (platform === 'whatsapp' && window.innerWidth < 768) {
+                                                e.preventDefault();
+                                                window.location.href = sharingLinks[platform];
+                                            }
+                                        }}
                                     >
                                         {platformConfig[platform].icon}
-                                        {showLabels && <span>{platformConfig[platform].label}</span>}
+                                        {showLabels && (
+                                            <span className="sr-only md:not-sr-only">
+                                                {platformConfig[platform].label}
+                                            </span>
+                                        )}
                                     </a>
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent>
+                            <TooltipContent side="bottom">
                                 <p>Share on {platformConfig[platform].label}</p>
                             </TooltipContent>
                         </Tooltip>

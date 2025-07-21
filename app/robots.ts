@@ -7,18 +7,24 @@ import { getSeoConfig } from '@/lib/seo/config';
 export default function robots(): MetadataRoute.Robots {
     const config = getSeoConfig();
     const siteUrl = config.siteUrl;
+    const robotsPolicy = config.robotsPolicy;
 
-    // For non-production environments, disallow all robots
-    if (process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview') {
+    // For non-production environments or if robotsPolicy.index is false, disallow all robots
+    if (
+        process.env.NODE_ENV !== 'production' ||
+        process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview' ||
+        (robotsPolicy && !robotsPolicy.index)
+    ) {
         return {
             rules: {
                 userAgent: '*',
                 disallow: '/',
             },
+            host: siteUrl,
         };
     }
 
-    // For production, allow all robots and specify sitemap
+    // For production, use configured robot policies
     return {
         rules: {
             userAgent: '*',
@@ -28,8 +34,10 @@ export default function robots(): MetadataRoute.Robots {
                 '/admin/',
                 '/settings/',
                 '/notifications/',
+                '/test-charts/',
             ],
         },
         sitemap: `${siteUrl}/sitemap.xml`,
+        host: siteUrl,
     };
 }
