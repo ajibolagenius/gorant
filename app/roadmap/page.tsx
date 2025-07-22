@@ -2,26 +2,24 @@
 
 import React, { useEffect, useRef, useState } from "react"
 import {
-    CheckCircle, Clock, XCircle, User, Bell, Shield, Flag, Users, Star, Heart, Lightning, Trophy, BookOpen, ListChecks, Rocket, Globe, ChatCircleDots, UserCircle, ChartBar, Gear, Bug, Eye, Pencil, PlusCircle, ArrowRight, ArrowDown, ArrowUp, ThumbsUp, ThumbsDown, Tag as TagIcon, Flag as FlagIcon
+    CheckCircle, Clock, XCircle, User, Bell, Shield, Flag, Users, Star, Heart, Lightning, Trophy, BookOpen, ListChecks, Rocket, Globe, ChatCircleDots, UserCircle, ChartBar, Gear, Bug, Eye, Pencil, PlusCircle, Tag as TagIcon, Flag as FlagIcon
 } from "@phosphor-icons/react"
-import { Loader, MessageCircle, Dot, User as LucideUser, Search, List as LucideList, Shield as LucideShield, BarChart, Settings as LucideSettings, Users as LucideUsers, Book as LucideBook, Star as LucideStar, Heart as LucideHeart, Bell as LucideBell, Globe as LucideGlobe, Rocket as LucideRocket, Bug as LucideBug, Eye as LucideEye, Pencil as LucidePencil, Plus as LucidePlus, ArrowRight as LucideArrowRight, ArrowDown as LucideArrowDown, ArrowUp as LucideArrowUp, Check, X, ChevronRight, View, File, Pen, LayoutDashboard, PanelLeft, Calendar, Heading, Clipboard, Moon, Sun, Trash, LogOut, Home, Menu, ChevronDown, ChevronLeft, ChevronUp, Send, SeparatorHorizontal, Link, Copy, ExternalLink, ArrowLeft, ArrowLeftCircle, ArrowRightCircle, ArrowUpCircle as LucideArrowUpCircle, ArrowDownCircle as LucideArrowDownCircle } from "lucide-react"
+import { MessageCircle, Dot, User as LucideUser, Search, List as LucideList, Shield as LucideShield, BarChart, Settings as LucideSettings, Users as LucideUsers, Book as LucideBook, Star as LucideStar, Heart as LucideHeart, Bell as LucideBell, Globe as LucideGlobe, Rocket as LucideRocket, Bug as LucideBug, Eye as LucideEye, Pencil as LucidePencil, Plus as LucidePlus, ArrowRight as LucideArrowRight, ArrowUp as LucideArrowUp, Check, X, ChevronRight, View, File, Pen, LayoutDashboard, PanelLeft, Calendar, Heading, Clipboard, Moon, Sun, Trash, LogOut, Home, Menu, ChevronDown, ChevronLeft, ChevronUp, Send, SeparatorHorizontal, Link, Copy, ExternalLink, ArrowUpCircle as LucideArrowUpCircle, ArrowDownCircle as LucideArrowDownCircle } from "lucide-react"
 import { MagnifyingGlass, Funnel, SortAscending } from "@phosphor-icons/react"
 import { motion } from "framer-motion"
-import gsap from "gsap"
 import { Badge } from "@/components/ui/badge"
 import type { Variants } from "framer-motion"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { ArrowUpCircle } from "lucide-react"
-import ReactMarkdown from "react-markdown"
-import remarkGfm from "remark-gfm"
 import { supabase } from "@/lib/supabaseClient";
-import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
 import dynamic from 'next/dynamic';
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 import 'react-quill/dist/quill.snow.css';
 import { CaretDown } from "@phosphor-icons/react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { EnvelopeIcon } from '@heroicons/react/24/outline'
+// import { marked } from 'marked';
 import {
     AcademicCapIcon, AdjustmentsHorizontalIcon, ArchiveBoxIcon, ArrowDownCircleIcon, ArrowUpCircleIcon, AtSymbolIcon, BellIcon, BookOpenIcon, BookmarkIcon, BriefcaseIcon, BugAntIcon, CalendarIcon, ChartBarIcon, ChatBubbleLeftRightIcon, CheckCircleIcon, ChevronDownIcon, ClipboardDocumentCheckIcon, ClockIcon, CloudIcon, CodeBracketIcon, Cog6ToothIcon, CommandLineIcon, CpuChipIcon, CreditCardIcon, CubeIcon, CurrencyDollarIcon, DevicePhoneMobileIcon, DocumentTextIcon, ExclamationCircleIcon, EyeIcon, FlagIcon as HeroFlagIcon, FolderIcon, GiftIcon, GlobeAltIcon, HeartIcon, HomeIcon, IdentificationIcon, InboxIcon, InformationCircleIcon, KeyIcon, LightBulbIcon, LinkIcon, ListBulletIcon, LockClosedIcon, MagnifyingGlassIcon, MapPinIcon, MegaphoneIcon, MicrophoneIcon, MoonIcon, NewspaperIcon, PaintBrushIcon, PaperAirplaneIcon, PencilIcon, PhoneIcon, PhotoIcon, PlayCircleIcon, PlusCircleIcon, PresentationChartBarIcon, PrinterIcon, PuzzlePieceIcon, QuestionMarkCircleIcon, ReceiptPercentIcon, RocketLaunchIcon, ScaleIcon, ScissorsIcon, ServerStackIcon, ShieldCheckIcon, ShoppingBagIcon, SignalIcon, SparklesIcon, StarIcon, SunIcon, SwatchIcon, TableCellsIcon, TagIcon as HeroTagIcon, TicketIcon, TrashIcon, TrophyIcon, TruckIcon, UserCircleIcon, UserGroupIcon, UsersIcon, VideoCameraIcon, WalletIcon, WrenchScrewdriverIcon, XCircleIcon
 } from '@heroicons/react/24/outline'
@@ -231,7 +229,7 @@ function parseRoadmapMarkdown(markdown: string) {
 
     const phases: Array<{ emoji: string; title: string; items: Array<{ text: string; checked: boolean }> }> = []
     let match: RegExpExecArray | null
-    let lastIndex = 0
+    const lastIndex = 0
     const lines = markdown.split('\n')
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i]
@@ -278,17 +276,18 @@ function getOrCreateAnonymousId() {
     return id;
 }
 
+// Define interface Gap above usage:
+interface Gap {
+    feature: string;
+    [key: string]: unknown;
+}
+
 export default function RoadmapPage() {
     const markdown = useRoadmapMarkdown()
     const parsed = parseRoadmapMarkdown(markdown)
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [expandedId, setExpandedId] = useState<string | null>(null);
-    const [filterCategory, setFilterCategory] = useState("");
-    const [filterPriority, setFilterPriority] = useState("");
-    const [filterStatus, setFilterStatus] = useState("");
-    // Admin flag (toggleable)
-    const [isAdmin, setIsAdmin] = useState(false); // Default to user view
     // Sort state, default to 'all'
     const [sortBy, setSortBy] = useState('all');
     const [search, setSearch] = useState("");
@@ -296,11 +295,20 @@ export default function RoadmapPage() {
     const phaseRefs = useRef<Record<string, HTMLDivElement | null>>({})
     const [showTopBtn, setShowTopBtn] = useState(false)
     // Sidebar state
-    const [suggestions, setSuggestions] = useState<any[]>([])
+    interface Suggestion {
+        id: string;
+        title: string;
+        description: string;
+        votes_up: number;
+        votes_down: number;
+        status: 'pending' | 'accepted' | 'reviewed' | 'rejected';
+        created_at: string;
+        category: string;
+        priority: string;
+    }
+    const [suggestions, setSuggestions] = useState<Suggestion[]>([])
     const [loadingSuggestions, setLoadingSuggestions] = useState(true)
-    // Modal state
-    const [showModal, setShowModal] = useState(false)
-    const [suggestionText, setSuggestionText] = useState("")
+
     const [submitting, setSubmitting] = useState(false)
     const [submitMsg, setSubmitMsg] = useState<string | null>(null)
     // Commented out voting UI and logic for now. To restore, uncomment the relevant sections below.
@@ -323,8 +331,7 @@ export default function RoadmapPage() {
     // Fetch suggestions (refactored to a function for refresh)
     const fetchSuggestions = () => {
         setLoadingSuggestions(true)
-        supabase
-            .from("suggestions")
+        supabase?.from("suggestions")
             .select("id, title, description, votes_up, votes_down, status, created_at, category, priority")
             .order("created_at", { ascending: false })
             .then(({ data, error }) => {
@@ -354,14 +361,14 @@ export default function RoadmapPage() {
         setSubmitting(true);
         setSubmitMsg(null);
         const anonymous_id = getOrCreateAnonymousId();
-        const { error } = await supabase.from("suggestions").insert({
+        const response = await supabase?.from("suggestions").insert({
             title: title.trim(),
             description,
             anonymous_id,
             category,
             priority
         });
-        if (error) {
+        if (response?.error) {
             setSubmitMsg("Failed to submit suggestion. Please try again.");
         } else {
             setSubmitMsg("Thank you for your suggestion!");
@@ -594,15 +601,19 @@ export default function RoadmapPage() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {parsed.gaps.map((gap: any) => (
-                                                <tr key={gap.feature} className="border-b border-muted last:border-0">
-                                                    <td className="px-3 py-2">{gap.feature}</td>
-                                                    <td className="px-3 py-2">
-                                                        <span className={`inline-block px-2 py-0.5 rounded-none font-mono text-xs font-bold ${gap.priority === 'High' ? 'bg-yellow-200 text-yellow-800' : gap.priority === 'Medium' ? 'bg-blue-100 text-blue-800' : 'bg-gray-200 text-gray-700'}`}>{gap.priority}</span>
-                                                    </td>
-                                                    <td className="px-3 py-2">{gap.status}</td>
-                                                </tr>
-                                            ))}
+                                            {parsed.gaps.map((gap) => {
+                                                if (!gap) return null;
+                                                const typedGap = gap as Gap;
+                                                return (
+                                                    <tr key={String(typedGap.feature)} className="border-b border-muted last:border-0">
+                                                        <td className="px-3 py-2">{String(typedGap.feature)}</td>
+                                                        <td className="px-3 py-2">
+                                                            <span className={`inline-block px-2 py-0.5 rounded-none font-mono text-xs font-bold ${String(typedGap.priority) === 'High' ? 'bg-yellow-200 text-yellow-800' : String(typedGap.priority) === 'Medium' ? 'bg-blue-100 text-blue-800' : 'bg-gray-200 text-gray-700'}`}>{String(typedGap.priority)}</span>
+                                                        </td>
+                                                        <td className="px-3 py-2">{String(typedGap.status)}</td>
+                                                    </tr>
+                                                );
+                                            })}
                                         </tbody>
                                     </table>
                                 </div>
@@ -780,28 +791,35 @@ export default function RoadmapPage() {
                                             <div className="animate-slide-down mt-2 prose prose-sm max-w-none pl-7" style={{ fontFamily: 'Manrope, sans-serif', maxHeight: 380, overflowY: 'auto' }} dangerouslySetInnerHTML={{ __html: s.description }} />
                                         )}
                                         {/* Admin status dropdown */}
-                                        {isAdmin && (
-                                            <div className="flex items-center gap-2 pl-7 mt-2">
-                                                <label htmlFor={`status-select-${s.id}`} className="text-xs font-mono">Status:</label>
-                                                <select
-                                                    id={`status-select-${s.id}`}
-                                                    value={s.status || 'pending'}
-                                                    onChange={async (e) => {
-                                                        const newStatus = e.target.value;
-                                                        // Update status in Supabase
-                                                        setSuggestions(prev => prev.map(sug => sug.id === s.id ? { ...sug, status: newStatus } : sug));
-                                                        await supabase.from('suggestions').update({ status: newStatus }).eq('id', s.id);
-                                                        fetchSuggestions();
-                                                    }}
-                                                    className="border px-2 py-1 rounded-none text-xs font-mono bg-background"
-                                                >
-                                                    <option value="pending">Pending</option>
-                                                    <option value="accepted">Accepted</option>
-                                                    <option value="reviewed">Reviewed</option>
-                                                    <option value="rejected">Rejected</option>
-                                                </select>
-                                            </div>
-                                        )}
+                                        <div className="pl-7 mt-3">
+                                            <select
+                                                value={s.status}
+                                                onChange={async (e) => {
+                                                    const newStatus = e.target.value;
+                                                    try {
+                                                        await supabase?.from("suggestions")
+                                                            .update({ status: newStatus })
+                                                            .eq("id", s.id);
+                                                        setSubmitMsg("Status updated!");
+                                                        fetchSuggestions(); // Refresh suggestions to update status
+                                                    } catch (error) {
+                                                        setSubmitMsg("Failed to update status. Please try again.");
+                                                        console.error("Error updating status:", error);
+                                                    }
+                                                }}
+                                                className="border px-2 py-1 rounded-none text-xs font-mono bg-background"
+                                            >
+                                                <option value="pending">Pending</option>
+                                                <option value="accepted">Accepted</option>
+                                                <option value="reviewed">Reviewed</option>
+                                                <option value="rejected">Rejected</option>
+                                            </select>
+                                        </div>
+                                        {/* Suggestion Modal */}
+                                        {/* Removed Suggestion Modal */}
+                                        {/* Sort dropdown moved below the suggest button */}
+                                        {/* Removed Sort dropdown */}
+                                        {/* Removed Pagination controls */}
                                     </li>
                                 ))}
                             </ul>
