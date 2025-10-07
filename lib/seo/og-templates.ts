@@ -83,5 +83,6 @@ export const createOgImage = (type: OgTemplateType, data: Partial<OgTemplateData
     const Template = getOgTemplate(type);
     const sanitizedData = sanitizeTemplateData(data);
 
-    return <Template data={ sanitizedData } />;
+    // Return the component constructor and data for JSX rendering
+    return { Template, data: sanitizedData };
 };

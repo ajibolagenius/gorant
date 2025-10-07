@@ -1,3 +1,4 @@
+import React from 'react';
 import { ImageResponse } from 'next/og';
 import { NextRequest } from 'next/server';
 import { createOgImage, OgTemplateType } from '@/lib/seo/og-templates';
@@ -278,9 +279,12 @@ export async function GET(request: NextRequest) {
         const { isValid, type, data, error } = validateParams(searchParams);
 
         // Generate image component
-        const imageComponent = isValid
+        const imageResult = isValid
             ? createOgImage(type, data)
             : generateFallbackImage(error);
+
+        const { Template, data: templateData } = imageResult;
+        const imageComponent = <Template data={ templateData } />;
 
         // Create the image response with improved options
         const imageResponse = new ImageResponse(imageComponent, {
@@ -345,8 +349,12 @@ export async function GET(request: NextRequest) {
         });
 
         // Return a fallback image with cache headers
+        const fallbackResult = generateFallbackImage('Failed to generate image');
+        const { Template: FallbackTemplate, data: fallbackData } = fallbackResult;
+        const fallbackComponent = <FallbackTemplate data={ fallbackData } />;
+
         const fallbackResponse = new ImageResponse(
-            generateFallbackImage('Failed to generate image'),
+            fallbackComponent,
             {
                 width: WIDTH,
                 height: HEIGHT,
