@@ -133,7 +133,7 @@ const validateParams = (params: URLSearchParams): {
                 .slice(0, 5); // Limit to 5 tags
 
             data.tags = processedTags;
-        } catch (e) {
+        } catch {
             // Ignore tag parsing errors
             data.tags = [];
         }
@@ -239,7 +239,7 @@ export async function GET(request: NextRequest) {
             success = true;
 
             // Create response from cached data
-            const response = new Response(cachedImageData);
+            const response = new Response(new Uint8Array(cachedImageData));
 
             // Determine appropriate cache TTL based on content type
             const type = searchParams.get('type') || 'default';
@@ -284,7 +284,7 @@ export async function GET(request: NextRequest) {
             : generateFallbackImage(error);
 
         const { Template, data: templateData } = imageResult;
-        const imageComponent = <Template data={ templateData } />;
+        const imageComponent = React.createElement(Template, { data: templateData });
 
         // Create the image response with improved options
         const imageResponse = new ImageResponse(imageComponent, {
@@ -339,11 +339,13 @@ export async function GET(request: NextRequest) {
 
         success = true;
         return cachedResponse;
-    } catch (error: any) {
+    } catch (error: unknown) {
         // Log the error with more context
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorStack = error instanceof Error ? error.stack : undefined;
         console.error('Error generating OG image:', {
-            error: error.message,
-            stack: error.stack,
+            error: errorMessage,
+            stack: errorStack,
             url: request.url,
             timestamp: new Date().toISOString(),
         });
@@ -351,7 +353,7 @@ export async function GET(request: NextRequest) {
         // Return a fallback image with cache headers
         const fallbackResult = generateFallbackImage('Failed to generate image');
         const { Template: FallbackTemplate, data: fallbackData } = fallbackResult;
-        const fallbackComponent = <FallbackTemplate data={ fallbackData } />;
+        const fallbackComponent = React.createElement(FallbackTemplate, { data: fallbackData });
 
         const fallbackResponse = new ImageResponse(
             fallbackComponent,
