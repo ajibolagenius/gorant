@@ -10,7 +10,7 @@ import { getHomePageMetadata } from "@/lib/seo/metadata"
 
 export const generateMetadata = async (): Promise<Metadata> => {
     return getHomePageMetadata();
-}
+};
 
 export default function RootLayout({
     children,

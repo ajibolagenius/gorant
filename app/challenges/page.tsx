@@ -1,12 +1,27 @@
 import { Metadata } from "next"
-import { getPageMetadata } from "@/lib/seo/metadata"
+import { getSeoConfig, getDefaultMetadata } from "@/lib/seo/metadata"
 
-export const generateMetadata = async (): Promise<Metadata> {
-    return getPageMetadata('challenge', {
+export const generateMetadata = async (): Promise<Metadata> => {
+    const config = getSeoConfig();
+    const defaultMetadata = getDefaultMetadata();
+
+    return {
+        ...defaultMetadata,
         title: "Rant Challenges",
-        description: "Join community challenges, share your story, and earn badges on Rant."
-    });
-}
+        description: "Join community challenges, share your story, and earn badges on Rant.",
+        openGraph: {
+            ...defaultMetadata.openGraph,
+            title: "Rant Challenges",
+            description: "Join community challenges, share your story, and earn badges on Rant.",
+            type: 'website',
+        },
+        twitter: {
+            ...defaultMetadata.twitter,
+            title: "Rant Challenges",
+            description: "Join community challenges, share your story, and earn badges on Rant.",
+        },
+    };
+};
 
 import ChallengeClient from "./ChallengeClient"
 
