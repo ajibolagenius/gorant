@@ -86,7 +86,9 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             aria-live={screenReaderMode ? "polite" : undefined}
         >
             <Header userLevel={userLevel} theme={theme} toggleTheme={toggleTheme} pathname={pathname} />
-            {children}
+            <main id="main-content" role="main">
+                {children}
+            </main>
             {/* Desktop Footer */}
             {showFooter && (
                 <footer className="fixed bottom-0 left-0 w-full z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-t border-gray-200 dark:border-gray-700 mt-8 md:mt-16 md:block hidden">

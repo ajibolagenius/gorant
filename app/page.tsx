@@ -15,10 +15,9 @@ import {
     HeartBreak,
     Cloud,
     Confetti,
-    SmileySticker,
-    LegoSmiley
+    SmileySticker
 } from "@phosphor-icons/react"
-import { HelpCircle, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, MoreHorizontal, Dot, GripVertical, Search, PanelLeft, Award, MessageCircle, Send, X, Filter, Eraser } from "lucide-react"
+import { Search, PanelLeft, Award, Send, X, Filter, Eraser } from "lucide-react"
 import { toast } from "sonner"
 import confetti from "canvas-confetti"
 import { useTheme } from "@/hooks/use-theme"
