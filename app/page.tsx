@@ -260,8 +260,13 @@ export default function RantApp() {
             if (notificationSettings.comments) toast.error(`Comment flagged: ${moderationResult.reason}`)
             throw new Error(`Comment flagged: ${moderationResult.reason}`)
         }
+        if (!supabase) {
+            if (notificationSettings.comments) toast.error('Commenting is unavailable in demo mode.')
+            throw new Error('Supabase not configured.')
+        }
+        const client = supabase
         // Only send valid fields
-        const { error } = await supabase.from('comments').insert([
+        const { error } = await client.from('comments').insert([
             {
                 rant_id: rantId,
                 content: content.trim(),
@@ -273,7 +278,7 @@ export default function RantApp() {
             toast.error('Failed to post comment.')
             throw new Error('Failed to post comment.')
         }
-        await supabase.from('rants').update({ comments_count: (rants.find(r => r.id === rantId)?.comments_count || 0) + 1 }).eq('id', rantId)
+        await client.from('rants').update({ comments_count: (rants.find(r => r.id === rantId)?.comments_count || 0) + 1 }).eq('id', rantId)
         fetchRants()
         addPoints(2, "comment")
         checkAchievements("comments_posted", Object.values(comments).flat().length + 1)
@@ -321,7 +326,8 @@ export default function RantApp() {
             likedComments.add(commentId)
         }
         localStorage.setItem(likedCommentsKey, JSON.stringify(Array.from(likedComments)))
-        // Update likes_count in Supabase
+        // Update likes_count in Supabase (skip in demo mode)
+        if (!supabase) return
         const { error } = await supabase.from('comments').update({
             likes_count: isLiked
                 ? Math.max((comments[rantId]?.find(c => c.id === commentId)?.likes_count || 1) - 1, 0)
@@ -375,8 +381,8 @@ export default function RantApp() {
     // Update fetchRants to only use mockRants if Supabase is not configured
     const fetchRants = async () => {
         try {
-            if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-                // Demo mode: use mock data
+            if (!supabase) {
+                // Demo mode: Supabase not configured, use mock data
                 // Only use mockRants in local/dev fallback
                 // setRants(mockRants.map(normalizeRant))
                 setRants([]) // Empty array for production safety
@@ -404,7 +410,7 @@ export default function RantApp() {
 
     // --- Fetch comments for each rant from Supabase ---
     const fetchCommentsForRants = async (rantIds: string[]) => {
-        if (!rantIds.length) return {}
+        if (!rantIds.length || !supabase) return {}
         const { data, error } = await supabase
             .from('comments')
             .select('id, rant_id, content, created_at, anonymous_id, likes_count')
@@ -424,8 +430,11 @@ export default function RantApp() {
 
     // --- Robust real-time listeners for rants and comments ---
     useEffect(() => {
+        // Skip real-time subscriptions when Supabase isn't configured (demo mode)
+        if (!supabase) return
+        const client = supabase
         // Listen for rants changes
-        const rantsChannel = supabase
+        const rantsChannel = client
             .channel('public:rants')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'rants' }, payload => {
                 if (payload.eventType === 'INSERT') {
@@ -438,7 +447,7 @@ export default function RantApp() {
             })
             .subscribe()
         // Listen for comments changes
-        const commentsChannel = supabase
+        const commentsChannel = client
             .channel('public:comments')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, payload => {
                 // Type assertion for payload.new and payload.old
@@ -466,8 +475,8 @@ export default function RantApp() {
             })
             .subscribe()
         return () => {
-            supabase.removeChannel(rantsChannel)
-            supabase.removeChannel(commentsChannel)
+            client.removeChannel(rantsChannel)
+            client.removeChannel(commentsChannel)
         }
     }, [])
 
@@ -519,7 +528,8 @@ export default function RantApp() {
             localStorage.setItem('likedRants', JSON.stringify(Array.from(newSet)))
             return newSet
         })
-        // Update likes_count in Supabase
+        // Update likes_count in Supabase (skip in demo mode)
+        if (!supabase) return
         const { error } = await supabase.from('rants').update({
             likes_count: isLiked ? Math.max((rant?.likes_count || 1) - 1, 0) : (rant?.likes_count || 0) + 1
         }).eq('id', rantId)
@@ -627,8 +637,8 @@ export default function RantApp() {
         const isCurrentlyBookmarked = bookmarkedRants.has(rantId)
 
         if (isCurrentlyBookmarked) {
-            // Remove bookmark from Supabase
-            supabase.from('bookmarks').delete().match({ rant_id: rantId, anonymous_id: getAnonymousId() })
+            // Remove bookmark from Supabase (skip in demo mode)
+            supabase?.from('bookmarks').delete().match({ rant_id: rantId, anonymous_id: getAnonymousId() })
             setBookmarkedRants((prev) => {
                 const newSet = new Set(prev)
                 newSet.delete(rantId)
@@ -636,8 +646,8 @@ export default function RantApp() {
             })
             toast.info("Bookmark removed")
         } else {
-            // Add bookmark to Supabase
-            supabase.from('bookmarks').insert([
+            // Add bookmark to Supabase (skip in demo mode)
+            supabase?.from('bookmarks').insert([
                 { rant_id: rantId, anonymous_id: getAnonymousId() }
             ])
             setBookmarkedRants((prev) => {
@@ -1336,6 +1346,10 @@ export default function RantApp() {
                         // Content moderation check
                         const isAppropriate = await moderateContent(content)
                         if (!isAppropriate) return
+                        if (!supabase) {
+                            toast.error('Posting is unavailable in demo mode.')
+                            return
+                        }
                         // Only send valid fields, including tags array
                         const { data, error } = await supabase.from('rants').insert([
                             {

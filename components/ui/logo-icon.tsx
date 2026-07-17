@@ -94,7 +94,7 @@ export const LogoIcon: React.FC<LogoIconProps> = ({
                     { rotate: 0 },
                     {
                         rotate: -15, duration: 0.1, yoyo: true, repeat: 5, ease: "power1.inOut", onComplete: () => {
-                            gsap.to(logoRef.current, { rotate: 0, duration: 0.1 });
+                            if (logoRef.current) gsap.to(logoRef.current, { rotate: 0, duration: 0.1 });
                         }
                     }
                 );
@@ -110,7 +110,7 @@ export const LogoIcon: React.FC<LogoIconProps> = ({
                     repeat: 1,
                     ease: "power1.inOut",
                     onComplete: () => {
-                        gsap.to([leftBrowRef.current, rightBrowRef.current], { y: 0, duration: 0.1 });
+                        if (leftBrowRef.current && rightBrowRef.current) gsap.to([leftBrowRef.current, rightBrowRef.current], { y: 0, duration: 0.1 });
                     }
                 });
             }
@@ -125,7 +125,7 @@ export const LogoIcon: React.FC<LogoIconProps> = ({
                     repeat: 1,
                     ease: "power1.inOut",
                     onComplete: () => {
-                        gsap.to([leftEyeRef.current, rightEyeRef.current], { x: 0, duration: 0.1 });
+                        if (leftEyeRef.current && rightEyeRef.current) gsap.to([leftEyeRef.current, rightEyeRef.current], { x: 0, duration: 0.1 });
                     }
                 });
             }
@@ -154,7 +154,7 @@ export const LogoIcon: React.FC<LogoIconProps> = ({
                         { rotate: 0 },
                         {
                             rotate: 15, duration: 0.1, yoyo: true, repeat: 5, ease: "power1.inOut", onComplete: () => {
-                                gsap.to(logoRef.current, { rotate: 0, duration: 0.1 });
+                                if (logoRef.current) gsap.to(logoRef.current, { rotate: 0, duration: 0.1 });
                             }
                         }
                         , ">-0.1");
@@ -190,6 +190,9 @@ export const LogoIcon: React.FC<LogoIconProps> = ({
         startIdleInterval();
         return () => {
             if (idleIntervalRef.current) clearInterval(idleIntervalRef.current);
+            // Kill any in-flight tweens so their onComplete callbacks don't run on unmounted refs
+            const targets = [logoRef.current, mouthRef.current, leftEyeRef.current, rightEyeRef.current, leftBrowRef.current, rightBrowRef.current].filter(Boolean);
+            if (targets.length) gsap.killTweensOf(targets);
         };
     }, [playRandomAnimation, startIdleInterval]);
 
