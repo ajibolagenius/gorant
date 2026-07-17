@@ -30,6 +30,14 @@ import { FilterPanel } from "@/components/filter-panel"
 import { ContentModerationService } from "@/services/content-moderation"
 import { PersonalizationService } from "@/services/personalization"
 import { getAnonymousId, normalizeRant } from "@/lib/utils"
+import {
+    fetchRantsApi,
+    fetchCommentsApi,
+    createRantApi,
+    createCommentApi,
+    likeRantApi,
+    likeCommentApi,
+} from "@/lib/api/feed"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { SidebarContent } from "@/components/sidebar-content"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
@@ -260,37 +268,19 @@ export default function RantApp() {
             if (notificationSettings.comments) toast.error(`Comment flagged: ${moderationResult.reason}`)
             throw new Error(`Comment flagged: ${moderationResult.reason}`)
         }
-        if (!supabase) {
-            if (notificationSettings.comments) toast.error('Commenting is unavailable in demo mode.')
-            throw new Error('Supabase not configured.')
-        }
-        const client = supabase
-        // Only send valid fields
-        const { error } = await client.from('comments').insert([
-            {
-                rant_id: rantId,
-                content: content.trim(),
-                created_at: new Date().toISOString(),
-                anonymous_id: getAnonymousId(),
-            }
-        ])
-        if (error) {
-            toast.error('Failed to post comment.')
-            throw new Error('Failed to post comment.')
+        let created: Comment
+        try {
+            created = await createCommentApi(rantId, content.trim(), getAnonymousId())
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Failed to post comment.')
+            throw err instanceof Error ? err : new Error('Failed to post comment.')
         }
         fetchRants()
         addPoints(2, "comment")
         checkAchievements("comments_posted", Object.values(comments).flat().length + 1)
         if (notificationSettings.comments) toast.success("Comment posted! +2 points")
-        // Return a minimal comment object for UI
-        return {
-            id: '', // You may want to re-fetch comments to get the real ID
-            rant_id: rantId,
-            content: content.trim(),
-            created_at: new Date().toISOString(),
-            anonymous_id: getAnonymousId(),
-            likes_count: 0,
-        }
+        // Return the persisted comment (with real id) for the UI
+        return created
     }
 
     // --- Like logic for comments ---
@@ -325,20 +315,12 @@ export default function RantApp() {
             likedComments.add(commentId)
         }
         localStorage.setItem(likedCommentsKey, JSON.stringify(Array.from(likedComments)))
-        // Update likes_count in Supabase (skip in demo mode)
-        if (!supabase) return
-        const { error } = await supabase.rpc('increment_comment_likes', {
-            comment_id: commentId,
-            increment_val: isLiked ? -1 : 1
-        })
-        if (error) {
+        // Persist likes_count change to the database
+        try {
+            await likeCommentApi(commentId, isLiked ? -1 : 1)
+            toast[isLiked ? 'info' : 'success'](isLiked ? 'Comment unliked.' : 'Comment liked!')
+        } catch {
             toast.error(isLiked ? 'Failed to unlike comment.' : 'Failed to like comment.')
-        } else {
-            if (isLiked) {
-                toast.info('Comment unliked.')
-            } else {
-                toast.success('Comment liked!')
-            }
         }
     }
 
@@ -376,26 +358,10 @@ export default function RantApp() {
         }
     }
 
-    // Update fetchRants to only use mockRants if Supabase is not configured
+    // Fetch rants from the Turso-backed demo API
     const fetchRants = async () => {
         try {
-            if (!supabase) {
-                // Demo mode: Supabase not configured, use mock data
-                // Only use mockRants in local/dev fallback
-                // setRants(mockRants.map(normalizeRant))
-                setRants([]) // Empty array for production safety
-                setLoading(false)
-                return
-            }
-            // Always use Supabase in production
-            const { data, error } = await supabase
-                .from("rants")
-                .select("id, content, mood, likes_count, comments_count, anonymous_id, created_at, tags")
-                .order("created_at", { ascending: false })
-            // console.log("Supabase rants data:", data)
-            if (error) throw error
-            const safeData = (data || []).map(normalizeRant)
-            // console.log("Normalized rants:", safeData)
+            const safeData = await fetchRantsApi()
             setRants(safeData)
             setLoading(false)
         } catch (error) {
@@ -406,24 +372,14 @@ export default function RantApp() {
         }
     }
 
-    // --- Fetch comments for each rant from Supabase ---
+    // --- Fetch comments for a set of rants from the demo API ---
     const fetchCommentsForRants = async (rantIds: string[]) => {
-        if (!rantIds.length || !supabase) return {}
-        const { data, error } = await supabase
-            .from('comments')
-            .select('id, rant_id, content, created_at, anonymous_id, likes_count')
-            .in('rant_id', rantIds)
-        if (error) {
+        try {
+            return await fetchCommentsApi(rantIds)
+        } catch (error) {
             console.error('Error fetching comments:', error)
             return {}
         }
-        // Group comments by rant_id
-        const grouped: { [key: string]: Comment[] } = {}
-        for (const comment of data || []) {
-            if (!grouped[comment.rant_id]) grouped[comment.rant_id] = []
-            grouped[comment.rant_id].push(comment)
-        }
-        return grouped
     }
 
     // --- Robust real-time listeners for rants and comments ---
@@ -526,33 +482,30 @@ export default function RantApp() {
             localStorage.setItem('likedRants', JSON.stringify(Array.from(newSet)))
             return newSet
         })
-        // Update likes_count in Supabase (skip in demo mode)
-        if (!supabase) return
-        const { error } = await supabase.rpc('increment_rant_likes', {
-            rant_id: rantId,
-            increment_val: isLiked ? -1 : 1
-        })
-        if (error) {
+        // Persist likes_count change to the database
+        try {
+            await likeRantApi(rantId, isLiked ? -1 : 1)
+        } catch {
             toast.error(isLiked ? 'Failed to unlike rant.' : 'Failed to like rant.')
+            return
+        }
+        if (!isLiked) {
+            // Like analytics, points, confetti, etc.
+            await trackUserAction("like_rant", {
+                rantId,
+                rantMood: rant?.mood,
+                rantTags: rant?.tags,
+                rantAge: rant ? Math.floor((Date.now() - new Date(rant.created_at).getTime()) / (1000 * 60 * 60)) : null,
+                previousLikesCount: rant?.likes_count || 0,
+                userTotalLikes: likedRants.size + 1
+            })
+            addPoints(1, "like")
+            await checkAchievements("likes_given", likedRants.size + 1)
+            await audioService.playActionSound('like')
+            toast.success("Rant liked! +1 point")
+            confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } })
         } else {
-            if (!isLiked) {
-                // Like analytics, points, confetti, etc.
-                await trackUserAction("like_rant", {
-                    rantId,
-                    rantMood: rant?.mood,
-                    rantTags: rant?.tags,
-                    rantAge: rant ? Math.floor((Date.now() - new Date(rant.created_at).getTime()) / (1000 * 60 * 60)) : null,
-                    previousLikesCount: rant?.likes_count || 0,
-                    userTotalLikes: likedRants.size + 1
-                })
-                addPoints(1, "like")
-                await checkAchievements("likes_given", likedRants.size + 1)
-                await audioService.playActionSound('like')
-                toast.success("Rant liked! +1 point")
-                confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } })
-            } else {
-                toast.info("Rant unliked.")
-            }
+            toast.info("Rant unliked.")
         }
     }
 
@@ -1345,30 +1298,16 @@ export default function RantApp() {
                         // Content moderation check
                         const isAppropriate = await moderateContent(content)
                         if (!isAppropriate) return
-                        if (!supabase) {
-                            toast.error('Posting is unavailable in demo mode.')
+                        // Persist the rant via the demo API
+                        let created
+                        try {
+                            created = await createRantApi(content, mood, Array.isArray(tags) ? tags : [], getAnonymousId())
+                        } catch (err) {
+                            toast.error(err instanceof Error ? err.message : 'Failed to post rant.')
                             return
                         }
-                        // Only send valid fields, including tags array
-                        const { data, error } = await supabase.from('rants').insert([
-                            {
-                                content,
-                                mood,
-                                anonymous_id: getAnonymousId(),
-                                tags: Array.isArray(tags) ? tags : [],
-                                created_at: new Date().toISOString(),
-                                likes_count: 0,
-                                comments_count: 0
-                            }
-                        ]).select('*')
-                        if (error) {
-                            toast.error('Failed to post rant.')
-                            return
-                        }
-                        // Optimistically update UI
-                        if (data && data[0]) {
-                            setRants((prev) => [normalizeRant(data[0]), ...prev])
-                        }
+                        // Optimistically update UI, then refresh from the server
+                        setRants((prev) => [created, ...prev])
                         fetchRants()
                         addPoints(5, "post")
                         await checkAchievements("posts_created", rants.length + 1)
