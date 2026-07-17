@@ -1,5 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
 import { getSeoConfig } from '@/lib/seo/config';
+import { listRants } from '@/lib/db/repo';
 
 // Revalidate the feed at most once per hour
 export const revalidate = 3600;
@@ -51,27 +51,14 @@ export async function GET() {
     const config = getSeoConfig();
     const baseUrl = config.siteUrl.replace(/\/$/, '');
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
     let rants: RantRow[] = [];
 
-    // Only query when Supabase is configured; otherwise emit an empty (but valid) feed.
-    if (supabaseUrl && supabaseAnonKey) {
-        try {
-            const supabase = createClient(supabaseUrl, supabaseAnonKey);
-            const { data, error } = await supabase
-                .from('rants')
-                .select('id, content, mood, created_at, tags')
-                .order('created_at', { ascending: false })
-                .limit(MAX_ITEMS);
-
-            if (error) throw error;
-            rants = (data as RantRow[]) || [];
-        } catch (err) {
-            console.error('Error building RSS feed:', err);
-            rants = [];
-        }
+    // Read the latest rants from Turso; emit an empty (but valid) feed on failure.
+    try {
+        rants = await listRants({ sortBy: 'latest', limit: MAX_ITEMS });
+    } catch (err) {
+        console.error('Error building RSS feed:', err);
+        rants = [];
     }
 
     const lastBuildDate = (rants[0]?.created_at
