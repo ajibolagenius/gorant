@@ -1,6 +1,10 @@
 import { NextRequest } from 'next/server';
 import { initializeCacheWarming } from '@/lib/seo/og-cache-manager';
 
+// This route reads request headers, so it must be rendered on demand
+// (prevents the DYNAMIC_SERVER_USAGE error during static generation).
+export const dynamic = 'force-dynamic';
+
 /**
  * API route to manually trigger cache warming
  * This can be called periodically to ensure the cache is warm
