@@ -44,9 +44,10 @@
 - [x] Supabase, authentication, database
 - [x] API, serverless functions
 - [ ] Deployment, CI/CD, monitoring, security, performance, scalability, backup
-- [ ] Favicon
-- [ ] Dynamic Open Graphs (and Image)
-- [ ] Meta Tags, SEO, Sitemap, RSS Feeds, Twitter Cards, Schema.org
+- [x] Favicon
+- [x] Dynamic Open Graphs (and Image)
+- [x] Meta Tags, SEO, Sitemap, Twitter Cards, Schema.org
+- [x] RSS Feeds
 - [ ] Admin Super User Creation
 
 ---

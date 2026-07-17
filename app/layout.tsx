@@ -24,9 +24,7 @@ export default function RootLayout({
                 <meta name="theme-color" content="#a259ff" />
                 <meta name="msapplication-TileColor" content="#a259ff" />
                 <meta name="color-scheme" content="light dark" />
-                <link rel="manifest" href="/public/manifest.json" />
-
-
+                <link rel="alternate" type="application/rss+xml" title="Rant — Latest Rants" href="/rss.xml" />
             </head>
             <body>
                 <a
