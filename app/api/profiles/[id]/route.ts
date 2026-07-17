@@ -4,6 +4,8 @@ import {
     upsertProfile,
     getAuthorStats,
     listRantsByAuthor,
+    getFollowCounts,
+    isFollowing,
     ValidationError,
 } from '@/lib/db/repo';
 import { rateLimit, clientIp } from '@/lib/db/rate-limit';
@@ -17,7 +19,7 @@ export const dynamic = 'force-dynamic';
  * aggregate stats, and the author's rants. Anyone can read any profile.
  */
 export async function GET(
-    _request: Request,
+    request: Request,
     { params }: { params: { id: string } }
 ) {
     const id = decodeURIComponent(params.id || '').slice(0, 64);
@@ -25,13 +27,25 @@ export async function GET(
         return NextResponse.json({ error: 'Missing profile id.' }, { status: 400 });
     }
 
+    // Optional viewer id lets us report whether the viewer follows this profile.
+    const viewer = (new URL(request.url).searchParams.get('viewer') || '').slice(0, 64);
+
     try {
-        const [profile, stats, rants] = await Promise.all([
+        const [profile, stats, rants, followCounts, viewerFollows] = await Promise.all([
             getProfile(id),
             getAuthorStats(id),
             listRantsByAuthor(id, { limit: 50 }),
+            getFollowCounts(id),
+            viewer ? isFollowing(viewer, id) : Promise.resolve(false),
         ]);
-        return NextResponse.json({ id, profile, stats, rants });
+        return NextResponse.json({
+            id,
+            profile,
+            stats,
+            rants,
+            followCounts,
+            isFollowing: viewerFollows,
+        });
     } catch (err) {
         console.error('GET /api/profiles/[id] failed:', err);
         return NextResponse.json({ error: 'Failed to load profile.' }, { status: 500 });

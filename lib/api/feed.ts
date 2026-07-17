@@ -23,6 +23,16 @@ export async function fetchRantsApi(): Promise<Rant[]> {
     return (rants || []).map(normalizeRant);
 }
 
+export async function fetchFollowingRantsApi(viewerId: string): Promise<Rant[]> {
+    if (!viewerId) return [];
+    const res = await fetch(`/api/rants/following?viewer=${encodeURIComponent(viewerId)}`, {
+        cache: 'no-store',
+    });
+    if (!res.ok) throw new Error(await parseError(res, 'Failed to load following feed.'));
+    const { rants } = await res.json();
+    return (rants || []).map(normalizeRant);
+}
+
 export async function fetchCommentsApi(
     rantIds: string[]
 ): Promise<{ [key: string]: Comment[] }> {

@@ -23,7 +23,7 @@ export async function resetDemoDatabase(): Promise<{
     const seed = readFileSync(join(dbDir, 'seed.sql'), 'utf8');
 
     await db.executeMultiple(
-        'DROP TABLE IF EXISTS comments; DROP TABLE IF EXISTS bookmarks; DROP TABLE IF EXISTS profiles; DROP TABLE IF EXISTS rants;'
+        'DROP TABLE IF EXISTS comments; DROP TABLE IF EXISTS bookmarks; DROP TABLE IF EXISTS follows; DROP TABLE IF EXISTS profiles; DROP TABLE IF EXISTS rants;'
     );
     await db.executeMultiple(schema);
     await db.executeMultiple(seed);

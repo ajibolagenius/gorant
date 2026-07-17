@@ -34,7 +34,7 @@
 - [x] Moderation tools
 - [x] Reporting
 - [ ] Groups
-- [ ] User following
+- [x] User following
 - [x] Profiles
 
 ---

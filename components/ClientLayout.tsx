@@ -6,7 +6,7 @@ import { useTheme } from "@/hooks/use-theme"
 import { usePathname } from "next/navigation"
 import Header from "./Header"
 import Link from "next/link"
-import { TrendUp, Trophy, Lightning, Star, House, Bell, Shield, Users, Rocket, Globe, Info } from "@phosphor-icons/react"
+import { TrendUp, Trophy, Lightning, Star, House, Bell, Shield, Users, UsersThree, Rocket, Globe, Info } from "@phosphor-icons/react"
 import { FileText } from "lucide-react"
 import { useNotifications } from "@/hooks/use-notifications"
 import { useAnalytics } from "@/hooks/use-analytics"
@@ -136,6 +136,7 @@ function HamburgerDrawer() {
                     <nav className="flex flex-col gap-2 p-6">
                         <span className="text-xs uppercase font-bold text-muted-foreground mb-2 tracking-widest select-none">Navigation</span>
                         <Link href="/" onClick={() => trackUserAction("navigation_click", { destination: "feed", source: "mobile_nav" })} className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <House weight="duotone" className="w-5 h-5" />Feed</Link>
+                        <Link href="/following" onClick={() => trackUserAction("navigation_click", { destination: "following", source: "mobile_nav" })} className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/following" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <UsersThree weight="duotone" className="w-5 h-5" />Following</Link>
                         <Link href="/trending" onClick={() => trackUserAction("navigation_click", { destination: "trending", source: "mobile_nav" })} className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/trending" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <TrendUp weight="duotone" className="w-5 h-5" />Trending</Link>
                         <Link href="/challenges" onClick={() => trackUserAction("navigation_click", { destination: "challenges", source: "mobile_nav" })} className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/challenges" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <Trophy weight="duotone" className="w-5 h-5" />Challenges</Link>
                         <Link href="/leaderboard" onClick={() => trackUserAction("navigation_click", { destination: "leaderboard", source: "mobile_nav" })} className={`flex items-center gap-3 px-3 py-2 rounded-none font-medium text-base ${pathname === "/leaderboard" ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-200"}`}> <Lightning weight="duotone" className="w-5 h-5" />Leaderboard</Link>

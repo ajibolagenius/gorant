@@ -354,3 +354,94 @@ export async function listRantsByAuthor(
     const result = await db.execute({ sql, args });
     return result.rows.map(mapRant);
 }
+
+/* -------------------------------------------------------------------------- */
+/*  Follows                                                                   */
+/* -------------------------------------------------------------------------- */
+
+export interface FollowCounts {
+    followers: number;
+    following: number;
+}
+
+function normId(id: string): string {
+    return (id || '').slice(0, 64);
+}
+
+/** Follow followeeId as followerId. Idempotent; self-follows are rejected. */
+export async function followUser(followerId: string, followeeId: string): Promise<void> {
+    const follower = normId(followerId);
+    const followee = normId(followeeId);
+    if (!follower || !followee) throw new ValidationError('Both ids are required.');
+    if (follower === followee) throw new ValidationError('You cannot follow yourself.');
+    await db.execute({
+        sql: `INSERT INTO follows (follower_id, followee_id, created_at, is_seed)
+              VALUES (?, ?, ?, 0)
+              ON CONFLICT (follower_id, followee_id) DO NOTHING`,
+        args: [follower, followee, nowIso()],
+    });
+}
+
+/** Remove a follow edge. Idempotent. */
+export async function unfollowUser(followerId: string, followeeId: string): Promise<void> {
+    const follower = normId(followerId);
+    const followee = normId(followeeId);
+    if (!follower || !followee) throw new ValidationError('Both ids are required.');
+    await db.execute({
+        sql: 'DELETE FROM follows WHERE follower_id = ? AND followee_id = ?',
+        args: [follower, followee],
+    });
+}
+
+/** Follower / following counts for a given identity. */
+export async function getFollowCounts(id: string): Promise<FollowCounts> {
+    const anon = normId(id);
+    if (!anon) return { followers: 0, following: 0 };
+    const result = await db.execute({
+        sql: `SELECT
+                (SELECT COUNT(*) FROM follows WHERE followee_id = ?) AS followers,
+                (SELECT COUNT(*) FROM follows WHERE follower_id = ?) AS following`,
+        args: [anon, anon],
+    });
+    const row = result.rows[0] ?? {};
+    return {
+        followers: Number(row.followers) || 0,
+        following: Number(row.following) || 0,
+    };
+}
+
+/** True if followerId currently follows followeeId. */
+export async function isFollowing(followerId: string, followeeId: string): Promise<boolean> {
+    const follower = normId(followerId);
+    const followee = normId(followeeId);
+    if (!follower || !followee || follower === followee) return false;
+    const result = await db.execute({
+        sql: 'SELECT 1 FROM follows WHERE follower_id = ? AND followee_id = ? LIMIT 1',
+        args: [follower, followee],
+    });
+    return result.rows.length > 0;
+}
+
+/** Rants authored by everyone followerId follows, newest first. */
+export async function listFollowingRants(
+    followerId: string,
+    opts: { limit?: number; offset?: number } = {}
+): Promise<RantRecord[]> {
+    const follower = normId(followerId);
+    if (!follower) return [];
+    const limit = Math.min(Math.max(opts.limit ?? 100, 1), 200);
+    const args: (string | number)[] = [follower, limit];
+    let sql = `SELECT r.id, r.content, r.mood, r.likes_count, r.comments_count,
+                      r.anonymous_id, r.tags, r.created_at
+               FROM rants r
+               JOIN follows f ON f.followee_id = r.anonymous_id
+               WHERE f.follower_id = ?
+               ORDER BY r.created_at DESC
+               LIMIT ?`;
+    if (opts.offset && opts.offset > 0) {
+        sql += ' OFFSET ?';
+        args.push(opts.offset);
+    }
+    const result = await db.execute({ sql, args });
+    return result.rows.map(mapRant);
+}

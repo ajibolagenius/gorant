@@ -8,59 +8,26 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-    Smiley,
-    SmileySad,
-    SmileyMeh,
-    SmileyNervous,
-    Heart,
-    HeartBreak,
-    Cloud,
-    Confetti,
-    SmileySticker,
     ArrowLeft,
     PencilSimple,
     ChatCircle,
     Heart as HeartIcon,
+    UserPlus,
+    UserMinus,
 } from "@phosphor-icons/react";
+import { MOODS, getMoodIcon, getMoodColor, formatTimeAgo } from "@/components/mood-config";
 import { toast } from "sonner";
 import { getAnonymousId, friendlyNameFromId } from "@/lib/utils";
 import { storageGet, storageSet } from "@/lib/storage";
-import { fetchProfileApi, type AuthorStats, type Profile } from "@/lib/api/profiles";
+import {
+    fetchProfileApi,
+    setFollowApi,
+    type AuthorStats,
+    type FollowCounts,
+    type Profile,
+} from "@/lib/api/profiles";
 import { likeRantApi } from "@/lib/api/feed";
 
-const MOODS = [
-    { icon: SmileySad, label: "Sad", value: "sad", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300" },
-    { icon: SmileySad, label: "Crying", value: "crying", color: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300" },
-    { icon: Smiley, label: "Happy", value: "happy", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300" },
-    { icon: SmileyMeh, label: "Neutral", value: "neutral", color: "bg-gray-100 text-gray-800 dark:bg-gray-700/50 dark:text-gray-300" },
-    { icon: SmileyNervous, label: "Angry", value: "angry", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300" },
-    { icon: HeartBreak, label: "Heartbroken", value: "heartbroken", color: "bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300" },
-    { icon: Heart, label: "Love", value: "love", color: "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300" },
-    { icon: SmileyNervous, label: "Anxious", value: "anxious", color: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300" },
-    { icon: SmileyMeh, label: "Confused", value: "confused", color: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300" },
-    { icon: Cloud, label: "Tired", value: "tired", color: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300" },
-    { icon: Confetti, label: "Excited", value: "excited", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" },
-    { icon: SmileySticker, label: "Confident", value: "confident", color: "bg-lime-100 text-lime-800 dark:bg-lime-900/30 dark:text-lime-300" },
-];
-
-function getMoodIcon(mood: string) {
-    return MOODS.find((m) => m.value === mood)?.icon || SmileyMeh;
-}
-function getMoodColor(mood: string) {
-    return (
-        MOODS.find((m) => m.value === mood)?.color ||
-        "bg-gray-100 text-gray-800 dark:bg-gray-700/50 dark:text-gray-300"
-    );
-}
-function formatTimeAgo(dateString: string) {
-    const date = new Date(dateString);
-    const diff = Math.floor((Date.now() - date.getTime()) / 1000);
-    if (diff < 60) return "just now";
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-    if (diff < 2592000) return `${Math.floor(diff / 86400)}d ago`;
-    return date.toLocaleDateString();
-}
 function formatJoinDate(dateString: string | null) {
     if (!dateString) return null;
     return new Date(dateString).toLocaleDateString(undefined, {
@@ -80,6 +47,9 @@ export default function ProfileClient({ id }: { id: string }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isOwnProfile, setIsOwnProfile] = useState(false);
+    const [followCounts, setFollowCounts] = useState<FollowCounts>({ followers: 0, following: 0 });
+    const [following, setFollowing] = useState(false);
+    const [followBusy, setFollowBusy] = useState(false);
 
     const [likedRants, setLikedRants] = useState<Set<string>>(new Set());
     const [bookmarkedRants, setBookmarkedRants] = useState<Set<string>>(new Set());
@@ -99,12 +69,14 @@ export default function ProfileClient({ id }: { id: string }) {
         let cancelled = false;
         setLoading(true);
         setError(null);
-        fetchProfileApi(id)
+        fetchProfileApi(id, getAnonymousId())
             .then((data) => {
                 if (cancelled) return;
                 setProfile(data.profile);
                 setStats(data.stats);
                 setRants(data.rants);
+                setFollowCounts(data.followCounts);
+                setFollowing(data.isFollowing);
             })
             .catch((err) => {
                 if (!cancelled) setError(err?.message || "Failed to load profile.");
@@ -163,6 +135,22 @@ export default function ProfileClient({ id }: { id: string }) {
         });
     }, []);
 
+    const handleFollowToggle = useCallback(async () => {
+        const viewerId = getAnonymousId();
+        if (!viewerId) return;
+        setFollowBusy(true);
+        try {
+            const result = await setFollowApi(id, viewerId, !following);
+            setFollowing(result.following);
+            setFollowCounts(result.counts);
+            toast.success(result.following ? "Following!" : "Unfollowed.");
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : "Failed to update follow.");
+        } finally {
+            setFollowBusy(false);
+        }
+    }, [id, following]);
+
     const displayName = profile?.display_name?.trim() || friendlyNameFromId(id);
     const AvatarIcon = getMoodIcon(profile?.avatar_mood || "neutral");
     const avatarColor = getMoodColor(profile?.avatar_mood || "neutral");
@@ -218,18 +206,43 @@ export default function ProfileClient({ id }: { id: string }) {
                                                 : "No bio yet."}
                                         </p>
                                     )}
-                                    {joinDate && (
-                                        <p className="text-xs text-muted-foreground/70 mt-2">
-                                            Active since {joinDate}
-                                        </p>
-                                    )}
+                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-muted-foreground">
+                                        <span>
+                                            <span className="font-semibold text-foreground">{followCounts.followers}</span>{" "}
+                                            {followCounts.followers === 1 ? "follower" : "followers"}
+                                        </span>
+                                        <span>
+                                            <span className="font-semibold text-foreground">{followCounts.following}</span>{" "}
+                                            following
+                                        </span>
+                                        {joinDate && <span className="text-muted-foreground/70">Active since {joinDate}</span>}
+                                    </div>
                                 </div>
-                                {isOwnProfile && (
+                                {isOwnProfile ? (
                                     <Button variant="outline" size="sm" asChild>
                                         <Link href="/settings">
                                             <PencilSimple className="w-4 h-4 mr-1" weight="bold" />
                                             Edit profile
                                         </Link>
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        variant={following ? "outline" : "default"}
+                                        size="sm"
+                                        onClick={handleFollowToggle}
+                                        disabled={followBusy}
+                                    >
+                                        {following ? (
+                                            <>
+                                                <UserMinus className="w-4 h-4 mr-1" weight="bold" />
+                                                Unfollow
+                                            </>
+                                        ) : (
+                                            <>
+                                                <UserPlus className="w-4 h-4 mr-1" weight="bold" />
+                                                Follow
+                                            </>
+                                        )}
                                     </Button>
                                 )}
                             </div>

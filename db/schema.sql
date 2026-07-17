@@ -55,9 +55,22 @@ CREATE TABLE IF NOT EXISTS profiles (
     is_seed      INTEGER NOT NULL DEFAULT 0
 );
 
+-- Directed follow edges between pseudonymous identities (follower -> followee).
+-- Both sides are anonymous_ids; a row need not have a matching profiles row.
+CREATE TABLE IF NOT EXISTS follows (
+    follower_id TEXT NOT NULL,
+    followee_id TEXT NOT NULL,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    is_seed     INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (follower_id, followee_id),
+    CHECK (follower_id <> followee_id)
+);
+
 CREATE INDEX IF NOT EXISTS idx_rants_created_at   ON rants (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_rants_likes_count  ON rants (likes_count DESC);
 CREATE INDEX IF NOT EXISTS idx_rants_mood         ON rants (mood);
 CREATE INDEX IF NOT EXISTS idx_comments_rant_id   ON comments (rant_id);
 CREATE INDEX IF NOT EXISTS idx_bookmarks_anon     ON bookmarks (anonymous_id);
 CREATE INDEX IF NOT EXISTS idx_rants_anonymous_id ON rants (anonymous_id);
+CREATE INDEX IF NOT EXISTS idx_follows_follower   ON follows (follower_id);
+CREATE INDEX IF NOT EXISTS idx_follows_followee   ON follows (followee_id);

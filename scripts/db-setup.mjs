@@ -46,7 +46,7 @@ async function main() {
     if (reset) {
         console.log('→ Dropping existing tables (--reset)…');
         await db.executeMultiple(
-            'DROP TABLE IF EXISTS comments; DROP TABLE IF EXISTS bookmarks; DROP TABLE IF EXISTS profiles; DROP TABLE IF EXISTS rants;'
+            'DROP TABLE IF EXISTS comments; DROP TABLE IF EXISTS bookmarks; DROP TABLE IF EXISTS follows; DROP TABLE IF EXISTS profiles; DROP TABLE IF EXISTS rants;'
         );
     }
 

@@ -21,11 +21,18 @@ export interface AuthorStats {
     first_seen: string | null;
 }
 
+export interface FollowCounts {
+    followers: number;
+    following: number;
+}
+
 export interface ProfileResponse {
     id: string;
     profile: Profile | null;
     stats: AuthorStats;
     rants: Rant[];
+    followCounts: FollowCounts;
+    isFollowing: boolean;
 }
 
 async function parseError(res: Response, fallback: string): Promise<string> {
@@ -37,8 +44,9 @@ async function parseError(res: Response, fallback: string): Promise<string> {
     }
 }
 
-export async function fetchProfileApi(id: string): Promise<ProfileResponse> {
-    const res = await fetch(`/api/profiles/${encodeURIComponent(id)}`, { cache: 'no-store' });
+export async function fetchProfileApi(id: string, viewerId?: string): Promise<ProfileResponse> {
+    const qs = viewerId ? `?viewer=${encodeURIComponent(viewerId)}` : '';
+    const res = await fetch(`/api/profiles/${encodeURIComponent(id)}${qs}`, { cache: 'no-store' });
     if (!res.ok) throw new Error(await parseError(res, 'Failed to load profile.'));
     const data = await res.json();
     return {
@@ -46,6 +54,27 @@ export async function fetchProfileApi(id: string): Promise<ProfileResponse> {
         profile: data.profile ?? null,
         stats: data.stats ?? { rants_count: 0, likes_received: 0, first_seen: null },
         rants: (data.rants || []).map(normalizeRant),
+        followCounts: data.followCounts ?? { followers: 0, following: 0 },
+        isFollowing: Boolean(data.isFollowing),
+    };
+}
+
+/** Follow or unfollow a target identity. Returns the target's updated counts. */
+export async function setFollowApi(
+    followeeId: string,
+    followerId: string,
+    follow: boolean
+): Promise<{ following: boolean; counts: FollowCounts }> {
+    const res = await fetch(`/api/profiles/${encodeURIComponent(followeeId)}/follow`, {
+        method: follow ? 'POST' : 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ followerId }),
+    });
+    if (!res.ok) throw new Error(await parseError(res, 'Failed to update follow.'));
+    const data = await res.json();
+    return {
+        following: Boolean(data.following),
+        counts: data.counts ?? { followers: 0, following: 0 },
     };
 }
 
