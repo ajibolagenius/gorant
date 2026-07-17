@@ -36,6 +36,24 @@ export interface CommentRecord {
     created_at: string;
 }
 
+export interface ProfileRecord {
+    anonymous_id: string;
+    display_name: string;
+    bio: string;
+    avatar_mood: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface AuthorStats {
+    rants_count: number;
+    likes_received: number;
+    first_seen: string | null;
+}
+
+export const MAX_DISPLAY_NAME_LENGTH = 40;
+export const MAX_BIO_LENGTH = 280;
+
 export class ValidationError extends Error {}
 
 function nowIso(): string {
@@ -60,6 +78,17 @@ function mapRant(row: any): RantRecord {
         anonymous_id: String(row.anonymous_id),
         tags,
         created_at: String(row.created_at),
+    };
+}
+
+function mapProfile(row: any): ProfileRecord {
+    return {
+        anonymous_id: String(row.anonymous_id),
+        display_name: String(row.display_name ?? ''),
+        bio: String(row.bio ?? ''),
+        avatar_mood: String(row.avatar_mood ?? 'neutral'),
+        created_at: String(row.created_at),
+        updated_at: String(row.updated_at),
     };
 }
 
@@ -237,4 +266,91 @@ export async function adjustCommentLikes(id: string, delta: number): Promise<num
     });
     if (result.rows.length === 0) throw new ValidationError('Comment not found.');
     return Number(result.rows[0].likes_count) || 0;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Profiles                                                                  */
+/* -------------------------------------------------------------------------- */
+
+/** Fetch a profile row by anonymous_id, or null if the user never customized one. */
+export async function getProfile(anonymousId: string): Promise<ProfileRecord | null> {
+    const id = (anonymousId || '').slice(0, 64);
+    if (!id) return null;
+    const result = await db.execute({
+        sql: `SELECT anonymous_id, display_name, bio, avatar_mood, created_at, updated_at
+              FROM profiles WHERE anonymous_id = ?`,
+        args: [id],
+    });
+    return result.rows.length ? mapProfile(result.rows[0]) : null;
+}
+
+/** Create or update the caller's own profile. Returns the persisted row. */
+export async function upsertProfile(input: {
+    anonymousId: string;
+    displayName?: string;
+    bio?: string;
+    avatarMood?: string;
+}): Promise<ProfileRecord> {
+    const id = (input.anonymousId || '').slice(0, 64);
+    if (!id) throw new ValidationError('anonymousId is required.');
+
+    const displayName = (input.displayName ?? '').trim().slice(0, MAX_DISPLAY_NAME_LENGTH);
+    const bio = (input.bio ?? '').trim().slice(0, MAX_BIO_LENGTH);
+    const avatarMood = VALID_MOODS.has(input.avatarMood ?? '')
+        ? (input.avatarMood as string)
+        : 'neutral';
+    const now = nowIso();
+
+    await db.execute({
+        sql: `INSERT INTO profiles (anonymous_id, display_name, bio, avatar_mood, created_at, updated_at, is_seed)
+              VALUES (?, ?, ?, ?, ?, ?, 0)
+              ON CONFLICT (anonymous_id) DO UPDATE SET
+                  display_name = excluded.display_name,
+                  bio          = excluded.bio,
+                  avatar_mood  = excluded.avatar_mood,
+                  updated_at   = excluded.updated_at`,
+        args: [id, displayName, bio, avatarMood, now, now],
+    });
+
+    const saved = await getProfile(id);
+    if (!saved) throw new ValidationError('Failed to save profile.');
+    return saved;
+}
+
+/** Aggregate activity stats for an author, derived from their rants. */
+export async function getAuthorStats(anonymousId: string): Promise<AuthorStats> {
+    const id = (anonymousId || '').slice(0, 64);
+    if (!id) return { rants_count: 0, likes_received: 0, first_seen: null };
+    const result = await db.execute({
+        sql: `SELECT COUNT(*) AS rants_count,
+                     COALESCE(SUM(likes_count), 0) AS likes_received,
+                     MIN(created_at) AS first_seen
+              FROM rants WHERE anonymous_id = ?`,
+        args: [id],
+    });
+    const row = result.rows[0] ?? {};
+    return {
+        rants_count: Number(row.rants_count) || 0,
+        likes_received: Number(row.likes_received) || 0,
+        first_seen: row.first_seen ? String(row.first_seen) : null,
+    };
+}
+
+/** List an author's rants, newest first. */
+export async function listRantsByAuthor(
+    anonymousId: string,
+    opts: { limit?: number; offset?: number } = {}
+): Promise<RantRecord[]> {
+    const id = (anonymousId || '').slice(0, 64);
+    if (!id) return [];
+    const limit = Math.min(Math.max(opts.limit ?? 50, 1), 200);
+    const args: (string | number)[] = [id, limit];
+    let sql = `SELECT id, content, mood, likes_count, comments_count, anonymous_id, tags, created_at
+               FROM rants WHERE anonymous_id = ? ORDER BY created_at DESC LIMIT ?`;
+    if (opts.offset && opts.offset > 0) {
+        sql += ' OFFSET ?';
+        args.push(opts.offset);
+    }
+    const result = await db.execute({ sql, args });
+    return result.rows.map(mapRant);
 }

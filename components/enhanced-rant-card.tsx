@@ -37,7 +37,8 @@ import React from "react"
 import { audioService } from "@/services/audio-service"
 import { useNotifications, notificationHelpers } from "@/hooks/use-notifications"
 import { useAnalytics } from "@/hooks/use-analytics"
-import { getAnonymousId } from "@/lib/utils"
+import { getAnonymousId, friendlyNameFromId } from "@/lib/utils"
+import Link from "next/link"
 
 export interface Comment {
     id: string
@@ -541,7 +542,13 @@ const EnhancedRantCardComponent = React.forwardRef<HTMLDivElement, EnhancedRantC
                     {/* Right: Eye + User ID */}
                     <div className="flex items-center gap-2">
                         <Eye className="w-3 h-3" />
-                        <span>{rant.anonymous_id}</span>
+                        <Link
+                            href={`/u/${encodeURIComponent(rant.anonymous_id)}`}
+                            className="hover:text-purple-600 dark:hover:text-purple-400 hover:underline transition-colors"
+                            title="View profile"
+                        >
+                            {friendlyNameFromId(rant.anonymous_id)}
+                        </Link>
                     </div>
                 </div>
 
@@ -590,9 +597,13 @@ const EnhancedRantCardComponent = React.forwardRef<HTMLDivElement, EnhancedRantC
                                     >
                                         <div className="flex items-start justify-between mb-2">
                                             <div className="flex items-center space-x-2">
-                                                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                                                    {comment.anonymous_id}
-                                                </span>
+                                                <Link
+                                                    href={`/u/${encodeURIComponent(comment.anonymous_id)}`}
+                                                    className="text-sm font-medium text-gray-800 dark:text-gray-200 hover:text-purple-600 dark:hover:text-purple-400 hover:underline transition-colors"
+                                                    title="View profile"
+                                                >
+                                                    {friendlyNameFromId(comment.anonymous_id)}
+                                                </Link>
                                                 <span className="text-xs text-gray-500 dark:text-gray-400">
                                                     {formatTimeAgo(comment.created_at)}
                                                 </span>

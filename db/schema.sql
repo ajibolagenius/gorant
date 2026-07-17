@@ -38,8 +38,26 @@ CREATE TABLE IF NOT EXISTS bookmarks (
     UNIQUE (anonymous_id, rant_id)
 );
 
+-- Pseudonymous profiles. Keyed by the client-generated anonymous_id (the same
+-- opaque identity used on rants/comments/bookmarks). A row exists only once a
+-- visitor customizes their display name or bio; the anonymous_id remains a valid
+-- author even without a profile row (the UI falls back to a deterministic name).
+CREATE TABLE IF NOT EXISTS profiles (
+    anonymous_id TEXT PRIMARY KEY,
+    display_name TEXT NOT NULL DEFAULT '' CHECK (length(display_name) <= 40),
+    bio          TEXT NOT NULL DEFAULT '' CHECK (length(bio) <= 280),
+    avatar_mood  TEXT NOT NULL DEFAULT 'neutral' CHECK (avatar_mood IN (
+                     'sad','crying','happy','neutral','angry','heartbroken',
+                     'love','anxious','confused','tired','excited','confident'
+                 )),
+    created_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    updated_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    is_seed      INTEGER NOT NULL DEFAULT 0
+);
+
 CREATE INDEX IF NOT EXISTS idx_rants_created_at   ON rants (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_rants_likes_count  ON rants (likes_count DESC);
 CREATE INDEX IF NOT EXISTS idx_rants_mood         ON rants (mood);
 CREATE INDEX IF NOT EXISTS idx_comments_rant_id   ON comments (rant_id);
 CREATE INDEX IF NOT EXISTS idx_bookmarks_anon     ON bookmarks (anonymous_id);
+CREATE INDEX IF NOT EXISTS idx_rants_anonymous_id ON rants (anonymous_id);

@@ -29,22 +29,40 @@ export function generateUUID(): string {
     })
 }
 
+const FRIENDLY_ADJECTIVES = [
+    'Calm', 'Brave', 'Gentle', 'Clever', 'Bold', 'Quiet', 'Witty', 'Kind', 'Lively', 'Mellow',
+    'Sunny', 'Chill', 'Bright', 'Lucky', 'Noble', 'Swift', 'Wise', 'Happy', 'Jolly', 'Serene',
+]
+const FRIENDLY_ANIMALS = [
+    'Lion', 'Otter', 'Panda', 'Falcon', 'Wolf', 'Dolphin', 'Fox', 'Bear', 'Hawk', 'Tiger',
+    'Koala', 'Eagle', 'Rabbit', 'Owl', 'Seal', 'Moose', 'Swan', 'Badger', 'Lynx', 'Heron',
+]
+
 /**
  * Generates a friendly, human-readable anonymous name (e.g., "Calm Lion").
  * Optionally accepts a separator (default: space).
  */
 export function generateFriendlyAnonymousName(separator = ' '): string {
-    const adjectives = [
-        'Calm', 'Brave', 'Gentle', 'Clever', 'Bold', 'Quiet', 'Witty', 'Kind', 'Lively', 'Mellow',
-        'Sunny', 'Chill', 'Bright', 'Lucky', 'Noble', 'Swift', 'Wise', 'Happy', 'Jolly', 'Serene',
-    ]
-    const animals = [
-        'Lion', 'Otter', 'Panda', 'Falcon', 'Wolf', 'Dolphin', 'Fox', 'Bear', 'Hawk', 'Tiger',
-        'Koala', 'Eagle', 'Rabbit', 'Owl', 'Seal', 'Moose', 'Swan', 'Badger', 'Lynx', 'Heron',
-    ]
-    const adjective = adjectives[Math.floor(Math.random() * adjectives.length)]
-    const animal = animals[Math.floor(Math.random() * animals.length)]
+    const adjective = FRIENDLY_ADJECTIVES[Math.floor(Math.random() * FRIENDLY_ADJECTIVES.length)]
+    const animal = FRIENDLY_ANIMALS[Math.floor(Math.random() * FRIENDLY_ANIMALS.length)]
     return `${adjective}${separator}${animal}`
+}
+
+/**
+ * Deterministically maps an anonymous_id to a stable friendly name
+ * (e.g., "Calm Lion") so the same author always renders identically across the
+ * app. Used as the fallback display name when a user hasn't set a custom one.
+ */
+export function friendlyNameFromId(id: string, separator = ' '): string {
+    if (!id) return 'Anonymous'
+    // Simple deterministic 32-bit hash (djb2-ish) over the id characters.
+    let hash = 5381
+    for (let i = 0; i < id.length; i++) {
+        hash = ((hash << 5) + hash + id.charCodeAt(i)) | 0
+    }
+    const adjIndex = Math.abs(hash) % FRIENDLY_ADJECTIVES.length
+    const aniIndex = Math.abs(Math.floor(hash / FRIENDLY_ADJECTIVES.length)) % FRIENDLY_ANIMALS.length
+    return `${FRIENDLY_ADJECTIVES[adjIndex]}${separator}${FRIENDLY_ANIMALS[aniIndex]}`
 }
 
 /**

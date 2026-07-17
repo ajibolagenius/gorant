@@ -7,13 +7,18 @@ import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
-import { Shield, Eye, Bell, Lock, Globe, Download, Gear } from "@phosphor-icons/react"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { Shield, Eye, Bell, Lock, Globe, Download, Gear, UserCircle, ArrowSquareOut } from "@phosphor-icons/react"
 import { Filter } from "lucide-react"
 import Link from "next/link"
+import { getAnonymousId, friendlyNameFromId } from "@/lib/utils"
+import { fetchProfileApi, updateProfileApi } from "@/lib/api/profiles"
 import { useAccessibility } from "@/hooks/use-accessibility"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-import { useSettings } from "@/hooks/use-settings"
+import { useSettings, type FeedSort } from "@/hooks/use-settings"
 import { AudioSettings } from "@/components/audio-settings"
 import { Separator } from "@/components/ui/separator"
 import { useNotifications, notificationHelpers } from "@/hooks/use-notifications"
@@ -39,6 +44,19 @@ export default function SettingsPage() {
     const router = useRouter()
     const [isAdmin, setIsAdmin] = useState(false)
 
+    // Pseudonymous profile state
+    const [anonId, setAnonId] = useState("")
+    const [displayName, setDisplayName] = useState("")
+    const [bio, setBio] = useState("")
+    const [avatarMood, setAvatarMood] = useState("neutral")
+    const [profileLoaded, setProfileLoaded] = useState(false)
+    const [savingProfile, setSavingProfile] = useState(false)
+
+    const MOOD_OPTIONS = [
+        "neutral", "happy", "excited", "confident", "love", "confused",
+        "tired", "anxious", "sad", "crying", "angry", "heartbroken",
+    ]
+
     // Privacy state
     const [privateAccount, setPrivateAccount] = useState(false)
     const [hideFromSearch, setHideFromSearch] = useState(false)
@@ -60,6 +78,41 @@ export default function SettingsPage() {
             setIsAdmin(localStorage.getItem("user_is_admin") === "true")
         }
     }, [])
+
+    // Load the pseudonymous profile from the API on mount.
+    useEffect(() => {
+        const id = getAnonymousId()
+        if (!id) return
+        setAnonId(id)
+        fetchProfileApi(id)
+            .then(({ profile }) => {
+                setDisplayName(profile?.display_name || "")
+                setBio(profile?.bio || "")
+                setAvatarMood(profile?.avatar_mood || "neutral")
+            })
+            .catch(() => {
+                // Non-fatal: the editor still works with empty defaults.
+            })
+            .finally(() => setProfileLoaded(true))
+    }, [])
+
+    const handleSaveProfile = async () => {
+        if (!anonId) return
+        setSavingProfile(true)
+        try {
+            await updateProfileApi(anonId, {
+                displayName: displayName.trim(),
+                bio: bio.trim(),
+                avatarMood,
+            })
+            toast.success("Profile saved.")
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : "Failed to save profile.")
+        } finally {
+            setSavingProfile(false)
+        }
+    }
+
     // Save to localStorage
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -150,6 +203,79 @@ export default function SettingsPage() {
                 <Separator className="mb-6" />
                 {/* Main Content */}
                 <div className="space-y-6">
+                    {/* Profile Settings */}
+                    <Card className="shadow-sm border-0 bg-card/80 dark:bg-card/80 backdrop-blur">
+                        <CardHeader>
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center space-x-2">
+                                    <UserCircle weight="duotone" className="w-5 h-5 text-purple-600" />
+                                    <h2 className="text-xl font-semibold text-card-foreground">Profile</h2>
+                                </div>
+                                {anonId && (
+                                    <Button variant="ghost" size="sm" asChild>
+                                        <Link href={`/u/${encodeURIComponent(anonId)}`}>
+                                            View profile
+                                            <ArrowSquareOut className="w-4 h-4 ml-1" weight="bold" />
+                                        </Link>
+                                    </Button>
+                                )}
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <p className="text-sm text-muted-foreground">
+                                Your identity stays anonymous. A display name and bio just let others
+                                recognize your pseudonym{anonId ? (
+                                    <> — currently <span className="font-medium text-foreground">{displayName.trim() || friendlyNameFromId(anonId)}</span></>
+                                ) : null}.
+                            </p>
+                            <div className="space-y-2">
+                                <Label htmlFor="display-name">Display name</Label>
+                                <Input
+                                    id="display-name"
+                                    value={displayName}
+                                    onChange={(e) => setDisplayName(e.target.value.slice(0, 40))}
+                                    maxLength={40}
+                                    placeholder={anonId ? friendlyNameFromId(anonId) : "Your display name"}
+                                    disabled={!profileLoaded}
+                                />
+                                <p className="text-xs text-muted-foreground text-right">{displayName.length}/40</p>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="bio">Bio</Label>
+                                <Textarea
+                                    id="bio"
+                                    value={bio}
+                                    onChange={(e) => setBio(e.target.value.slice(0, 280))}
+                                    maxLength={280}
+                                    rows={3}
+                                    placeholder="A short line about you (optional)"
+                                    disabled={!profileLoaded}
+                                />
+                                <p className="text-xs text-muted-foreground text-right">{bio.length}/280</p>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="avatar-mood">Avatar mood</Label>
+                                <Select value={avatarMood} onValueChange={setAvatarMood} disabled={!profileLoaded}>
+                                    <SelectTrigger id="avatar-mood" className="w-full sm:w-56">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {MOOD_OPTIONS.map((m) => (
+                                            <SelectItem key={m} value={m} className="capitalize">
+                                                {m}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="flex justify-end">
+                                <Button onClick={handleSaveProfile} disabled={!profileLoaded || savingProfile}>
+                                    {savingProfile ? "Saving…" : "Save profile"}
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+
                     {/* Accessibility Settings */}
                     <Card className="shadow-sm border-0 bg-card/80 dark:bg-card/80 backdrop-blur">
                         <CardHeader>
@@ -256,7 +382,7 @@ export default function SettingsPage() {
                                 </div>
                                 <div className="flex-1">
                                     <label id="default-sort-label" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Default Sort</label>
-                                    <Select value={defaultSort} onValueChange={v => setDefaultSort(v as unknown)} aria-labelledby="default-sort-label">
+                                    <Select value={defaultSort} onValueChange={v => setDefaultSort(v as FeedSort)} aria-labelledby="default-sort-label">
                                         <SelectTrigger aria-label="Select default sort order">
                                             <SelectValue />
                                         </SelectTrigger>

@@ -35,7 +35,7 @@
 - [x] Reporting
 - [ ] Groups
 - [ ] User following
-- [ ] Profiles
+- [x] Profiles
 
 ---
 
