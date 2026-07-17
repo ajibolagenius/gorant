@@ -46,6 +46,7 @@ export interface Comment {
     content: string
     created_at: string
     anonymous_id: string
+    display_name?: string | null
     likes_count?: number
     replies?: Comment[]
 }
@@ -58,6 +59,8 @@ export interface Rant {
     likes_count: number
     comments_count: number
     anonymous_id: string
+    display_name?: string | null
+    group_id?: string | null
     tags?: string[]
     is_trending?: boolean
     sentiment_score?: number
@@ -547,7 +550,7 @@ const EnhancedRantCardComponent = React.forwardRef<HTMLDivElement, EnhancedRantC
                             className="hover:text-purple-600 dark:hover:text-purple-400 hover:underline transition-colors"
                             title="View profile"
                         >
-                            {friendlyNameFromId(rant.anonymous_id)}
+                            {rant.display_name?.trim() || friendlyNameFromId(rant.anonymous_id)}
                         </Link>
                     </div>
                 </div>
@@ -602,7 +605,7 @@ const EnhancedRantCardComponent = React.forwardRef<HTMLDivElement, EnhancedRantC
                                                     className="text-sm font-medium text-gray-800 dark:text-gray-200 hover:text-purple-600 dark:hover:text-purple-400 hover:underline transition-colors"
                                                     title="View profile"
                                                 >
-                                                    {friendlyNameFromId(comment.anonymous_id)}
+                                                    {comment.display_name?.trim() || friendlyNameFromId(comment.anonymous_id)}
                                                 </Link>
                                                 <span className="text-xs text-gray-500 dark:text-gray-400">
                                                     {formatTimeAgo(comment.created_at)}

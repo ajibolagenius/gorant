@@ -2,8 +2,25 @@
 -- Timestamps are relative to seed time so the feed always looks recent.
 -- All rows are marked is_seed = 1 so a reset can distinguish them from visitor posts.
 
-DELETE FROM comments WHERE is_seed = 1;
-DELETE FROM rants    WHERE is_seed = 1;
+DELETE FROM comments      WHERE is_seed = 1;
+DELETE FROM rants         WHERE is_seed = 1;
+DELETE FROM group_members WHERE is_seed = 1;
+DELETE FROM groups        WHERE is_seed = 1;
+
+INSERT INTO groups (id, name, description, mood, created_by, created_at, is_seed) VALUES
+('seed-group-01', 'Work Rants', 'Meetings that could have been emails, managers, deadlines — let it out.', 'angry', 'anon_9to5', strftime('%Y-%m-%dT%H:%M:%fZ','now','-6 days'), 1),
+('seed-group-02', 'Small Wins', 'Celebrate the little victories nobody else claps for.', 'excited', 'anon_gains', strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 days'), 1),
+('seed-group-03', 'Midnight Thoughts', 'For the 3am overthinkers. You are not alone in here.', 'anxious', 'anon_nightowl', strftime('%Y-%m-%dT%H:%M:%fZ','now','-4 days'), 1);
+
+INSERT INTO group_members (group_id, anonymous_id, joined_at, is_seed) VALUES
+('seed-group-01', 'anon_9to5',        strftime('%Y-%m-%dT%H:%M:%fZ','now','-6 days'), 1),
+('seed-group-01', 'anon_devlife',     strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 days'), 1),
+('seed-group-01', 'anon_burntout',    strftime('%Y-%m-%dT%H:%M:%fZ','now','-3 days'), 1),
+('seed-group-02', 'anon_gains',       strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 days'), 1),
+('seed-group-02', 'anon_finally',     strftime('%Y-%m-%dT%H:%M:%fZ','now','-4 days'), 1),
+('seed-group-02', 'anon_student',     strftime('%Y-%m-%dT%H:%M:%fZ','now','-2 days'), 1),
+('seed-group-03', 'anon_nightowl',    strftime('%Y-%m-%dT%H:%M:%fZ','now','-4 days'), 1),
+('seed-group-03', 'anon_overthinker', strftime('%Y-%m-%dT%H:%M:%fZ','now','-3 days'), 1);
 
 INSERT INTO rants (id, content, mood, likes_count, comments_count, anonymous_id, tags, created_at, is_seed) VALUES
 ('seed-rant-01', 'Just spent three hours debugging only to realize I never saved the file. I am the problem. It was me.', 'tired', 47, 2, 'anon_devlife', '["coding","work"]', strftime('%Y-%m-%dT%H:%M:%fZ','now','-35 minutes'), 1),
@@ -20,6 +37,11 @@ INSERT INTO rants (id, content, mood, likes_count, comments_count, anonymous_id,
 ('seed-rant-12', 'Passed my final exam I was convinced I failed. Screaming into a pillow with joy.', 'excited', 167, 1, 'anon_student', '["school","wins"]', strftime('%Y-%m-%dT%H:%M:%fZ','now','-1 day','-7 hours'), 1),
 ('seed-rant-13', 'Some days I feel like I am doing great and other days I forget how to reply to a simple email. Balance.', 'confused', 142, 0, 'anon_average', '["adulting","mentalhealth"]', strftime('%Y-%m-%dT%H:%M:%fZ','now','-2 days'), 1),
 ('seed-rant-14', 'Reminder to anyone reading this at 3am: you are doing better than you think. Get some rest.', 'love', 388, 2, 'anon_nightowl', '["kindness","support"]', strftime('%Y-%m-%dT%H:%M:%fZ','now','-2 days','-5 hours'), 1);
+
+-- Post a few seed rants into groups so group feeds have content.
+UPDATE rants SET group_id = 'seed-group-01' WHERE is_seed = 1 AND id IN ('seed-rant-01','seed-rant-03','seed-rant-08');
+UPDATE rants SET group_id = 'seed-group-02' WHERE is_seed = 1 AND id IN ('seed-rant-02','seed-rant-06','seed-rant-12');
+UPDATE rants SET group_id = 'seed-group-03' WHERE is_seed = 1 AND id IN ('seed-rant-10','seed-rant-14');
 
 INSERT INTO comments (id, rant_id, content, anonymous_id, likes_count, created_at, is_seed) VALUES
 ('seed-cmt-01', 'seed-rant-01', 'This is painfully relatable. Ctrl+S is now muscle memory for me out of pure trauma.', 'anon_reply1', 12, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 minutes'), 1),

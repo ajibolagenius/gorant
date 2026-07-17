@@ -48,12 +48,13 @@ export async function createRantApi(
     content: string,
     mood: string,
     tags: string[],
-    anonymousId: string
+    anonymousId: string,
+    groupId?: string
 ): Promise<Rant> {
     const res = await fetch('/api/rants', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, mood, tags, anonymousId }),
+        body: JSON.stringify({ content, mood, tags, anonymousId, groupId }),
     });
     if (!res.ok) throw new Error(await parseError(res, 'Failed to post rant.'));
     const { rant } = await res.json();

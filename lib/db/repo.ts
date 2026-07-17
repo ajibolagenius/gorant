@@ -23,8 +23,12 @@ export interface RantRecord {
     likes_count: number;
     comments_count: number;
     anonymous_id: string;
+    /** Author's custom display name from their profile, if they set one. */
+    display_name: string | null;
     tags: string[];
     created_at: string;
+    /** Group this rant was posted into, if any. */
+    group_id: string | null;
 }
 
 export interface CommentRecord {
@@ -32,6 +36,8 @@ export interface CommentRecord {
     rant_id: string;
     content: string;
     anonymous_id: string;
+    /** Author's custom display name from their profile, if they set one. */
+    display_name: string | null;
     likes_count: number;
     created_at: string;
 }
@@ -76,8 +82,10 @@ function mapRant(row: any): RantRecord {
         likes_count: Number(row.likes_count) || 0,
         comments_count: Number(row.comments_count) || 0,
         anonymous_id: String(row.anonymous_id),
+        display_name: row.display_name ? String(row.display_name) : null,
         tags,
         created_at: String(row.created_at),
+        group_id: row.group_id ? String(row.group_id) : null,
     };
 }
 
@@ -98,10 +106,18 @@ function mapComment(row: any): CommentRecord {
         rant_id: String(row.rant_id),
         content: String(row.content),
         anonymous_id: String(row.anonymous_id),
+        display_name: row.display_name ? String(row.display_name) : null,
         likes_count: Number(row.likes_count) || 0,
         created_at: String(row.created_at),
     };
 }
+
+/** Shared SELECT for rant queries: rants joined to author profiles. */
+const RANT_SELECT = `SELECT r.id, r.content, r.mood, r.likes_count, r.comments_count,
+       r.anonymous_id, r.tags, r.created_at, r.group_id,
+       NULLIF(TRIM(p.display_name), '') AS display_name
+FROM rants r
+LEFT JOIN profiles p ON p.anonymous_id = r.anonymous_id`;
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 export interface ListRantsOptions {
@@ -113,18 +129,17 @@ export interface ListRantsOptions {
 
 export async function listRants(opts: ListRantsOptions = {}): Promise<RantRecord[]> {
     const args: (string | number)[] = [];
-    let sql =
-        'SELECT id, content, mood, likes_count, comments_count, anonymous_id, tags, created_at FROM rants';
+    let sql = RANT_SELECT;
 
     if (opts.mood && VALID_MOODS.has(opts.mood)) {
-        sql += ' WHERE mood = ?';
+        sql += ' WHERE r.mood = ?';
         args.push(opts.mood);
     }
 
     const order =
         opts.sortBy === 'popular' || opts.sortBy === 'most_liked'
-            ? 'likes_count DESC, created_at DESC'
-            : 'created_at DESC';
+            ? 'r.likes_count DESC, r.created_at DESC'
+            : 'r.created_at DESC';
     sql += ` ORDER BY ${order}`;
 
     const limit = Math.min(Math.max(opts.limit ?? 100, 1), 200);
@@ -145,6 +160,7 @@ export async function createRant(input: {
     mood: string;
     tags?: string[];
     anonymousId: string;
+    groupId?: string;
 }): Promise<RantRecord> {
     const content = (input.content ?? '').trim();
     if (!content) throw new ValidationError('Content is required.');
@@ -159,11 +175,25 @@ export async function createRant(input: {
     const createdAt = nowIso();
     const anonymousId = (input.anonymousId || 'anon_unknown').slice(0, 64);
 
+    // If posting into a group, ensure it exists.
+    let groupId: string | null = null;
+    if (input.groupId) {
+        const candidate = input.groupId.slice(0, 64);
+        const group = await db.execute({
+            sql: 'SELECT id FROM groups WHERE id = ?',
+            args: [candidate],
+        });
+        if (group.rows.length === 0) throw new ValidationError('Group not found.');
+        groupId = candidate;
+    }
+
     await db.execute({
-        sql: `INSERT INTO rants (id, content, mood, likes_count, comments_count, anonymous_id, tags, created_at, is_seed)
-              VALUES (?, ?, ?, 0, 0, ?, ?, ?, 0)`,
-        args: [id, content, input.mood, anonymousId, JSON.stringify(tags), createdAt],
+        sql: `INSERT INTO rants (id, content, mood, likes_count, comments_count, anonymous_id, tags, group_id, created_at, is_seed)
+              VALUES (?, ?, ?, 0, 0, ?, ?, ?, ?, 0)`,
+        args: [id, content, input.mood, anonymousId, JSON.stringify(tags), groupId, createdAt],
     });
+
+    const profile = await getProfile(anonymousId);
 
     return {
         id,
@@ -172,8 +202,10 @@ export async function createRant(input: {
         likes_count: 0,
         comments_count: 0,
         anonymous_id: anonymousId,
+        display_name: profile?.display_name?.trim() || null,
         tags,
         created_at: createdAt,
+        group_id: groupId,
     };
 }
 
@@ -196,9 +228,12 @@ export async function listComments(
 
     const placeholders = ids.map(() => '?').join(', ');
     const result = await db.execute({
-        sql: `SELECT id, rant_id, content, anonymous_id, likes_count, created_at
-              FROM comments WHERE rant_id IN (${placeholders})
-              ORDER BY created_at DESC`,
+        sql: `SELECT c.id, c.rant_id, c.content, c.anonymous_id, c.likes_count, c.created_at,
+                     NULLIF(TRIM(p.display_name), '') AS display_name
+              FROM comments c
+              LEFT JOIN profiles p ON p.anonymous_id = c.anonymous_id
+              WHERE c.rant_id IN (${placeholders})
+              ORDER BY c.created_at DESC`,
         args: ids,
     });
 
@@ -247,11 +282,14 @@ export async function createComment(input: {
         'write'
     );
 
+    const profile = await getProfile(anonymousId);
+
     return {
         id,
         rant_id: input.rantId,
         content,
         anonymous_id: anonymousId,
+        display_name: profile?.display_name?.trim() || null,
         likes_count: 0,
         created_at: createdAt,
     };
@@ -345,8 +383,170 @@ export async function listRantsByAuthor(
     if (!id) return [];
     const limit = Math.min(Math.max(opts.limit ?? 50, 1), 200);
     const args: (string | number)[] = [id, limit];
-    let sql = `SELECT id, content, mood, likes_count, comments_count, anonymous_id, tags, created_at
-               FROM rants WHERE anonymous_id = ? ORDER BY created_at DESC LIMIT ?`;
+    let sql = `${RANT_SELECT} WHERE r.anonymous_id = ? ORDER BY r.created_at DESC LIMIT ?`;
+    if (opts.offset && opts.offset > 0) {
+        sql += ' OFFSET ?';
+        args.push(opts.offset);
+    }
+    const result = await db.execute({ sql, args });
+    return result.rows.map(mapRant);
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Groups                                                                    */
+/* -------------------------------------------------------------------------- */
+
+export const MAX_GROUP_NAME_LENGTH = 50;
+export const MAX_GROUP_DESCRIPTION_LENGTH = 200;
+
+export interface GroupRecord {
+    id: string;
+    name: string;
+    description: string;
+    mood: string;
+    created_by: string;
+    created_at: string;
+    members_count: number;
+    rants_count: number;
+    /** True when the requesting viewer is a member (only set if a viewer was given). */
+    is_member: boolean;
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function mapGroup(row: any): GroupRecord {
+    return {
+        id: String(row.id),
+        name: String(row.name),
+        description: String(row.description ?? ''),
+        mood: String(row.mood ?? 'neutral'),
+        created_by: String(row.created_by),
+        created_at: String(row.created_at),
+        members_count: Number(row.members_count) || 0,
+        rants_count: Number(row.rants_count) || 0,
+        is_member: Boolean(Number(row.is_member)),
+    };
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+const GROUP_SELECT = `SELECT g.id, g.name, g.description, g.mood, g.created_by, g.created_at,
+       (SELECT COUNT(*) FROM group_members m WHERE m.group_id = g.id) AS members_count,
+       (SELECT COUNT(*) FROM rants r WHERE r.group_id = g.id) AS rants_count,
+       EXISTS (SELECT 1 FROM group_members m WHERE m.group_id = g.id AND m.anonymous_id = ?) AS is_member
+FROM groups g`;
+
+/** All groups, most members first. Pass viewer to mark which ones they joined. */
+export async function listGroups(viewerId?: string): Promise<GroupRecord[]> {
+    const viewer = normId(viewerId ?? '');
+    const result = await db.execute({
+        sql: `${GROUP_SELECT} ORDER BY members_count DESC, g.created_at ASC LIMIT 100`,
+        args: [viewer],
+    });
+    return result.rows.map(mapGroup);
+}
+
+/** A single group by id, or null. */
+export async function getGroup(id: string, viewerId?: string): Promise<GroupRecord | null> {
+    const groupId = normId(id);
+    if (!groupId) return null;
+    const viewer = normId(viewerId ?? '');
+    const result = await db.execute({
+        sql: `${GROUP_SELECT} WHERE g.id = ?`,
+        args: [viewer, groupId],
+    });
+    return result.rows.length ? mapGroup(result.rows[0]) : null;
+}
+
+/** Create a group. The creator automatically becomes its first member. */
+export async function createGroup(input: {
+    name: string;
+    description?: string;
+    mood?: string;
+    createdBy: string;
+}): Promise<GroupRecord> {
+    const name = (input.name ?? '').trim();
+    if (!name) throw new ValidationError('Group name is required.');
+    if (name.length > MAX_GROUP_NAME_LENGTH)
+        throw new ValidationError(`Group name must be ${MAX_GROUP_NAME_LENGTH} characters or fewer.`);
+    const description = (input.description ?? '').trim().slice(0, MAX_GROUP_DESCRIPTION_LENGTH);
+    const mood = VALID_MOODS.has(input.mood ?? '') ? (input.mood as string) : 'neutral';
+    const createdBy = normId(input.createdBy);
+    if (!createdBy) throw new ValidationError('createdBy is required.');
+
+    const existing = await db.execute({
+        sql: 'SELECT id FROM groups WHERE name = ? COLLATE NOCASE',
+        args: [name],
+    });
+    if (existing.rows.length > 0)
+        throw new ValidationError('A group with that name already exists.');
+
+    const id = randomUUID();
+    const createdAt = nowIso();
+
+    await db.batch(
+        [
+            {
+                sql: `INSERT INTO groups (id, name, description, mood, created_by, created_at, is_seed)
+                      VALUES (?, ?, ?, ?, ?, ?, 0)`,
+                args: [id, name, description, mood, createdBy, createdAt],
+            },
+            {
+                sql: `INSERT INTO group_members (group_id, anonymous_id, joined_at, is_seed)
+                      VALUES (?, ?, ?, 0)`,
+                args: [id, createdBy, createdAt],
+            },
+        ],
+        'write'
+    );
+
+    return {
+        id,
+        name,
+        description,
+        mood,
+        created_by: createdBy,
+        created_at: createdAt,
+        members_count: 1,
+        rants_count: 0,
+        is_member: true,
+    };
+}
+
+/** Join a group. Idempotent. */
+export async function joinGroup(groupId: string, anonymousId: string): Promise<void> {
+    const gid = normId(groupId);
+    const anon = normId(anonymousId);
+    if (!gid || !anon) throw new ValidationError('groupId and anonymousId are required.');
+    const group = await db.execute({ sql: 'SELECT id FROM groups WHERE id = ?', args: [gid] });
+    if (group.rows.length === 0) throw new ValidationError('Group not found.');
+    await db.execute({
+        sql: `INSERT INTO group_members (group_id, anonymous_id, joined_at, is_seed)
+              VALUES (?, ?, ?, 0)
+              ON CONFLICT (group_id, anonymous_id) DO NOTHING`,
+        args: [gid, anon, nowIso()],
+    });
+}
+
+/** Leave a group. Idempotent. */
+export async function leaveGroup(groupId: string, anonymousId: string): Promise<void> {
+    const gid = normId(groupId);
+    const anon = normId(anonymousId);
+    if (!gid || !anon) throw new ValidationError('groupId and anonymousId are required.');
+    await db.execute({
+        sql: 'DELETE FROM group_members WHERE group_id = ? AND anonymous_id = ?',
+        args: [gid, anon],
+    });
+}
+
+/** Rants posted into a group, newest first. */
+export async function listGroupRants(
+    groupId: string,
+    opts: { limit?: number; offset?: number } = {}
+): Promise<RantRecord[]> {
+    const gid = normId(groupId);
+    if (!gid) return [];
+    const limit = Math.min(Math.max(opts.limit ?? 100, 1), 200);
+    const args: (string | number)[] = [gid, limit];
+    let sql = `${RANT_SELECT} WHERE r.group_id = ? ORDER BY r.created_at DESC LIMIT ?`;
     if (opts.offset && opts.offset > 0) {
         sql += ' OFFSET ?';
         args.push(opts.offset);
@@ -431,9 +631,7 @@ export async function listFollowingRants(
     if (!follower) return [];
     const limit = Math.min(Math.max(opts.limit ?? 100, 1), 200);
     const args: (string | number)[] = [follower, limit];
-    let sql = `SELECT r.id, r.content, r.mood, r.likes_count, r.comments_count,
-                      r.anonymous_id, r.tags, r.created_at
-               FROM rants r
+    let sql = `${RANT_SELECT}
                JOIN follows f ON f.followee_id = r.anonymous_id
                WHERE f.follower_id = ?
                ORDER BY r.created_at DESC

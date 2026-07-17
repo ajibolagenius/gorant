@@ -1,5 +1,5 @@
 "use client"
-import { Star, TrendUp, Trophy, Lightning, Moon, Sun, Bell, Shield, House, Gear, List, UsersThree } from "@phosphor-icons/react"
+import { Star, TrendUp, Trophy, Lightning, Moon, Sun, Bell, Shield, House, Gear, List, UsersThree, UsersFour } from "@phosphor-icons/react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -69,6 +69,13 @@ export default function Header({ userLevel, theme, toggleTheme, pathname }: Head
                         >
                             <TrendUp weight="duotone" className="w-4 h-4" />
                             <span>Trending</span>
+                        </Link>
+                        <Link
+                            href="/groups"
+                            className={`flex items-center space-x-1 ${pathname.startsWith("/groups") ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-300"} hover:text-purple-600 dark:hover:text-purple-400`}
+                        >
+                            <UsersFour weight="duotone" className="w-4 h-4" />
+                            <span>Groups</span>
                         </Link>
                         <Link
                             href="/challenges"

@@ -78,6 +78,8 @@ export function normalizeRant(rant: any): Rant {
         likes_count: rant.likes_count ?? 0,
         comments_count: rant.comments_count ?? 0,
         anonymous_id: rant.anonymous_id ?? "anon_unknown",
+        display_name: rant.display_name ?? null,
+        group_id: rant.group_id ?? null,
         tags: rant.tags ?? [],
         is_trending: rant.is_trending ?? false,
         sentiment_score: rant.sentiment_score ?? 0,

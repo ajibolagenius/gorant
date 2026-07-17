@@ -36,7 +36,8 @@ import React from "react"
 import { motion } from "framer-motion"
 import { audioService } from "@/services/audio-service"
 import { trackEvent } from "@/lib/self-analytics"
-import { getAnonymousId } from "@/lib/utils"
+import { getAnonymousId, friendlyNameFromId } from "@/lib/utils"
+import Link from "next/link"
 
 interface RantCardProps {
     rant: Rant
@@ -348,7 +349,13 @@ export const RantCard = React.memo(function RantCard({
                                 </Tooltip>
                             )}
                             <Eye className="w-3 h-3" />
-                            <span>{rant.anonymous_id}</span>
+                            <Link
+                                href={`/u/${encodeURIComponent(rant.anonymous_id)}`}
+                                className="hover:text-purple-600 dark:hover:text-purple-400 hover:underline transition-colors"
+                                title="View profile"
+                            >
+                                {rant.display_name?.trim() || friendlyNameFromId(rant.anonymous_id)}
+                            </Link>
                         </div>
                     </div>
 

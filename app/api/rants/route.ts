@@ -37,7 +37,13 @@ export async function POST(request: Request) {
         );
     }
 
-    let body: { content?: string; mood?: string; tags?: string[]; anonymousId?: string };
+    let body: {
+        content?: string;
+        mood?: string;
+        tags?: string[];
+        anonymousId?: string;
+        groupId?: string;
+    };
     try {
         body = await request.json();
     } catch {
@@ -50,6 +56,7 @@ export async function POST(request: Request) {
             mood: body.mood ?? '',
             tags: body.tags,
             anonymousId: body.anonymousId ?? 'anon_unknown',
+            groupId: body.groupId,
         });
         return NextResponse.json({ rant }, { status: 201 });
     } catch (err) {

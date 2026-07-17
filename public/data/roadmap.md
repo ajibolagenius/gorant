@@ -33,7 +33,7 @@
 - [x] Notifications
 - [x] Moderation tools
 - [x] Reporting
-- [ ] Groups
+- [x] Groups
 - [x] User following
 - [x] Profiles
 

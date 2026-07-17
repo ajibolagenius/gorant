@@ -46,8 +46,19 @@ async function main() {
     if (reset) {
         console.log('→ Dropping existing tables (--reset)…');
         await db.executeMultiple(
-            'DROP TABLE IF EXISTS comments; DROP TABLE IF EXISTS bookmarks; DROP TABLE IF EXISTS follows; DROP TABLE IF EXISTS profiles; DROP TABLE IF EXISTS rants;'
+            'DROP TABLE IF EXISTS comments; DROP TABLE IF EXISTS bookmarks; DROP TABLE IF EXISTS follows; DROP TABLE IF EXISTS group_members; DROP TABLE IF EXISTS groups; DROP TABLE IF EXISTS profiles; DROP TABLE IF EXISTS rants;'
         );
+    }
+
+    // Migrations for pre-existing databases (CREATE TABLE IF NOT EXISTS won't
+    // add new columns). Must run BEFORE the schema, because the schema also
+    // creates indexes on these columns. Each is a no-op error when the column
+    // already exists or the table doesn't exist yet (fresh database).
+    try {
+        await db.execute('ALTER TABLE rants ADD COLUMN group_id TEXT');
+        console.log('→ Migrated: added rants.group_id');
+    } catch {
+        // Column already exists or table not created yet — nothing to do.
     }
 
     console.log('→ Applying schema…');

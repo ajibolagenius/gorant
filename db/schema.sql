@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS rants (
     comments_count INTEGER NOT NULL DEFAULT 0 CHECK (comments_count >= 0),
     anonymous_id   TEXT NOT NULL,
     tags           TEXT NOT NULL DEFAULT '[]',
+    group_id       TEXT,
     created_at     TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
     is_seed        INTEGER NOT NULL DEFAULT 0
 );
@@ -55,6 +56,28 @@ CREATE TABLE IF NOT EXISTS profiles (
     is_seed      INTEGER NOT NULL DEFAULT 0
 );
 
+-- Topic groups. Rants may optionally be posted into a group (rants.group_id).
+CREATE TABLE IF NOT EXISTS groups (
+    id          TEXT PRIMARY KEY,
+    name        TEXT NOT NULL UNIQUE CHECK (length(name) > 0 AND length(name) <= 50),
+    description TEXT NOT NULL DEFAULT '' CHECK (length(description) <= 200),
+    mood        TEXT NOT NULL DEFAULT 'neutral' CHECK (mood IN (
+                    'sad','crying','happy','neutral','angry','heartbroken',
+                    'love','anxious','confused','tired','excited','confident'
+                )),
+    created_by  TEXT NOT NULL,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    is_seed     INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS group_members (
+    group_id     TEXT NOT NULL REFERENCES groups (id) ON DELETE CASCADE,
+    anonymous_id TEXT NOT NULL,
+    joined_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    is_seed      INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (group_id, anonymous_id)
+);
+
 -- Directed follow edges between pseudonymous identities (follower -> followee).
 -- Both sides are anonymous_ids; a row need not have a matching profiles row.
 CREATE TABLE IF NOT EXISTS follows (
@@ -74,3 +97,5 @@ CREATE INDEX IF NOT EXISTS idx_bookmarks_anon     ON bookmarks (anonymous_id);
 CREATE INDEX IF NOT EXISTS idx_rants_anonymous_id ON rants (anonymous_id);
 CREATE INDEX IF NOT EXISTS idx_follows_follower   ON follows (follower_id);
 CREATE INDEX IF NOT EXISTS idx_follows_followee   ON follows (followee_id);
+CREATE INDEX IF NOT EXISTS idx_rants_group_id     ON rants (group_id);
+CREATE INDEX IF NOT EXISTS idx_group_members_anon ON group_members (anonymous_id);
