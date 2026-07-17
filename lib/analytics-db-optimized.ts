@@ -53,7 +53,7 @@ export class AnalyticsDBOptimized {
                         const metrics = aggData[0].data
                         return {
                             totalPageViews: metrics.pageViews || 0,
-                            uniqueSessitrics.uniqueSessions || 0,
+                            uniqueSessions: metrics.uniqueSessions || 0,
                             totalEvents: metrics.totalEvents || 0,
                             avgSessionDuration: "4m 32s" // Simplified for now
                         }

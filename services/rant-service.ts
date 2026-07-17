@@ -21,6 +21,7 @@ export interface RantOperationResult<T = unknown> {
 export class RantService {
     static async fetchRants(filters: RantFilters = {}): Promise<RantOperationResult<Rant[]>> {
         try {
+            if (!supabase) throw new Error('Database client not configured')
             let query = supabase
                 .from('rants')
                 .select('id, content, mood, likes_count, comments_count, anonymous_id, created_at, tags')
@@ -81,6 +82,7 @@ export class RantService {
                 }
             }
 
+            if (!supabase) throw new Error('Database client not configured')
             const { data, error } = await supabase
                 .from('rants')
                 .insert([{
@@ -110,20 +112,12 @@ export class RantService {
 
     static async likeRant(rantId: string): Promise<RantOperationResult<void>> {
         try {
-            // Get current likes count
-            const { data: currentRant, error: fetchError } = await supabase
-                .from('rants')
-                .select('likes_count')
-                .eq('id', rantId)
-                .single()
-
-            if (fetchError) throw fetchError
-
-            // Update likes count
-            const { error } = await supabase
-                .from('rants')
-                .update({ likes_count: (currentRant.likes_count || 0) + 1 })
-                .eq('id', rantId)
+            if (!supabase) throw new Error('Database client not configured')
+            // Update likes count via secure RPC function
+            const { error } = await supabase.rpc('increment_rant_likes', {
+                rant_id: rantId,
+                increment_val: 1
+            })
 
             if (error) throw error
 
@@ -142,6 +136,7 @@ export class RantService {
                 return { success: true, data: {} }
             }
 
+            if (!supabase) throw new Error('Database client not configured')
             const { data, error } = await supabase
                 .from('comments')
                 .select('id, rant_id, content, created_at, anonymous_id, likes_count')

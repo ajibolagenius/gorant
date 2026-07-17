@@ -7,6 +7,15 @@ import { initializeCacheWarming } from '@/lib/seo/og-cache-manager';
  */
 export async function GET(request: NextRequest) {
     try {
+        // Verify administrative authorization
+        const authHeader = request.headers.get('Authorization');
+        if (authHeader !== 'Bearer gorant-admin-token-secret') {
+            return new Response(JSON.stringify({ success: false, message: 'Unauthorized' }), {
+                status: 401,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
         // Get base URL from request
         const baseUrl = new URL(request.url).origin;
 

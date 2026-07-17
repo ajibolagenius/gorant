@@ -187,6 +187,12 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
     try {
+        // Verify administrative authorization
+        const authHeader = request.headers.get('Authorization')
+        if (authHeader !== 'Bearer gorant-admin-token-secret') {
+            return ApiResponse.error('Unauthorized', 401)
+        }
+
         // Rate limiting for dashboard queries
         const clientId = getClientIdentifier(request)
         if (!checkRateLimit(clientId, 50, 60000)) {

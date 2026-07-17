@@ -1,4 +1,4 @@
-import { Metadata } from 'next';
+import { Metadata, Viewport } from 'next';
 import { getSeoConfig as getOriginalSeoConfig, getCanonicalUrl, getRobotsMetaContent, getOgImageUrl } from './config';
 import { PageMetadata } from '@/types/seo';
 
@@ -14,6 +14,23 @@ export const getSeoConfig = (): ReturnType<typeof getOriginalSeoConfig> => {
     const config = getOriginalSeoConfig();
     cachedConfig = config;
     return config;
+};
+
+/**
+ * Generate the viewport configuration for the application.
+ * In Next.js 14+, `themeColor` and `viewport` must be provided via a
+ * dedicated `viewport` export rather than inside the `metadata` object.
+ */
+export const getViewport = (): Viewport => {
+    return {
+        width: 'device-width',
+        initialScale: 1,
+        maximumScale: 5,
+        userScalable: true,
+        colorScheme: 'light dark',
+        // Matches `theme_color` in public/manifest.json (the app's purple brand)
+        themeColor: '#a259ff',
+    };
 };
 
 /**
@@ -72,7 +89,6 @@ export const getDefaultMetadata = (): Metadata => {
             images: getOgImageUrl({ type: 'default' }),
         },
         robots: getRobotsMetaContent(),
-        themeColor: config.themeColor,
         manifest: '/manifest.json',
         icons: {
             icon: [
@@ -90,12 +106,6 @@ export const getDefaultMetadata = (): Metadata => {
                     color: config.themeColor,
                 },
             ],
-        },
-        viewport: {
-            width: 'device-width',
-            initialScale: 1,
-            maximumScale: 1,
-            userScalable: false,
         },
         verification: {
             google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION,

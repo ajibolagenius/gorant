@@ -12,6 +12,7 @@ import type { Variants } from "framer-motion"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { ArrowUpCircle } from "lucide-react"
 import { supabase } from "@/lib/supabaseClient";
+import DOMPurify from "dompurify";
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import dynamic from 'next/dynamic';
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
@@ -294,6 +295,7 @@ export default function RoadmapPage() {
     const [activePhase, setActivePhase] = useState<string>("")
     const phaseRefs = useRef<Record<string, HTMLDivElement | null>>({})
     const [showTopBtn, setShowTopBtn] = useState(false)
+    const [isMounted, setIsMounted] = useState(false)
     // Sidebar state
     interface Suggestion {
         id: string;
@@ -402,6 +404,7 @@ export default function RoadmapPage() {
     }
 
     useEffect(() => {
+        setIsMounted(true)
         if (typeof window !== "undefined") {
             const onScroll = () => setShowTopBtn(window.scrollY > 300)
             window.addEventListener("scroll", onScroll)
@@ -788,7 +791,7 @@ export default function RoadmapPage() {
                                         </div>
                                         {/* Description (expandable) */}
                                         {expandedId === s.id && (
-                                            <div className="animate-slide-down mt-2 prose prose-sm max-w-none pl-7" style={{ fontFamily: 'Manrope, sans-serif', maxHeight: 380, overflowY: 'auto' }} dangerouslySetInnerHTML={{ __html: s.description }} />
+                                            <div className="animate-slide-down mt-2 prose prose-sm max-w-none pl-7" style={{ fontFamily: 'Manrope, sans-serif', maxHeight: 380, overflowY: 'auto' }} dangerouslySetInnerHTML={{ __html: isMounted ? DOMPurify.sanitize(s.description) : s.description }} />
                                         )}
                                         {/* Admin status dropdown */}
                                         <div className="pl-7 mt-3">

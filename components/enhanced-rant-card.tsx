@@ -32,6 +32,7 @@ import {
 import { SentimentAnalysisService } from "@/services/sentiment-analysis"
 import { toast } from "sonner"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import DOMPurify from "dompurify"
 import React from "react"
 import { audioService } from "@/services/audio-service"
 import { useNotifications, notificationHelpers } from "@/hooks/use-notifications"
@@ -129,6 +130,7 @@ const EnhancedRantCardComponent = React.forwardRef<HTMLDivElement, EnhancedRantC
     const [isMobile, setIsMobile] = useState(false)
     const [showRepTooltip, setShowRepTooltip] = useState(false)
     const [commentCooldown, setCommentCooldown] = useState(0)
+    const [isMounted, setIsMounted] = useState(false)
     const { addNotification } = useNotifications()
     const { trackUserAction } = useAnalytics()
 
@@ -151,6 +153,7 @@ const EnhancedRantCardComponent = React.forwardRef<HTMLDivElement, EnhancedRantC
 
     useEffect(() => {
         setIsMobile(window.matchMedia('(pointer: coarse)').matches)
+        setIsMounted(true)
     }, [])
 
     // Update local comments when props change
@@ -429,7 +432,7 @@ const EnhancedRantCardComponent = React.forwardRef<HTMLDivElement, EnhancedRantC
                 </div>
 
                 {/* Rant Content */}
-                <div className="prose prose-sm dark:prose-invert max-w-none mb-4" dangerouslySetInnerHTML={{ __html: rant.content }} />
+                <div className="prose prose-sm dark:prose-invert max-w-none mb-4" dangerouslySetInnerHTML={{ __html: isMounted ? DOMPurify.sanitize(rant.content) : rant.content }} />
 
                 {/* Tags */}
                 {rant.tags && rant.tags.length > 0 && (

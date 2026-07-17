@@ -184,7 +184,7 @@ class AnalyticsPrivacyService {
             // Remove script tags and suspicious content
             if (typeof anonymized[key] === 'string') {
                 anonymized[key] = (anonymized[key] as string)
-                    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '[script removed]')
+                    .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gi, '[script removed]')
                     .replace(/javascript:/gi, '[js removed]')
             }
         })

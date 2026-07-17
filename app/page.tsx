@@ -278,7 +278,6 @@ export default function RantApp() {
             toast.error('Failed to post comment.')
             throw new Error('Failed to post comment.')
         }
-        await client.from('rants').update({ comments_count: (rants.find(r => r.id === rantId)?.comments_count || 0) + 1 }).eq('id', rantId)
         fetchRants()
         addPoints(2, "comment")
         checkAchievements("comments_posted", Object.values(comments).flat().length + 1)
@@ -328,11 +327,10 @@ export default function RantApp() {
         localStorage.setItem(likedCommentsKey, JSON.stringify(Array.from(likedComments)))
         // Update likes_count in Supabase (skip in demo mode)
         if (!supabase) return
-        const { error } = await supabase.from('comments').update({
-            likes_count: isLiked
-                ? Math.max((comments[rantId]?.find(c => c.id === commentId)?.likes_count || 1) - 1, 0)
-                : (comments[rantId]?.find(c => c.id === commentId)?.likes_count || 0) + 1
-        }).eq('id', commentId)
+        const { error } = await supabase.rpc('increment_comment_likes', {
+            comment_id: commentId,
+            increment_val: isLiked ? -1 : 1
+        })
         if (error) {
             toast.error(isLiked ? 'Failed to unlike comment.' : 'Failed to like comment.')
         } else {
@@ -530,9 +528,10 @@ export default function RantApp() {
         })
         // Update likes_count in Supabase (skip in demo mode)
         if (!supabase) return
-        const { error } = await supabase.from('rants').update({
-            likes_count: isLiked ? Math.max((rant?.likes_count || 1) - 1, 0) : (rant?.likes_count || 0) + 1
-        }).eq('id', rantId)
+        const { error } = await supabase.rpc('increment_rant_likes', {
+            rant_id: rantId,
+            increment_val: isLiked ? -1 : 1
+        })
         if (error) {
             toast.error(isLiked ? 'Failed to unlike rant.' : 'Failed to like rant.')
         } else {

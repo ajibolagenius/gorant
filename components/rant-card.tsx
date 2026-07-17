@@ -20,6 +20,7 @@ import {
     TrendingUp,
     Star,
 } from "lucide-react"
+import DOMPurify from "dompurify"
 import type { Rant } from "@/components/enhanced-rant-card"
 import {
     DropdownMenu,
@@ -87,9 +88,11 @@ export const RantCard = React.memo(function RantCard({
     const [showReportDialog, setShowReportDialog] = useState(false)
     const [isMobile, setIsMobile] = useState(false)
     const [showRepTooltip, setShowRepTooltip] = useState(false)
+    const [isMounted, setIsMounted] = useState(false)
 
     useEffect(() => {
         setIsMobile(window.matchMedia('(pointer: coarse)').matches)
+        setIsMounted(true)
     }, [])
 
     if (isUserBlocked) {
@@ -252,7 +255,7 @@ export const RantCard = React.memo(function RantCard({
                     </div>
 
                     {/* Rant Content */}
-                    <div className="prose prose-sm dark:prose-invert max-w-none mb-4" dangerouslySetInnerHTML={{ __html: rant.content }} />
+                    <div className="prose prose-sm dark:prose-invert max-w-none mb-4" dangerouslySetInnerHTML={{ __html: isMounted ? DOMPurify.sanitize(rant.content) : rant.content }} />
 
                     {/* Tags */}
                     {rant.tags && rant.tags.length > 0 && (

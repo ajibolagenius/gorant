@@ -190,6 +190,9 @@ export class AnalyticsAPI {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': typeof window !== 'undefined' && localStorage.getItem('user_is_admin') === 'true'
+                        ? 'Bearer gorant-admin-token-secret'
+                        : '',
                 },
             })
 
@@ -355,6 +358,9 @@ export class AnalyticsAPI {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': typeof window !== 'undefined' && localStorage.getItem('user_is_admin') === 'true'
+                        ? 'Bearer gorant-admin-token-secret'
+                        : '',
                 },
             })
 
